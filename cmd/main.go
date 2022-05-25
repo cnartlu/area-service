@@ -6,6 +6,7 @@ import (
 
 	"area-service/internal/conf"
 
+	"github.com/cnartlu/area-service/command"
 	"github.com/go-kratos/kratos/v2"
 	"github.com/go-kratos/kratos/v2/config"
 	"github.com/go-kratos/kratos/v2/config/file"
@@ -27,8 +28,15 @@ var (
 	id, _ = os.Hostname()
 )
 
+func main() {
+	err := command.App().Run(os.Args)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
 func init() {
-	flag.StringVar(&flagconf, "conf", "../../configs", "config path, eg: -conf config.yaml")
+	flag.StringVar(&flagconf, "conf", "../configs", "config path, eg: -conf config.yaml")
 }
 
 func newApp(logger log.Logger, hs *http.Server, gs *grpc.Server) *kratos.App {
@@ -45,7 +53,7 @@ func newApp(logger log.Logger, hs *http.Server, gs *grpc.Server) *kratos.App {
 	)
 }
 
-func main() {
+func main1() {
 	flag.Parse()
 	logger := log.With(log.NewStdLogger(os.Stdout),
 		"ts", log.DefaultTimestamp,
