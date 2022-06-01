@@ -1,0 +1,2 @@
+# 忽略go文件
+!config.pb.go

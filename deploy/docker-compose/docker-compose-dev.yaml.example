@@ -1,0 +1,156 @@
+version: "3"
+
+services:
+  mysql:
+    image: mysql:latest
+    networks:
+      github.com/cnartlu/area-service:
+        aliases:
+          - mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: github.com/cnartlu/area-service
+    ports:
+      - "$PORT:3306"
+    command: >
+      bash -c "chmod 644 /etc/mysql/conf.d/*.cnf && /entrypoint.sh mysqld"
+    volumes:
+      - "./mysql/mysql.cnf:/etc/mysql/conf.d/mysql.cnf"
+      - "./mysql/data:/var/lib/mysql"
+      - "./apollo/migrate:/docker-entrypoint-initdb.d"
+
+  redis:
+    image: redis:latest
+    networks:
+      github.com/cnartlu/area-service:
+        aliases:
+          - redis
+    ports:
+      - "$PORT:6379"
+    command:
+      - "redis-server"
+      - "/usr/local/etc/redis/redis.conf"
+    volumes:
+      - "./redis/redis.conf:/usr/local/etc/redis/redis.conf"
+      - "./redis/data:/data"
+
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    networks:
+      github.com/cnartlu/area-service:
+        aliases:
+          - jaeger
+    environment:
+      SPAN_STORAGE_TYPE: "badger"
+      BADGER_EPHEMERAL: "false"
+      BADGER_DIRECTORY_VALUE: "/badger/data"
+      BADGER_DIRECTORY_KEY: "/badger/key"
+    ports:
+      - "$PORT:5775/udp"
+      - "$PORT:6831/udp"     # agent 组件端口
+      - "$PORT:6832/udp"
+      - "$PORT:5778"
+      - "$PORT:16686"       # UI 端口
+      - "$PORT:14250"
+      - "$PORT:14268"       # collector 组件端口
+      - "$PORT:14269"
+      - "$PORT:9411"
+    volumes:
+      - "./jaeger/data:/badger"
+
+  apollo-configservice:
+    image: apolloconfig/apollo-configservice:latest
+    networks:
+      github.com/cnartlu/area-service:
+        aliases:
+          - apollo-configservice
+    depends_on:
+      - mysql
+    restart: always
+    environment:
+      SPRING_DATASOURCE_URL: "jdbc:mysql://mysql:3306/ApolloConfigDB?characterEncoding=utf8"
+      SPRING_DATASOURCE_USERNAME: "root"
+      SPRING_DATASOURCE_PASSWORD: "root"
+      EUREKA_INSTANCE_HOME_PAGE_URL: "http://apollo-configservice:8080"
+    ports:
+      - "$PORT:8080"
+
+  apollo-adminservice:
+    image: apolloconfig/apollo-adminservice:latest
+    networks:
+      github.com/cnartlu/area-service:
+        aliases:
+          - apollo-adminservice
+    depends_on:
+      - mysql
+      - apollo-configservice
+    restart: always
+    environment:
+      SPRING_DATASOURCE_URL: "jdbc:mysql://mysql:3306/ApolloConfigDB?characterEncoding=utf8"
+      SPRING_DATASOURCE_USERNAME: "root"
+      SPRING_DATASOURCE_PASSWORD: "root"
+      EUREKA_INSTANCE_HOME_PAGE_URL: "http://apollo-adminservice:8090"
+    ports:
+      - "$PORT:8090"
+
+  apollo-portal:
+    image: apolloconfig/apollo-portal:latest
+    networks:
+      github.com/cnartlu/area-service:
+        aliases:
+          - apollo-portal
+    depends_on:
+      - mysql
+      - apollo-configservice
+      - apollo-adminservice
+    restart: always
+    environment:
+      SPRING_DATASOURCE_URL: "jdbc:mysql://mysql:3306/ApolloPortalDB?characterEncoding=utf8"
+      SPRING_DATASOURCE_USERNAME: "root"
+      SPRING_DATASOURCE_PASSWORD: "root"
+      APOLLO_PORTAL_ENVS: "dev"
+      DEV_META: "http://apollo-configservice:8080"
+    ports:
+      - "$PORT:8070"
+
+  etcd:
+    image: bitnami/etcd:3.5.2
+    networks:
+      github.com/cnartlu/area-service:
+        aliases:
+          - etcd
+    restart: always
+    environment:
+      ALLOW_NONE_AUTHENTICATION: "yes"
+    ports:
+      - "$PORT:2379"
+    volumes:
+      - "./etcd/conf.yml:/opt/bitnami/etcd/conf/etcd.conf.yml"
+
+  app:
+    image: cosmtrek/air
+    networks:
+      github.com/cnartlu/area-service:
+        aliases:
+          - rest
+    ports:
+      - "$PORT:9527"
+    environment:
+      - GOOS=linux
+      - CGO_ENABLED=0
+      - GOPROXY=https://goproxy.cn,direct
+    working_dir: /app
+    command:
+      - "./dockerize"
+      - "-wait"
+      - "tcp://mysql:3306"
+      - "air"
+    volumes:
+      - "../../.:/app"
+    depends_on:
+      - mysql
+      - redis
+    restart: always
+
+networks:
+  github.com/cnartlu/area-service:

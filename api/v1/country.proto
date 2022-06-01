@@ -1,0 +1,72 @@
+syntax = "proto3";
+
+package api.v1;
+
+option go_package = "github.com/cnartlu/area-service/api/v1;v1";
+option java_multiple_files = true;
+option java_package = "api.v1";
+
+import "google/api/annotations.proto";
+// import "google/protobuf/field_mask.proto";
+
+service Country {
+	rpc ListCountry (ListCountryRequest) returns (ListCountryReply) {
+		option (google.api.http) = {
+			get: "/country/list",
+		};
+	};
+	rpc GetCountry (GetCountryRequest) returns (GetCountryReply) {
+		option (google.api.http) = {
+			get: "/country/view",
+			additional_bindings: {
+				get: "/country/uuid/{uuid}",
+			},
+			additional_bindings: {
+				get: "/country/code/{code}",
+			},
+			additional_bindings: {
+				get: "/country/number/{number_code}",
+			},
+		};
+	};
+}
+
+message ListCountryRequest {
+	string kw = 1;
+}
+message ListCountryReply {
+	message Item {
+		string uuid = 1;
+		string title = 2;
+		string founding_time = 3;
+		string two_digit_code = 4;
+		string there_digit_code = 5;
+		uint64 number_code = 6;
+		bool is_sovereignty = 7;
+		string note = 8;
+		uint64 create_time = 9;
+		uint64 update_time = 10;
+	}
+	repeated Item items = 1;
+}
+
+message GetCountryRequest {
+	// 唯一标识
+	string uuid = 1;
+	// 国家代码
+	string code = 2;
+	// 国家数值代码
+	uint32 number_code = 3;
+}
+message GetCountryReply {
+	string uuid = 1;
+	string title = 2;
+	string founding_time = 3;
+	string two_digit_code = 4;
+	string there_digit_code = 5;
+	uint64 number_code = 6;
+	bool is_sovereignty = 7;
+	string note = 8;
+	uint64 create_time = 9;
+	uint64 update_time = 10;
+}

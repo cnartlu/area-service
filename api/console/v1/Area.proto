@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package api.console.v1;
+
+option go_package = "github.com/cnartlu/area-service/api/console/v1;v1";
+option java_multiple_files = true;
+option java_package = "api.console.v1";
+
+service Area {
+	rpc CreateArea (CreateAreaRequest) returns (CreateAreaReply);
+	rpc UpdateArea (UpdateAreaRequest) returns (UpdateAreaReply);
+	rpc DeleteArea (DeleteAreaRequest) returns (DeleteAreaReply);
+	rpc GetArea (GetAreaRequest) returns (GetAreaReply);
+	rpc ListArea (ListAreaRequest) returns (ListAreaReply);
+}
+
+message CreateAreaRequest {}
+message CreateAreaReply {}
+
+message UpdateAreaRequest {}
+message UpdateAreaReply {}
+
+message DeleteAreaRequest {}
+message DeleteAreaReply {}
+
+message GetAreaRequest {}
+message GetAreaReply {}
+
+message ListAreaRequest {}
+message ListAreaReply {}

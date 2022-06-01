@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package api.console.v1;
+
+option go_package = "github.com/cnartlu/area-service/api/console/v1;v1";
+option java_multiple_files = true;
+option java_package = "api.console.v1";
+
+service AreaPolygon {
+	rpc CreateAreaPolygon (CreateAreaPolygonRequest) returns (CreateAreaPolygonReply);
+	rpc UpdateAreaPolygon (UpdateAreaPolygonRequest) returns (UpdateAreaPolygonReply);
+	rpc DeleteAreaPolygon (DeleteAreaPolygonRequest) returns (DeleteAreaPolygonReply);
+	rpc GetAreaPolygon (GetAreaPolygonRequest) returns (GetAreaPolygonReply);
+	rpc ListAreaPolygon (ListAreaPolygonRequest) returns (ListAreaPolygonReply);
+}
+
+message CreateAreaPolygonRequest {}
+message CreateAreaPolygonReply {}
+
+message UpdateAreaPolygonRequest {}
+message UpdateAreaPolygonReply {}
+
+message DeleteAreaPolygonRequest {}
+message DeleteAreaPolygonReply {}
+
+message GetAreaPolygonRequest {}
+message GetAreaPolygonReply {}
+
+message ListAreaPolygonRequest {}
+message ListAreaPolygonReply {}
