@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package pkg.config.redis;
+
+import "google/protobuf/duration.proto";
+
+option go_package = "github.com/cnartlu/area-service/pkg/config/redis;redis";
+option java_multiple_files = true;
+option java_package = "pkg.config.redis";
+
+message Config {
+  string host = 1;
+  int64 port = 2;
+  string username = 3;
+  string password = 4;
+  int64 db = 5;
+  int64 max_retries = 6;
+  int64 min_retry_backoff = 7;
+  int64 max_retry_backoff = 8;
+  google.protobuf.Duration  dial_timeout = 9;
+  google.protobuf.Duration  read_timeout = 10;
+  google.protobuf.Duration write_timeout = 11;
+  int64 pool_size = 12;
+  int64 min_idle_conns = 13;
+  int64 max_conn_age   = 14;
+  google.protobuf.Duration pool_timeout = 15;
+  google.protobuf.Duration idle_timeout = 16;
+  int64 idle_check_frequency = 17;
+}

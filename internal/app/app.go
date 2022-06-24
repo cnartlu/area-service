@@ -3,9 +3,9 @@ package app
 import (
 	"context"
 
-	"github.com/cnartlu/area-service/internal/app/cron"
-	"github.com/cnartlu/area-service/internal/app/transport"
-	"github.com/go-kratos/kratos/v2/log"
+	"github.com/cnartlu/area-service/internal/cron"
+	"github.com/cnartlu/area-service/internal/transport"
+	"github.com/cnartlu/area-service/pkg/log"
 )
 
 //go:generate swag fmt -g app.go
@@ -25,7 +25,7 @@ import (
 // @name                        Token
 
 type App struct {
-	logger    *log.Helper
+	logger    *log.Logger
 	cron      *cron.Cron
 	transport *transport.Transport
 }
@@ -49,7 +49,7 @@ func (a *App) Start(cancel context.CancelFunc) (err error) {
 	// 启动 transport 服务
 	go func() {
 		if err = a.transport.Start(); err != nil {
-			a.logger.Error(err)
+			a.logger.Error(err.Error())
 			cancel()
 			return
 		}
@@ -75,12 +75,12 @@ func (a *App) Stop(ctx context.Context) (err error) {
 
 // New 实例化应用
 func New(
-	logger log.Logger,
+	logger *log.Logger,
 	cron *cron.Cron,
 	transport *transport.Transport,
 ) *App {
 	return &App{
-		logger:    log.NewHelper(logger),
+		logger:    logger,
 		cron:      cron,
 		transport: transport,
 	}

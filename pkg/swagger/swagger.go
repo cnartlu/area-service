@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"strings"
 
-	// _ "github.com/cnartlu/area-service/internal/app/transport/http/api/docs"
+	// _ "github.com/cnartlu/area-service/internal/transport/http/api/docs"
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
