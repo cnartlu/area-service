@@ -10,12 +10,10 @@ import (
 	"github.com/cnartlu/area-service/internal/service"
 	"github.com/cnartlu/area-service/internal/transport"
 	pCompant "github.com/cnartlu/area-service/pkg/component"
-	"github.com/cnartlu/area-service/pkg/log"
 	"github.com/google/wire"
 )
 
 var ProviderSet = wire.NewSet(
-	log.ProviderSet,
 	config.ProviderSet,
 	pCompant.ProviderSet,
 	component.ProviderSet,

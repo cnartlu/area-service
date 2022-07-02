@@ -1,7 +1,6 @@
 package log
 
 import (
-	"github.com/cnartlu/area-service/pkg/config/logger"
 	kconfig "github.com/go-kratos/kratos/v2/config"
 )
 
@@ -13,7 +12,7 @@ func WithConfigure(c kconfig.Config) Option {
 	}
 }
 
-func WithConfig(c *logger.Config) Option {
+func WithConfig(c *Config) Option {
 	return func(o *Logger) {
 		o.config = c
 	}

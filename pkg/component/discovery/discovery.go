@@ -1,8 +1,8 @@
 package discovery
 
 import (
-	"go-scaffold/internal/component/discovery/consul"
-	"go-scaffold/internal/component/discovery/etcd"
+	"github.com/cnartlu/area-service/pkg/component/discovery/consul"
+	"github.com/cnartlu/area-service/pkg/component/discovery/etcd"
 
 	"github.com/go-kratos/kratos/v2/registry"
 	"go.uber.org/zap"

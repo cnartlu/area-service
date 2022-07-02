@@ -5,14 +5,13 @@ import (
 	"fmt"
 	"time"
 
-	predis "github.com/cnartlu/area-service/pkg/config/redis"
-	"github.com/cnartlu/area-service/pkg/log"
+	"github.com/cnartlu/area-service/pkg/component/log"
 	"github.com/go-redis/redis/v8"
 	"go.uber.org/zap"
 )
 
 // New 创建 redis 客户端
-func New(config *predis.Config, logger *log.Logger) (*redis.Client, func(), error) {
+func New(config *Config, logger *log.Logger) (*redis.Client, func(), error) {
 	if config == nil {
 		return nil, func() {}, nil
 	}

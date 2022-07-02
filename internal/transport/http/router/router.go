@@ -13,7 +13,7 @@ import (
 
 	"github.com/cnartlu/area-service/internal/config"
 	"github.com/cnartlu/area-service/middleware/recover"
-	"github.com/cnartlu/area-service/pkg/log"
+	"github.com/cnartlu/area-service/pkg/component/log"
 	"github.com/cnartlu/area-service/pkg/swagger"
 
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"

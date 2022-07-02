@@ -5,7 +5,7 @@ import (
 
 	"github.com/cnartlu/area-service/internal/cron"
 	"github.com/cnartlu/area-service/internal/transport"
-	"github.com/cnartlu/area-service/pkg/log"
+	"github.com/cnartlu/area-service/pkg/component/log"
 )
 
 //go:generate swag fmt -g app.go

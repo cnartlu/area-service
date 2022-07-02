@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+package internal.component.db;
+
+import "google/protobuf/duration.proto";
+// import "google/protobuf/wrappers.proto";
+import "google/protobuf/any.proto";
+
+option go_package = "github.com/cnartlu/area-service/internal/component/db;db";
+option java_multiple_files = true;
+option java_package = "internal.component.db";
+
+// Config 数据库配置
+message Config {
+  // DB 数据库配置
+  message DB {
+    // driver 连接驱动
+    string driver = 1;
+    // source 驱动dsn连接字符集
+    string source = 2;
+    // hostname 服务器地址
+    string hostname = 3;
+    // database 数据库名
+    string database = 4;
+    // username 数据库用户名
+    string username = 5;
+    // password 数据库密码
+    string password = 6;
+    // hostport 数据库连接端口
+    int32 hostport = 7;
+    // params 数据库连接参数
+    map<string, google.protobuf.Any> params = 8;
+    // charset 数据库编码默认采用utf8
+    string charset = 9;
+    // prefix 数据库表前缀
+    string prefix = 10;
+    // timeout 超时时间
+    google.protobuf.Duration timeout = 11;
+  }
+  // default 默认使用的数据库
+  string default = 1;
+  // connections 连接配置项
+  map<string, DB> connections = 2;
+}

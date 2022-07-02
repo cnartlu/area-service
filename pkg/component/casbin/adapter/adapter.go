@@ -1,8 +1,8 @@
 package adapter
 
 import (
-	fileadapter "go-scaffold/internal/component/casbin/adapter/file"
-	gormadapter "go-scaffold/internal/component/casbin/adapter/gorm"
+	fileadapter "github.com/cnartlu/area-service/pkg/component/casbin/adapter/file"
+	gormadapter "github.com/cnartlu/area-service/pkg/component/casbin/adapter/gorm"
 
 	"github.com/casbin/casbin/v2/persist"
 	"gorm.io/gorm"

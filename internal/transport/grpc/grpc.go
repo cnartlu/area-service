@@ -2,7 +2,7 @@ package grpc
 
 import (
 	"github.com/cnartlu/area-service/internal/config"
-	"github.com/cnartlu/area-service/pkg/log"
+	"github.com/cnartlu/area-service/pkg/component/log"
 	"github.com/go-kratos/kratos/v2/middleware/recovery"
 	"github.com/go-kratos/kratos/v2/transport/grpc"
 )

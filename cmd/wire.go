@@ -9,7 +9,7 @@ import (
 	// "github.com/cnartlu/area-service/internal/command"
 	"github.com/cnartlu/area-service/internal/app"
 	"github.com/cnartlu/area-service/internal/config"
-	"github.com/cnartlu/area-service/pkg/log"
+	"github.com/cnartlu/area-service/pkg/component/log"
 	"github.com/google/wire"
 )
 

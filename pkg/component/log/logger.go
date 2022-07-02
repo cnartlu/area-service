@@ -5,7 +5,6 @@ import (
 	"os"
 	"strings"
 
-	pclogger "github.com/cnartlu/area-service/pkg/config/logger"
 	ppath "github.com/cnartlu/area-service/pkg/path"
 	kconfig "github.com/go-kratos/kratos/v2/config"
 	"github.com/go-kratos/kratos/v2/log"
@@ -16,7 +15,7 @@ import (
 
 type Logger struct {
 	configure kconfig.Config
-	config    *pclogger.Config
+	config    *Config
 	log       *zap.Logger
 	// 日志配置器
 	loggers map[string]*zap.Logger
@@ -70,6 +69,10 @@ func (l *Logger) Log(level log.Level, keyvals ...interface{}) error {
 		l.log.Fatal("", data...)
 	}
 	return nil
+}
+
+func (l *Logger) DebugLog(data ...interface{}) {
+	l.Log(log.LevelDebug, data...)
 }
 
 func (l *Logger) Debug(msg string, fields ...zapcore.Field) {
@@ -139,7 +142,7 @@ func New(options ...Option) (*Logger, error) {
 	return &logger, nil
 }
 
-func newLogger(c *pclogger.Logger) *zap.Logger {
+func newLogger(c *Config_Logger) *zap.Logger {
 	var (
 		encoderConfig zapcore.EncoderConfig
 		encoder       zapcore.Encoder

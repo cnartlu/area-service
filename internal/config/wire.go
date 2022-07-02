@@ -3,7 +3,8 @@
 package config
 
 import (
-	"github.com/cnartlu/area-service/pkg/config/logger"
+	"github.com/cnartlu/area-service/internal/component/db"
+	"github.com/cnartlu/area-service/pkg/component/log"
 	"github.com/google/wire"
 )
 
@@ -20,9 +21,10 @@ var ProviderSet = wire.NewSet(
 		"Cache",
 		"Redis",
 	),
+	wire.FieldsOf(new(*Application), "Proxy"),
 	wire.FieldsOf(new(*Server), "HTTP", "GRPC"),
-	wire.FieldsOf(new(*Database), "Connections"),
+	wire.FieldsOf(new(*db.Config), "Connections"),
 	wire.FieldsOf(new(*FileSystem), "Disks"),
 	wire.FieldsOf(new(*Cache), "Stores"),
-	wire.FieldsOf(new(*logger.Config), "Loggers"),
+	wire.FieldsOf(new(*log.Config), "Loggers"),
 )

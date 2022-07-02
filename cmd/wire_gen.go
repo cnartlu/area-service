@@ -8,14 +8,16 @@ package main
 
 import (
 	"github.com/cnartlu/area-service/internal/app"
+	"github.com/cnartlu/area-service/internal/component/db"
 	"github.com/cnartlu/area-service/internal/config"
 	"github.com/cnartlu/area-service/internal/cron"
 	"github.com/cnartlu/area-service/internal/cron/job"
 	"github.com/cnartlu/area-service/internal/transport"
 	"github.com/cnartlu/area-service/internal/transport/grpc"
 	"github.com/cnartlu/area-service/internal/transport/http"
+	"github.com/cnartlu/area-service/pkg/component/log"
+	"github.com/cnartlu/area-service/pkg/component/proxy"
 	"github.com/cnartlu/area-service/pkg/component/redis"
-	"github.com/cnartlu/area-service/pkg/log"
 )
 
 // Injectors from wire.go:
@@ -27,13 +29,22 @@ func initApp(logger *log.Logger, bootstrap *config.Bootstrap) (*app.App, func(),
 	if err != nil {
 		return nil, nil, err
 	}
-	example := job.NewExample(logger)
-	cronCron, err := cron.New(logger, client, example)
+	dbConfig := bootstrap.Database
+	dbDB, cleanup2, err := db.New(logger, dbConfig)
 	if err != nil {
 		cleanup()
 		return nil, nil, err
 	}
 	application := bootstrap.Application
+	proxyConfig := application.Proxy
+	httpClient := proxy.New(proxyConfig)
+	github := job.NewGithub(logger, dbDB, httpClient)
+	cronCron, err := cron.New(logger, client, dbDB, github)
+	if err != nil {
+		cleanup2()
+		cleanup()
+		return nil, nil, err
+	}
 	server := bootstrap.Server
 	server_HTTP := server.Http
 	httpServer := http.NewHTTPServer(logger, server_HTTP)
@@ -42,6 +53,7 @@ func initApp(logger *log.Logger, bootstrap *config.Bootstrap) (*app.App, func(),
 	transportTransport := transport.New(logger, application, httpServer, grpcServer)
 	appApp := app.New(logger, cronCron, transportTransport)
 	return appApp, func() {
+		cleanup2()
 		cleanup()
 	}, nil
 }

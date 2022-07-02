@@ -5,8 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cnartlu/area-service/pkg/config/tracer"
-	"github.com/cnartlu/area-service/pkg/log"
+	"github.com/cnartlu/area-service/pkg/component/log"
 	"go.opentelemetry.io/otel/exporters/jaeger"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
@@ -16,11 +15,11 @@ import (
 )
 
 type Tracer struct {
-	config         tracer.Config
+	config         *Config
 	tracerProvider *sdktrace.TracerProvider
 }
 
-func New(config *tracer.Config, logger *log.Logger) (*Tracer, func(), error) {
+func New(config *Config, logger *log.Logger) (*Tracer, func(), error) {
 	if config == nil {
 		return nil, func() {}, nil
 	}
@@ -67,7 +66,7 @@ func New(config *tracer.Config, logger *log.Logger) (*Tracer, func(), error) {
 	}
 
 	return &Tracer{
-		config:         *config,
+		config:         config,
 		tracerProvider: tp,
 	}, cleanup, nil
 }

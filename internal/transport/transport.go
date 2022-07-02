@@ -5,7 +5,7 @@ import (
 
 	// "github.com/cnartlu/area-service/internal/component/discovery"
 	"github.com/cnartlu/area-service/internal/config"
-	"github.com/cnartlu/area-service/pkg/log"
+	"github.com/cnartlu/area-service/pkg/component/log"
 
 	"github.com/go-kratos/kratos/v2"
 	"github.com/go-kratos/kratos/v2/transport"

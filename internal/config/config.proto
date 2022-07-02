@@ -5,14 +5,17 @@ option go_package = "area-service/internal/config;config";
 
 import "google/protobuf/duration.proto";
 import "google/protobuf/any.proto";
-import "pkg/config/redis/config.proto";
-import "pkg/config/logger/config.proto";
+import "pkg/component/redis/redis.proto";
+import "pkg/component/log/log.proto";
+import "pkg/component/proxy/proxy.proto";
+import "internal/component/db/db.proto";
 
 // Application 应用基础配置
 message Application {
   bool debug = 1;
   string env = 2;
   string name = 3;
+  pkg.component.proxy.Config proxy = 4;
 }
 
 // Server 服务
@@ -29,40 +32,6 @@ message Server {
   }
   HTTP http = 1;
   GRPC grpc = 2;
-}
-
-// Database 数据库配置
-message Database {
-  // DB 数据库配置
-  message DB {
-    // driver 连接驱动
-    string driver = 1;
-    // source 驱动dsn连接字符集
-    string source = 2;
-    // hostname 服务器地址
-    string hostname = 3;
-    // database 数据库名
-    string database = 4;
-    // username 数据库用户名
-    string username = 5;
-    // password 数据库密码
-    string password = 6;
-    // hostport 数据库连接端口
-    string hostport = 7;
-    // params 数据库连接参数
-    map<string, google.protobuf.Any> params = 8;
-    // charset 数据库编码默认采用utf8
-    string charset = 9;
-    // prefix 数据库表前缀
-    string prefix = 10;
-    // timeout 超时时间
-    google.protobuf.Duration timeout = 11;
-  }
-
-  // default 默认使用的数据库
-  string default = 1;
-  // connections 连接配置项
-  map<string, DB> connections = 2;
 }
 
 // FileSystem 文件系统，
@@ -102,11 +71,11 @@ message Cache {
 message Bootstrap {
   Application application = 1;
   Server server = 2;
-  Database database = 3;
+  internal.component.db.Config database = 3;
   FileSystem filesystem = 4;
-  pkg.config.logger.Config logger = 5;
+  pkg.component.log.Config logger = 5;
   Cache cache = 6;
-  pkg.config.redis.Config redis = 7;
+  pkg.component.redis.Config redis = 7;
 }
 
 message Nacos {

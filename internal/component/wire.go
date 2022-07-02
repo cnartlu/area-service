@@ -1,5 +1,10 @@
 package component
 
-import "github.com/google/wire"
+import (
+	"github.com/cnartlu/area-service/internal/component/db"
+	"github.com/google/wire"
+)
 
-var ProviderSet = wire.NewSet()
+var ProviderSet = wire.NewSet(
+	wire.NewSet(db.New),
+)

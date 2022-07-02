@@ -9,8 +9,9 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/cnartlu/area-service/internal/component/ent"
 	appconfig "github.com/cnartlu/area-service/internal/config"
-	"github.com/cnartlu/area-service/pkg/log"
+	"github.com/cnartlu/area-service/pkg/component/log"
 	kconfig "github.com/go-kratos/kratos/v2/config"
 	kconfigFile "github.com/go-kratos/kratos/v2/config/file"
 
@@ -60,6 +61,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	ent.NewClient()
 	// 配置执行方法
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
 		// 初始化

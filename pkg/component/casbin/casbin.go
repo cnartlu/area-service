@@ -1,8 +1,8 @@
 package casbin
 
 import (
-	"go-scaffold/internal/component/casbin/adapter"
-	"go-scaffold/internal/component/casbin/model"
+	"github.com/cnartlu/area-service/pkg/component/casbin/adapter"
+	"github.com/cnartlu/area-service/pkg/component/casbin/model"
 
 	"github.com/casbin/casbin/v2"
 	"gorm.io/gorm"
