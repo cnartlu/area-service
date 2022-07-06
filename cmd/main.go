@@ -49,8 +49,8 @@ func main() {
 		panic(err)
 	}
 	defer config.Close()
-	var bootstrap *appconfig.Bootstrap
-	if err := config.Scan(&bootstrap); err != nil {
+	var bootstrap appconfig.Bootstrap
+	if err := config.Scan(bootstrap); err != nil {
 		panic(err)
 	}
 	// 初始化日志器
@@ -69,7 +69,7 @@ func main() {
 		// 监听退出信号
 		signalCtx, signalStop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 		defer signalStop()
-		appServ, appCleanup, err := initApp(logger, bootstrap)
+		appServ, appCleanup, err := initApp(logger, &bootstrap)
 		if err != nil {
 			return err
 		}

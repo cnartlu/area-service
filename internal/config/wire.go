@@ -10,6 +10,8 @@ import (
 
 // ProviderSet 配置项的功能
 var ProviderSet = wire.NewSet(
+	New,
+	wire.FieldsOf(new(*Config), "Config", "Bootstrap"),
 	// new(*Redis),
 	wire.FieldsOf(
 		new(*Bootstrap),

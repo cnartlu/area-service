@@ -1,3 +1,7 @@
+application:
+  name: kk
+  proxy:
+    url: http://127.0.0.1:7890
 server:
   http:
     addr: 0.0.0.0:8000

@@ -142,6 +142,10 @@ func New(options ...Option) (*Logger, error) {
 	return &logger, nil
 }
 
+func NewDefault() (*Logger, error) {
+	return New()
+}
+
 func newLogger(c *Config_Logger) *zap.Logger {
 	var (
 		encoderConfig zapcore.EncoderConfig

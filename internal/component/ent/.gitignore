@@ -1,5 +1,5 @@
 #
-*
+*.go
 !.gitignore
 !generate.go
-!schema/*
+!schema/*.go
