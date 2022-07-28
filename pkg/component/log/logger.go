@@ -3,11 +3,13 @@ package log
 import (
 	"fmt"
 	"os"
-	"strings"
+	"path/filepath"
 
+	"github.com/cnartlu/area-service/pkg/path"
 	ppath "github.com/cnartlu/area-service/pkg/path"
 	kconfig "github.com/go-kratos/kratos/v2/config"
 	"github.com/go-kratos/kratos/v2/log"
+	"gopkg.in/natefinch/lumberjack.v2"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -72,7 +74,9 @@ func (l *Logger) Log(level log.Level, keyvals ...interface{}) error {
 }
 
 func (l *Logger) DebugLog(data ...interface{}) {
-	l.Log(log.LevelDebug, data...)
+	zap := l.log.WithOptions(zap.AddCallerSkip(1))
+	clone := &Logger{log: zap}
+	clone.Log(log.LevelDebug, data...)
 }
 
 func (l *Logger) Debug(msg string, fields ...zapcore.Field) {
@@ -138,7 +142,14 @@ func New(options ...Option) (*Logger, error) {
 				logger.loggers[name] = zapLogger
 			}
 		}
+		// 默认配置
+		if config.Default != "" {
+			if defaultLogger, ok := logger.loggers[config.Default]; ok {
+				logger.log = defaultLogger
+			}
+		}
 	}
+
 	return &logger, nil
 }
 
@@ -158,9 +169,10 @@ func newLogger(c *Config_Logger) *zap.Logger {
 	encoderConfig = zap.NewProductionEncoderConfig()
 	encoderConfig.EncodeLevel = zapcore.LowercaseLevelEncoder
 	encoderConfig.EncodeTime = zapcore.RFC3339TimeEncoder
+	encoderConfig.EncodeCaller = zapcore.ShortCallerEncoder
 	encoder = zapcore.NewJSONEncoder(encoderConfig)
 	writeSyncer = zapcore.AddSync(os.Stdout)
-	zapOptions = append(zapOptions, zap.AddCaller())
+	zapOptions = append(zapOptions, zap.AddCaller(), zap.AddCallerSkip(1))
 
 	if c != nil {
 		if c.Path != "" {
@@ -169,16 +181,6 @@ func newLogger(c *Config_Logger) *zap.Logger {
 				c.File = "{Y-m-d}.log"
 			}
 			writeSyncer = zapcore.AddSync(os.Stdout)
-		}
-		switch strings.ToLower(strings.TrimSpace(c.Level)) {
-		case "error":
-			zapOptions = append(zapOptions, zap.AddCallerSkip(int(zap.ErrorLevel)))
-		case "warn":
-			zapOptions = append(zapOptions, zap.AddCallerSkip(int(zap.WarnLevel)))
-		case "info":
-			zapOptions = append(zapOptions, zap.AddCallerSkip(int(zap.InfoLevel)))
-		case "debug":
-		default:
 		}
 		if c.Stdout == nil || c.Stdout.GetValue() {
 			writeSyncer = zapcore.AddSync(os.Stdout)
@@ -192,12 +194,28 @@ func newLogger(c *Config_Logger) *zap.Logger {
 			}
 		}
 	}
-	core = zapcore.NewCore(
-		encoder,
-		writeSyncer,
-		zap.DebugLevel,
+
+	_ = os.MkdirAll(filepath.Join(path.RootPath(), "logs"), 0666)
+	core = zapcore.NewTee(
+		zapcore.NewCore(
+			encoder,
+			writeSyncer,
+			zap.DebugLevel,
+		),
+		zapcore.NewCore(
+			encoder,
+			zapcore.AddSync(&lumberjack.Logger{
+				Filename:   filepath.Join(path.RootPath(), "logs", "app.log"),
+				MaxSize:    500, // megabytes
+				MaxBackups: 3,
+				MaxAge:     28,   //days
+				Compress:   true, // disabled by default
+			}),
+			zap.DebugLevel,
+		),
 	)
 
 	core.With(zapFields)
-	return zap.New(core, zapOptions...)
+	zap := zap.New(core, zapOptions...)
+	return zap
 }

@@ -9,6 +9,6 @@ import (
 
 // ProviderSet 命令行注入方法
 var ProviderSet = wire.NewSet(
-	job.NewGithub,
+	job.NewSyncGithub,
 	New,
 )

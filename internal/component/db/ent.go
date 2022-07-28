@@ -2,20 +2,65 @@ package db
 
 import (
 	"context"
+	"fmt"
 	"strconv"
+	"time"
 
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
 	"github.com/cnartlu/area-service/internal/component/ent"
-	"github.com/cnartlu/area-service/internal/component/ent/migrate"
-	"github.com/go-kratos/kratos/v2/log"
+	"github.com/cnartlu/area-service/pkg/component/log"
+	"go.uber.org/zap"
 )
 
-func NewEnt(config *Config_DB, logger log.Logger) (*ent.Client, func(), error) {
+// WithTx 数据库事务
+func WithTx(ctx context.Context, client *ent.Client, fn func(tx *ent.Tx) error) error {
+	tx, err := client.Tx(ctx)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if v := recover(); v != nil {
+			tx.Rollback()
+			panic(v)
+		}
+	}()
+	if err := fn(tx); err != nil {
+		if rerr := tx.Rollback(); rerr != nil {
+			err = fmt.Errorf("rolling back transaction: %w", rerr)
+		}
+		return err
+	}
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("committing transaction: %w", err)
+	}
+	return nil
+}
+
+// NewEnt 实例化数据库客户端
+func NewEnt(config *Config_DB, logger *log.Logger) (*ent.Client, func(), error) {
+	switch config.Driver {
+	case dialect.SQLite:
+		config.Driver = dialect.SQLite
+	case dialect.MySQL:
+		config.Driver = dialect.MySQL
+	case dialect.Gremlin:
+		config.Driver = dialect.Gremlin
+	case dialect.Postgres:
+		config.Driver = dialect.Postgres
+	default:
+		config.Driver = dialect.MySQL
+	}
 	driver, err := sql.Open(config.Driver, buildSource(config))
 	if err != nil {
 		return nil, nil, err
 	}
+	// 默认配置
+	driver.DB().SetMaxOpenConns(100)
+	driver.DB().SetMaxIdleConns(10)
+	// 连接的最大生命周期
+	driver.DB().SetConnMaxLifetime(0)
+	driver.DB().SetConnMaxIdleTime(time.Second * 60 * 60)
 
 	// if config.MaxIdleConn > 0 {
 	// 	driver.DB().SetMaxIdleConns(config.MaxIdleConn)
@@ -30,30 +75,35 @@ func NewEnt(config *Config_DB, logger log.Logger) (*ent.Client, func(), error) {
 	// 	driver.DB().SetConnMaxLifetime(time.Duration(config.ConnMaxLifeTime) * time.Second)
 	// }
 
-	hLogger := log.NewHelper(logger)
 	cleanup := func() {
-		hLogger.Info("closing the ent resources")
+		logger.Info("closing the ent resources")
 
 		err = driver.Close()
 		if err != nil {
-			hLogger.Error(err)
+			logger.Error("close db resources failed", zap.Error(err))
 		}
+	}
+
+	if err := driver.DB().Ping(); err != nil {
+		defer cleanup()
+		return nil, nil, err
 	}
 
 	client := ent.NewClient(
 		ent.Driver(driver),
 		ent.Log(func(i ...interface{}) {
-			hLogger.Debug(i)
+			logger.DebugLog(i)
 		}),
 	)
 
-	if err := client.Schema.Create(
-		context.Background(),
-		migrate.WithForeignKeys(false),
-	); err != nil {
-		hLogger.Errorf("failed to creat schema resources: %v", err)
-		return nil, nil, err
-	}
+	// err = client.Schema.Create(
+	// 	context.Background(),
+	// 	migrate.WithForeignKeys(false),
+	// )
+	// if err != nil {
+	// 	hLogger.Errorf("failed to creat schema resources: %v", err)
+	// 	return nil, nil, err
+	// }
 
 	return client, cleanup, nil
 }

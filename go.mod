@@ -1,9 +1,9 @@
 module github.com/cnartlu/area-service
 
-go 1.17
+go 1.18
 
 require (
-	entgo.io/ent v0.10.2-0.20220704055051-91b643091fba
+	entgo.io/ent v0.11.1
 	github.com/bwmarrin/snowflake v0.3.0
 	github.com/casbin/casbin/v2 v2.47.2
 	github.com/casbin/gorm-adapter/v3 v3.7.2
@@ -13,7 +13,7 @@ require (
 	github.com/gin-gonic/gin v1.8.0
 	github.com/go-kratos/consul v0.1.5
 	github.com/go-kratos/kratos/contrib/registry/etcd/v2 v2.0.0-20220607143821-123fc1e6c81a
-	github.com/go-kratos/kratos/v2 v2.3.1
+	github.com/go-kratos/kratos/v2 v2.4.0
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/golang/mock v1.6.0
 	github.com/google/go-github/v45 v45.2.0
@@ -40,10 +40,11 @@ require (
 )
 
 require (
-	ariga.io/atlas v0.4.3-0.20220618160942-1080fa97c763 // indirect
+	ariga.io/atlas v0.5.0 // indirect
 	github.com/agext/levenshtein v1.2.1 // indirect
 	github.com/apparentlymart/go-textseg/v13 v13.0.0 // indirect
 	github.com/go-openapi/inflect v0.19.0 // indirect
+	github.com/golang/geo v0.0.0-20210211234256-740aa86cb551 // indirect
 	github.com/google/btree v1.1.2 // indirect
 	github.com/google/go-cmp v0.5.8 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
@@ -51,8 +52,11 @@ require (
 	github.com/jonboulle/clockwork v0.3.0 // indirect
 	github.com/lestrrat-go/strftime v1.0.6 // indirect
 	github.com/mitchellh/go-wordwrap v0.0.0-20150314170334-ad45545899c7 // indirect
+	github.com/mmcloughlin/geohash v0.10.0 // indirect
+	github.com/mozillazg/go-pinyin v0.19.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/zclconf/go-cty v1.8.0 // indirect
+	gopkg.in/natefinch/lumberjack.v2 v2.0.0 // indirect
 )
 
 require (
@@ -88,7 +92,7 @@ require (
 	github.com/golang-sql/civil v0.0.0-20220223132316-b832511892a9 // indirect
 	github.com/golang-sql/sqlexp v0.0.0-20170517235910-f1bb20e5a188 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
-	github.com/google/subcommands v1.0.1 // indirect
+	github.com/google/subcommands v1.2.0 // indirect
 	github.com/gorilla/mux v1.8.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-hclog v1.2.1 // indirect
@@ -133,7 +137,7 @@ require (
 	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4 // indirect
 	golang.org/x/net v0.0.0-20220517181318-183a9ca12b87 // indirect
 	golang.org/x/sync v0.0.0-20220513210516-0976fa681c29 // indirect
-	golang.org/x/sys v0.0.0-20220503163025-988cb79eb6c6 // indirect
+	golang.org/x/sys v0.0.0-20220722155257-8c9f86f7a55f // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/tools v0.1.12-0.20220624134725-2994e99415f5 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect

@@ -7,10 +7,16 @@ import (
 	"strings"
 )
 
+// rootPath 应用程序的根目录
+var rootPath string = ""
+
 // RootPath 获取此项目的绝对路径
 // 如果是以 go build 生成的二进制文件运行，则返回 bin 目录的上级目录的绝对路径
 // 如果是以 go run 运行，则返回在此项目的绝对路径
 func RootPath() string {
+	if rootPath != "" {
+		return rootPath
+	}
 	var binDir string
 
 	exePath, err := os.Executable()
@@ -27,6 +33,8 @@ func RootPath() string {
 			binDir = filepath.Dir(filepath.Dir(filepath.Dir(filename)))
 		}
 	}
+
+	rootPath = binDir
 
 	return binDir
 }

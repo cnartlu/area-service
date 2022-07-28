@@ -7,6 +7,7 @@ import (
 
 	"github.com/cnartlu/area-service/internal/component/db"
 	"github.com/cnartlu/area-service/internal/cron/job"
+
 	"github.com/go-redis/redis/v8"
 	"github.com/robfig/cron/v3"
 )
@@ -17,7 +18,7 @@ type Cron struct {
 	db     *db.DB
 	server *cron.Cron
 
-	githubJob *job.Github
+	syncGithub *job.SyncGithub
 }
 
 // Start cron 服务启动
@@ -54,7 +55,7 @@ func New(
 	rdb *redis.Client,
 	db *db.DB,
 	// .... 此处开始注入job
-	githubJob *job.Github,
+	sg *job.SyncGithub,
 ) (*Cron, error) {
 	server := cron.New(
 		cron.WithSeconds(),
@@ -65,10 +66,10 @@ func New(
 	)
 
 	return &Cron{
-		logger:    logger,
-		rdb:       rdb,
-		db:        db,
-		server:    server,
-		githubJob: githubJob,
+		logger: logger,
+		rdb:    rdb,
+		db:     db,
+		server: server,
+		syncGithub: sg,
 	}, nil
 }
