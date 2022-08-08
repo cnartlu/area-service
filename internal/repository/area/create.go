@@ -8,6 +8,11 @@ import (
 	"github.com/cnartlu/area-service/internal/component/ent/area"
 )
 
+type Creator interface {
+	// Create 创建数据
+	Create(ctx context.Context, area *ent.Area) (*ent.Area, error)
+}
+
 // Create 创建数据
 func (r *Repository) Create(ctx context.Context, data *ent.Area) (*ent.Area, error) {
 	data = FormatEntArea(data)

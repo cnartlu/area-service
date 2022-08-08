@@ -15,6 +15,9 @@ func New(config *Config, logger *log.Logger) (*redis.Client, func(), error) {
 	if config == nil {
 		return nil, func() {}, nil
 	}
+	if config.Port < 1 {
+		config.Port = 6379
+	}
 	option := &redis.Options{
 		Addr: fmt.Sprintf("%s:%d", config.Host, config.Port),
 	}
@@ -69,7 +72,7 @@ func New(config *Config, logger *log.Logger) (*redis.Client, func(), error) {
 	ctx := context.Background()
 
 	if _, err := client.Ping(ctx).Result(); err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("redis ping connection error: %w", err)
 	}
 
 	cleanup := func() {

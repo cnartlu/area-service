@@ -9,11 +9,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/cnartlu/area-service/internal/component/ent"
-	appconfig "github.com/cnartlu/area-service/internal/config"
+	"github.com/cnartlu/area-service/internal/config"
 	"github.com/cnartlu/area-service/pkg/component/log"
-	kconfig "github.com/go-kratos/kratos/v2/config"
-	kconfigFile "github.com/go-kratos/kratos/v2/config/file"
+	"go.uber.org/zap"
 
 	"github.com/spf13/cobra"
 )
@@ -35,33 +33,25 @@ var (
 
 func main() {
 	var (
-		// configPaths 配置文件路径
-		configPaths []string
+		// configfile 配置文件路径
+		configfile string
 	)
-	cmd.Flags().StringSliceVarP(&configPaths, "config", "c", []string{"config.yaml"}, "config paths")
-	// 初始化配置器
-	var options []kconfig.Option
-	for _, path := range configPaths {
-		options = append(options, kconfig.WithSource(kconfigFile.NewSource(path)))
+	cmd.Flags().StringVarP(&configfile, "config", "c", "config.yaml", "config paths")
+	conf, err := config.New(configfile)
+	if err != nil {
+		log.Error("load config error", zap.Error(err))
+		return
 	}
-	config := kconfig.New(options...)
-	if err := config.Load(); err != nil {
-		panic(err)
-	}
-	defer config.Close()
-	var bootstrap appconfig.Bootstrap
-	if err := config.Scan(bootstrap); err != nil {
-		panic(err)
-	}
+	defer conf.Close()
 	// 初始化日志器
 	logger, err := log.New(
-		log.WithConfigure(config),
-		log.WithConfig(bootstrap.GetLogger()),
+		log.WithConfigure(conf.Config),
+		log.WithConfig(conf.Bootstrap.GetLogger()),
 	)
 	if err != nil {
-		panic(err)
+		log.Error("init logger error", zap.Error(err))
+		return
 	}
-	ent.NewClient()
 	// 配置执行方法
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
 		// 初始化
@@ -69,14 +59,14 @@ func main() {
 		// 监听退出信号
 		signalCtx, signalStop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 		defer signalStop()
-		appServ, appCleanup, err := initApp(logger, &bootstrap)
+		appServ, appCleanup, err := initApp(logger, conf)
 		if err != nil {
 			return err
 		}
 		defer appCleanup()
 		// 调用 app 启动钩子
 		if err := appServ.Start(signalStop); err != nil {
-			panic(err)
+			return err
 		}
 		// 等待退出信号
 		<-signalCtx.Done()
@@ -84,7 +74,6 @@ func main() {
 
 		logger.Info("the app is shutting down ...")
 
-		// time.Duration(bootstrap.Application.Timeout)
 		ctx, cancel := context.WithTimeout(
 			context.Background(),
 			30*time.Second,
@@ -93,7 +82,7 @@ func main() {
 
 		// 关闭应用
 		if err := appServ.Stop(ctx); err != nil {
-			panic(err)
+			return err
 		}
 		return nil
 	}
@@ -103,7 +92,8 @@ func main() {
 	// })
 
 	if err := cmd.Execute(); err != nil {
-		panic(err)
+		logger.Error("execute app error", zap.Error(err))
+		return
 	}
 }
 
@@ -115,8 +105,4 @@ func getExecutableName() string {
 	}
 	filenameWithSuffix := filepath.Base(binPath)
 	return strings.TrimSuffix(filenameWithSuffix, "."+filepath.Ext(binPath))
-}
-
-func NewConfig() {
-
 }

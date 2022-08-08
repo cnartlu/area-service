@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/cnartlu/area-service/internal/config"
+	"github.com/cnartlu/area-service/internal/transport/http/handler/v1/area"
 	"github.com/cnartlu/area-service/middleware/recover"
 	"github.com/cnartlu/area-service/pkg/component/log"
 	"github.com/cnartlu/area-service/pkg/swagger"
@@ -27,16 +28,18 @@ import (
 
 // New 返回 gin 路由对象
 func New(
-	loggerWriter *rotatelogs.RotateLogs,
-	logger log.Logger,
+	// loggerWriter *rotatelogs.RotateLogs,
+	logger *log.Logger,
 	appConf *config.Application,
 	httpConf *config.Server_HTTP,
+	areaHandler *area.Handler,
 ) *gin.Engine {
 	if httpConf == nil {
 		return nil
 	}
 
 	var output io.Writer
+	var loggerWriter *rotatelogs.RotateLogs
 	if loggerWriter == nil {
 		output = os.Stdout
 	} else {
@@ -69,34 +72,15 @@ func New(
 		rg = router.Group("/" + extAddrSubs[1])
 	}
 
-	rg.GET("/ping", func(ctx *gin.Context) { ctx.String(http.StatusOK, "pong"); return })
+	rg.GET("/ping", func(ctx *gin.Context) {
+		ctx.String(http.StatusOK, "pong")
+		return
+	})
 	// 注册 api 路由组
 	apiGroup := rg.Group("/api")
 	{
-		apiGroup.Use(cors.Default()) // 允许跨越
-		// if jwtConf != nil {
-		// 	if jwtConf.Key != "" {
-		// 		apiGroup.Use(jwtmd.New(
-		// 			jwtConf.Key,
-		// 			jwtmd.WithLogger(log.NewHelper(logger)),
-		// 			jwtmd.WithErrorResponseBody(response.NewBody(int(errors.ServerErrorCode), errors.ServerErrorCode.String(), nil)),
-		// 			jwtmd.WithValidateFailedResponseBody(response.NewBody(int(errors.UnauthorizedCode), errors.UnauthorizedCode.String(), nil)),
-		// 		).Validate())
-		// 	}
-		// }
-		// if enforcer != nil {
-		// 	apiGroup.Use(casbinmd.New(
-		// 		enforcer,
-		// 		func(ctx *gin.Context) ([]interface{}, error) {
-		// 			// TODO
-		// 			return nil, nil
-		// 		},
-		// 		casbinmd.WithLogger(log.NewHelper(logger)),
-		// 		casbinmd.WithErrorResponseBody(response.NewBody(int(errors.ServerErrorCode), errors.ServerErrorCode.String(), nil)),
-		// 		casbinmd.WithValidateFailedResponseBody(response.NewBody(int(errors.UnauthorizedCode), errors.UnauthorizedCode.String(), nil)),
-		// 	).Validate())
-		// }
-
+		// 允许跨越
+		apiGroup.Use(cors.Default())
 		// swagger 配置
 		if appConf.Env == "local" {
 			docs.SwaggerInfo.Host = httpConf.Addr
@@ -113,10 +97,10 @@ func New(
 			})
 		}
 
-		// apiV1Group := apiGroup.Group("/v1")
-		// {
-		// 	// TODO 编写路由
-		// }
+		apiV1Group := apiGroup.Group("/v1")
+		{
+			apiV1Group.GET("sync/release", areaHandler.Import)
+		}
 	}
 
 	return router

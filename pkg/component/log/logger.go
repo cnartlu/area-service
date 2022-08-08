@@ -5,8 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/cnartlu/area-service/pkg/path"
-	ppath "github.com/cnartlu/area-service/pkg/path"
+	"github.com/cnartlu/area-service/pkg/utils"
 	kconfig "github.com/go-kratos/kratos/v2/config"
 	"github.com/go-kratos/kratos/v2/log"
 	"gopkg.in/natefinch/lumberjack.v2"
@@ -14,6 +13,8 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
+
+var logger, _ = NewDefault()
 
 type Logger struct {
 	configure kconfig.Config
@@ -79,30 +80,51 @@ func (l *Logger) DebugLog(data ...interface{}) {
 	clone.Log(log.LevelDebug, data...)
 }
 
+func Debug(msg string, fields ...zapcore.Field) {
+	logger.Debug(msg, fields...)
+}
 func (l *Logger) Debug(msg string, fields ...zapcore.Field) {
 	l.log.Debug(msg, fields...)
 }
 
+func Info(msg string, fields ...zapcore.Field) {
+	logger.Info(msg, fields...)
+}
 func (l *Logger) Info(msg string, fields ...zapcore.Field) {
 	l.log.Info(msg, fields...)
 }
 
+func Warn(msg string, fields ...zapcore.Field) {
+	logger.Warn(msg, fields...)
+}
 func (l *Logger) Warn(msg string, fields ...zapcore.Field) {
 	l.log.Warn(msg, fields...)
 }
 
+func Error(msg string, fields ...zapcore.Field) {
+	logger.Error(msg, fields...)
+}
 func (l *Logger) Error(msg string, fields ...zapcore.Field) {
 	l.log.Error(msg, fields...)
 }
 
+func DPanic(msg string, fields ...zapcore.Field) {
+	logger.DPanic(msg, fields...)
+}
 func (l *Logger) DPanic(msg string, fields ...zapcore.Field) {
 	l.log.DPanic(msg, fields...)
 }
 
+func Panic(msg string, fields ...zapcore.Field) {
+	logger.Panic(msg, fields...)
+}
 func (l *Logger) Panic(msg string, fields ...zapcore.Field) {
 	l.log.Panic(msg, fields...)
 }
 
+func Fatal(msg string, fields ...zapcore.Field) {
+	logger.Fatal(msg, fields...)
+}
 func (l *Logger) Fatal(msg string, fields ...zapcore.Field) {
 	l.log.Fatal(msg, fields...)
 }
@@ -126,8 +148,8 @@ func New(options ...Option) (*Logger, error) {
 		option(&logger)
 	}
 	// 初始化配置
+	// 监听配置文件的修改
 	if logger.configure != nil {
-		// 监听配置文件的修改
 		logger.configure.Watch("logger", func(key string, v kconfig.Value) {
 
 		})
@@ -176,7 +198,7 @@ func newLogger(c *Config_Logger) *zap.Logger {
 
 	if c != nil {
 		if c.Path != "" {
-			c.Path = ppath.RootPath()
+			c.Path = utils.RootPath()
 			if c.File == "" {
 				c.File = "{Y-m-d}.log"
 			}
@@ -195,7 +217,7 @@ func newLogger(c *Config_Logger) *zap.Logger {
 		}
 	}
 
-	_ = os.MkdirAll(filepath.Join(path.RootPath(), "logs"), 0666)
+	_ = os.MkdirAll(filepath.Join(utils.RootPath(), "logs"), 0666)
 	core = zapcore.NewTee(
 		zapcore.NewCore(
 			encoder,
@@ -205,7 +227,7 @@ func newLogger(c *Config_Logger) *zap.Logger {
 		zapcore.NewCore(
 			encoder,
 			zapcore.AddSync(&lumberjack.Logger{
-				Filename:   filepath.Join(path.RootPath(), "logs", "app.log"),
+				Filename:   filepath.Join(utils.RootPath(), "logs", "app.log"),
 				MaxSize:    500, // megabytes
 				MaxBackups: 3,
 				MaxAge:     28,   //days

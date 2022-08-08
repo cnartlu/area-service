@@ -38,7 +38,10 @@ func WithTx(ctx context.Context, client *ent.Client, fn func(tx *ent.Tx) error) 
 }
 
 // NewEnt 实例化数据库客户端
-func NewEnt(config *Config_DB, logger *log.Logger) (*ent.Client, func(), error) {
+func NewEnt(config *Config, logger *log.Logger) (*ent.Client, func(), error) {
+	if config == nil {
+		return nil, func() {}, nil
+	}
 	switch config.Driver {
 	case dialect.SQLite:
 		config.Driver = dialect.SQLite
@@ -53,6 +56,7 @@ func NewEnt(config *Config_DB, logger *log.Logger) (*ent.Client, func(), error) 
 	}
 	driver, err := sql.Open(config.Driver, buildSource(config))
 	if err != nil {
+		logger.Error("", zap.Error(err))
 		return nil, nil, err
 	}
 	// 默认配置
@@ -86,6 +90,7 @@ func NewEnt(config *Config_DB, logger *log.Logger) (*ent.Client, func(), error) 
 
 	if err := driver.DB().Ping(); err != nil {
 		defer cleanup()
+		logger.Error("", zap.Error(err))
 		return nil, nil, err
 	}
 
@@ -108,7 +113,7 @@ func NewEnt(config *Config_DB, logger *log.Logger) (*ent.Client, func(), error) 
 	return client, cleanup, nil
 }
 
-func buildSource(c *Config_DB) string {
+func buildSource(c *Config) string {
 	var (
 		options string
 		dsn     = ""

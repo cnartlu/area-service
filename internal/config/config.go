@@ -1,9 +1,9 @@
 package config
 
 import (
-	"fmt"
+	"os"
+	"path/filepath"
 
-	"github.com/cnartlu/area-service/pkg/path"
 	kconfig "github.com/go-kratos/kratos/v2/config"
 	kconfigFile "github.com/go-kratos/kratos/v2/config/file"
 )
@@ -13,30 +13,54 @@ type Config struct {
 	Bootstrap *Bootstrap
 }
 
-func New() (*Config, func(), error) {
-	rootPath := path.RootPath()
-	var configPaths = []string{"config.yaml", rootPath + "/config.yaml", rootPath + "/etc/config.yaml"}
+func (c *Config) Close() error {
+	return c.Config.Close()
+}
+
+func New(filename string) (*Config, error) {
+	// 初始化配置器
 	var options []kconfig.Option
-	for _, path := range configPaths {
-		options = append(options, kconfig.WithSource(kconfigFile.NewSource(path)))
+	if filename == "" {
+		filename = "config.yaml"
 	}
+	var (
+		sources   []kconfig.Source
+		filenames []string = []string{filename}
+	)
+	filenames = append(
+		filenames,
+		filepath.Join("config", filename),
+		filepath.Join("..", "config", filename),
+		filepath.Join("etc", filename),
+	)
+	for _, filename := range filenames {
+		_, err := os.Stat(filename)
+		if err == nil {
+			sources = append(sources, kconfigFile.NewSource(filename))
+			break
+		}
+	}
+	options = append(options, kconfig.WithSource(sources...))
 	config := kconfig.New(options...)
 	if err := config.Load(); err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	cleanup := func() {
-		config.Close()
-	}
-	var v interface{}
-	config.Scan(&v)
-	fmt.Println(v)
 	var bootstrap Bootstrap
 	if err := config.Scan(&bootstrap); err != nil {
-		return nil, cleanup, err
+		defer config.Close()
+		return nil, err
 	}
-	c := &Config{
+	// 初始化默认配置数据
+	if bootstrap.GetApplication() == nil {
+		bootstrap.Application = &Application{
+			Name:  "",
+			Debug: false,
+			Env:   "Prod",
+			Proxy: "",
+		}
+	}
+	return &Config{
 		Config:    config,
 		Bootstrap: &bootstrap,
-	}
-	return c, cleanup, nil
+	}, nil
 }

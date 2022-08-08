@@ -14,7 +14,7 @@ import (
 )
 
 // initApp 初始化应用
-func initApp(*log.Logger, *config.Bootstrap) (*app.App, func(), error) {
+func initApp(*log.Logger, *config.Config) (*app.App, func(), error) {
 	panic(
 		wire.Build(
 			app.ProviderSet,

@@ -7,7 +7,11 @@ import (
 	"github.com/cnartlu/area-service/internal/component/ent/area"
 )
 
-type WhereInterface interface {
+type Querier interface {
+	// FindList 列表查询
+	FindList(ctx context.Context, param FindListParam, columns []string, order string) ([]*ent.Area, error)
+	// FindOneById 根据 id 查询详情
+	FindOneById(ctx context.Context, id uint64, columns []string) (*ent.Area, error)
 }
 
 type FindListParam struct {

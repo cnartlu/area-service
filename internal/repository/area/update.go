@@ -12,6 +12,22 @@ import (
 	"github.com/cnartlu/area-service/pkg/utils"
 )
 
+type Updater interface {
+	// Update 更新数据
+	Update(ctx context.Context, old *ent.Area, new *ent.Area) (*ent.Area, error)
+	UpdateOneByID(ctx context.Context, id uint64, data *ent.Area) (*ent.Area, error)
+}
+
+// Update 更新用户数据
+func (r *Repository) Update(ctx context.Context, old *ent.Area, new *ent.Area) (*ent.Area, error) {
+	return update(ctx, r.ent, r.ent.Area.UpdateOne(old), new)
+}
+
+// UpdateOneID 通过ID，更新数据
+func (r *Repository) UpdateOneByID(ctx context.Context, id uint64, data *ent.Area) (*ent.Area, error) {
+	return update(ctx, r.ent, r.ent.Area.UpdateOneID(id), data)
+}
+
 // update 更新区域
 func update(ctx context.Context, client *ent.Client, update *ent.AreaUpdateOne, data *ent.Area) (model *ent.Area, err error) {
 	var (
@@ -115,14 +131,4 @@ func update(ctx context.Context, client *ent.Client, update *ent.AreaUpdateOne, 
 		return nil, err
 	}
 	return model, err
-}
-
-// Update 更新用户数据
-func (r *Repository) Update(ctx context.Context, old *ent.Area, new *ent.Area) (*ent.Area, error) {
-	return update(ctx, r.ent, r.ent.Area.UpdateOne(old), new)
-}
-
-// UpdateOneID 通过ID，更新数据
-func (r *Repository) UpdateOneID(ctx context.Context, id uint64, data *ent.Area) (*ent.Area, error) {
-	return update(ctx, r.ent, r.ent.Area.UpdateOneID(id), data)
 }

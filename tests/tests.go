@@ -12,19 +12,16 @@ func init() {
 }
 
 type Tests struct {
-	Logger  *log.Logger
-	Config  *config.Config
-	CronJob *CronJob
+	Logger *log.Logger
+	Config *config.Config
 }
 
 func New(
 	logger *log.Logger,
 	config *config.Config,
-	cronJob *CronJob,
 ) *Tests {
 	return &Tests{
-		Logger:  logger,
-		Config:  config,
-		CronJob: cronJob,
+		Logger: logger,
+		Config: config,
 	}
 }

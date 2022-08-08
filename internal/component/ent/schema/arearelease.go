@@ -7,7 +7,13 @@ import (
 	"entgo.io/ent/schema"
 	"entgo.io/ent/schema/field"
 	"github.com/cnartlu/area-service/pkg/ent/fields/mixin"
+
 	"github.com/cnartlu/area-service/pkg/ent/validates"
+)
+
+const (
+	Status1 = 0
+	Status2 = 1
 )
 
 // AreaRelease holds the schema definition for the AreaRelease entity.
@@ -38,7 +44,12 @@ func (AreaRelease) Fields() []ent.Field {
 			Charset:   "utf8mb4",
 			Collation: "utf8mb4_general_ci",
 		}),
-		field.Uint8("status").Default(0).Comment("状态"),
+		field.Enum("status").
+			NamedValues(
+				"WaitLoaded", "0",
+				"FinishLoaded", "1",
+			).Default("0").
+			Comment("状态"),
 	}
 }
 

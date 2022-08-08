@@ -1,7 +1,6 @@
 application:
   name: kk
-  proxy:
-    url: http://127.0.0.1:7890
+  proxy: http://127.0.0.1:7890
 server:
   http:
     addr: 0.0.0.0:8000
@@ -10,12 +9,10 @@ server:
     addr: 0.0.0.0:9000
     timeout: 1s
 database:
-  default: db
-  connections:
-    db:
-      driver: mysql
-      source: root:xingyun@tcp(127.0.0.1:3306)/ad_area_service  
+  driver: mysql
+  source: root:xingyun@tcp(127.0.0.1:3306)/ad_area_service  
 redis:
-  addr: 127.0.0.1:6379
+  host:
+  port: 6379
   read_timeout: 0.2s
   write_timeout: 0.2s

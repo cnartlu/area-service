@@ -3,12 +3,12 @@
 package cron
 
 import (
-	"github.com/cnartlu/area-service/internal/cron/job"
+	"github.com/cnartlu/area-service/internal/cron/jobs"
 	"github.com/google/wire"
 )
 
 // ProviderSet 命令行注入方法
 var ProviderSet = wire.NewSet(
-	job.NewSyncGithub,
+	jobs.NewSyncArea,
 	New,
 )

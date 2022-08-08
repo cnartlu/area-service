@@ -3,6 +3,7 @@ package http
 import (
 	"github.com/cnartlu/area-service/internal/config"
 	"github.com/cnartlu/area-service/pkg/component/log"
+	"github.com/gin-gonic/gin"
 	"github.com/go-kratos/kratos/v2/middleware/recovery"
 	"github.com/go-kratos/kratos/v2/transport/http"
 )
@@ -11,6 +12,7 @@ import (
 func NewHTTPServer(
 	logger *log.Logger,
 	c *config.Server_HTTP,
+	router *gin.Engine,
 ) *http.Server {
 	var opts = []http.ServerOption{
 		http.Middleware(
@@ -30,6 +32,7 @@ func NewHTTPServer(
 		opts = append(opts, http.Timeout(c.Timeout.AsDuration()))
 	}
 	srv := http.NewServer(opts...)
+	srv.HandlePrefix("/", router)
 
 	return srv
 }

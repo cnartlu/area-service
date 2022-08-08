@@ -1,7 +1,6 @@
 package area
 
 import (
-	"context"
 	"fmt"
 	"strings"
 
@@ -21,26 +20,18 @@ var (
 )
 
 type RepositoryInterface interface {
-	// FindList 列表查询
-	FindList(ctx context.Context, param FindListParam, columns []string, order string) ([]*ent.Area, error)
-
-	// FindOneById 根据 id 查询详情
-	FindOneById(ctx context.Context, id uint64, columns []string) (*ent.Area, error)
-
-	// Create 创建数据
-	Create(ctx context.Context, area *ent.Area) (*ent.Area, error)
-
-	// Save 保存数据
-	Save(ctx context.Context, area *ent.Area) (*ent.Area, error)
-
-	// Delete 删除数据
-	Delete(ctx context.Context, area *ent.Area) error
+	Querier
+	Creator
+	Updater
+	Deleter
 }
 
 type Repository struct {
 	ent *ent.Client
 	rdb *redis.Client
 }
+
+var _ RepositoryInterface = (*Repository)(nil)
 
 // NewRepository 实例化存储数据
 func NewRepository(ent *ent.Client, rdb *redis.Client) *Repository {

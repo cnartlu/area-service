@@ -18,7 +18,6 @@ var providerSet = wire.NewSet(
 	pCompant.ProviderSet,
 	component.ProviderSet,
 	cron.ProviderSet,
-	NewCronJob,
 )
 
 func Init() (*Tests, func(), error) {

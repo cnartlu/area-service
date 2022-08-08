@@ -5,8 +5,8 @@ import (
 
 	"github.com/cnartlu/area-service/pkg/component/log"
 
-	"github.com/cnartlu/area-service/internal/component/db"
-	"github.com/cnartlu/area-service/internal/cron/job"
+	"github.com/cnartlu/area-service/internal/component/ent"
+	"github.com/cnartlu/area-service/internal/cron/jobs"
 
 	"github.com/go-redis/redis/v8"
 	"github.com/robfig/cron/v3"
@@ -15,22 +15,25 @@ import (
 type Cron struct {
 	logger *log.Logger
 	rdb    *redis.Client
-	db     *db.DB
+	db     *ent.Client
 	server *cron.Cron
 
-	syncGithub *job.SyncGithub
+	syncArea *jobs.SyncArea
 }
 
 // Start cron 服务启动
 func (c *Cron) Start() (err error) {
 	// TODO 编写 cron 任务
-	// if _, err = c.server.AddFunc("*/5 * * * * *", func() {}); err != nil { // 每 5 秒钟运行一次
+	// 每 5 秒钟运行一次
+	// if _, err = c.server.AddFunc("*/5 * * * * *", func() {}); err != nil {
 	// 	return err
 	// }
-	// if _, err = c.server.AddJob("@daily", c.exampleJob); err != nil { // 每天 00:00 运行一次
-	// 	return err
-	// }
-	// if _, err = c.server.AddJob("@every 1h30m10s", c.exampleJob); err != nil { // 每 1 小时 30 分 10 秒运行一次
+	// 每天 00:00 运行一次
+	if _, err = c.server.AddJob("@daily", c.syncArea); err != nil {
+		return err
+	}
+	// 每 1 小时 30 分 10 秒运行一次
+	// if _, err = c.server.AddJob("@every 12h00m00s", c.exampleJob); err != nil {
 	// 	return err
 	// }
 
@@ -53,9 +56,9 @@ func (c *Cron) Stop(ctx context.Context) (err error) {
 func New(
 	logger *log.Logger,
 	rdb *redis.Client,
-	db *db.DB,
+	db *ent.Client,
 	// .... 此处开始注入job
-	sg *job.SyncGithub,
+	sa *jobs.SyncArea,
 ) (*Cron, error) {
 	server := cron.New(
 		cron.WithSeconds(),
@@ -66,10 +69,10 @@ func New(
 	)
 
 	return &Cron{
-		logger: logger,
-		rdb:    rdb,
-		db:     db,
-		server: server,
-		syncGithub: sg,
+		logger:   logger,
+		rdb:      rdb,
+		db:       db,
+		server:   server,
+		syncArea: sa,
 	}, nil
 }

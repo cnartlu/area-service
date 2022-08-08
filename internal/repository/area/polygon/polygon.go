@@ -1,4 +1,4 @@
-package area_release
+package polygon
 
 import (
 	"github.com/cnartlu/area-service/internal/component/ent"
@@ -10,11 +10,12 @@ type RepositoryInterface interface {
 
 type Repository struct {
 	ent *ent.Client
-	rdb *redis.Client
+	rds *redis.Client
 }
 
-// func (r *Repository) FindLast
-
-func NewRepository(ent *ent.Client, rdb *redis.Client) *Repository {
-	return &Repository{ent, rdb}
+func NewRepository(ent *ent.Client, rds *redis.Client) *Repository {
+	return &Repository{
+		ent: ent,
+		rds: rds,
+	}
 }

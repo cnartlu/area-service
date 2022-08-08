@@ -6,5 +6,5 @@ import (
 )
 
 var ProviderSet = wire.NewSet(
-	wire.NewSet(db.New),
+	db.NewEnt,
 )
