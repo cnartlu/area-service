@@ -7,6 +7,9 @@ package main
 
 import (
 	"github.com/cnartlu/area-service/internal/app"
+	"github.com/cnartlu/area-service/internal/command"
+	"github.com/cnartlu/area-service/internal/command/handler/greet"
+	"github.com/cnartlu/area-service/internal/command/script"
 	"github.com/cnartlu/area-service/internal/component/db"
 	"github.com/cnartlu/area-service/internal/config"
 	"github.com/cnartlu/area-service/internal/cron"
@@ -66,5 +69,14 @@ func initApp(logger *log.Logger, configConfig *config.Config) (*app.App, func(),
 	return appApp, func() {
 		cleanup2()
 		cleanup()
+	}, nil
+}
+
+// initCommand 初始化命令行
+func initCommand(logger *log.Logger, configConfig *config.Config) (*command.Command, func(), error) {
+	handler := greet.NewHandler(logger)
+	s0000000000 := script.NewS0000000000(logger)
+	commandCommand := command.New(handler, s0000000000)
+	return commandCommand, func() {
 	}, nil
 }

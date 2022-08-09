@@ -10,7 +10,13 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"github.com/cnartlu/area-service/internal/component/ent"
 	"github.com/cnartlu/area-service/pkg/component/log"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
+
+	// 通过MySQL驱动使用Opencensus​
+	_ "github.com/go-sql-driver/mysql"
+	// 使用pgx驱动PostgreSQL​
+	_ "github.com/jackc/pgx/v4/stdlib"
 )
 
 // WithTx 数据库事务
@@ -56,8 +62,7 @@ func NewEnt(config *Config, logger *log.Logger) (*ent.Client, func(), error) {
 	}
 	driver, err := sql.Open(config.Driver, buildSource(config))
 	if err != nil {
-		logger.Error("", zap.Error(err))
-		return nil, nil, err
+		return nil, nil, errors.Wrap(err, "ent open fail")
 	}
 	// 默认配置
 	driver.DB().SetMaxOpenConns(100)

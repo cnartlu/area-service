@@ -9,6 +9,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/cnartlu/area-service/internal/command"
 	"github.com/cnartlu/area-service/internal/config"
 	"github.com/cnartlu/area-service/pkg/component/log"
 	"go.uber.org/zap"
@@ -55,7 +56,7 @@ func main() {
 	// 配置执行方法
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
 		// 初始化
-		logger.Info("starting app ...")
+		logger.Info("starting app ...", zap.Strings("args", args))
 		// 监听退出信号
 		signalCtx, signalStop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 		defer signalStop()
@@ -87,9 +88,9 @@ func main() {
 		return nil
 	}
 
-	// command.Setup(cmd, func() (*command.Command, func(), error) {
-	// 	return initCommand(loggerWriter, logger, zLogger, configModel)
-	// })
+	command.Setup(cmd, func() (*command.Command, func(), error) {
+		return initCommand(logger, conf)
+	})
 
 	if err := cmd.Execute(); err != nil {
 		logger.Error("execute app error", zap.Error(err))

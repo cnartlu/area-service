@@ -1,29 +1,23 @@
 //go:build wireinject
 // +build wireinject
 
-package tests
+// The build tag makes sure the stub is not built in the final build.
+
+package command
 
 import (
+	"github.com/cnartlu/area-service/internal/command/handler"
+	"github.com/cnartlu/area-service/internal/command/script"
 	"github.com/cnartlu/area-service/internal/component"
 	"github.com/cnartlu/area-service/internal/config"
-	"github.com/cnartlu/area-service/internal/cron"
 	pCompant "github.com/cnartlu/area-service/pkg/component"
-	"github.com/cnartlu/area-service/pkg/component/log"
 	"github.com/google/wire"
 )
 
-var providerSet = wire.NewSet(
-	NewConfig,
-	log.NewDefault,
+var ProviderSet = wire.NewSet(
 	config.ProviderSet,
 	pCompant.ProviderSet,
 	component.ProviderSet,
-	cron.ProviderSet,
+	script.ProviderSet,
+	handler.ProviderSet,
 )
-
-func Init() (*Tests, func(), error) {
-	panic(wire.Build(
-		providerSet,
-		New,
-	))
-}

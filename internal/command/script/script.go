@@ -1,11 +1,8 @@
 package script
 
 import (
-	"github.com/google/wire"
 	"github.com/spf13/cobra"
 )
-
-var ProviderSet = wire.NewSet(NewS0000000000)
 
 // Script 脚本接口
 // 所有脚本都应该实现此接口

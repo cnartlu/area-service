@@ -21,16 +21,17 @@ func Init() (*Tests, func(), error) {
 	if err != nil {
 		return nil, nil, err
 	}
-	configConfig, cleanup, err := config.New()
+	config, err := NewConfig()
 	if err != nil {
 		return nil, nil, err
 	}
-	tests := New(logger, configConfig)
+	tests := New(logger, config)
 	return tests, func() {
-		cleanup()
 	}, nil
 }
 
 // wire.go:
 
-var providerSet = wire.NewSet(log.NewDefault, config.ProviderSet, component.ProviderSet, component2.ProviderSet, cron.ProviderSet)
+var providerSet = wire.NewSet(
+	NewConfig, log.NewDefault, config.ProviderSet, component.ProviderSet, component2.ProviderSet, cron.ProviderSet,
+)

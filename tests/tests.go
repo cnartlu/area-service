@@ -11,6 +11,10 @@ func init() {
 	testing.Init()
 }
 
+func NewConfig() (*config.Config, error) {
+	return config.New("")
+}
+
 type Tests struct {
 	Logger *log.Logger
 	Config *config.Config

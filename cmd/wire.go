@@ -6,8 +6,8 @@
 package main
 
 import (
-	// "github.com/cnartlu/area-service/internal/command"
 	"github.com/cnartlu/area-service/internal/app"
+	"github.com/cnartlu/area-service/internal/command"
 	"github.com/cnartlu/area-service/internal/config"
 	"github.com/cnartlu/area-service/pkg/component/log"
 	"github.com/google/wire"
@@ -24,6 +24,9 @@ func initApp(*log.Logger, *config.Config) (*app.App, func(), error) {
 }
 
 // initCommand 初始化命令行
-// func initCommand() (*command.Command, func(), error) {
-// 	return nil, nil, nil
-// }
+func initCommand(*log.Logger, *config.Config) (*command.Command, func(), error) {
+	panic(wire.Build(
+		command.ProviderSet,
+		command.New,
+	))
+}
