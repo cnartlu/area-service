@@ -25,7 +25,7 @@ type Cron struct {
 func (c *Cron) Start() (err error) {
 	// TODO 编写 cron 任务
 	// 每 5 秒钟运行一次
-	// if _, err = c.server.AddFunc("*/5 * * * * *", func() {}); err != nil {
+	// if _, err = c.server.AddJob("*/5 * * * * *", c.syncArea); err != nil {
 	// 	return err
 	// }
 	// 每天 00:00 运行一次

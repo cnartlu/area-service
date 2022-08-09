@@ -48,7 +48,7 @@ func (AreaReleaseAsset) Fields() []ent.Field {
 // Edges of the AreaReleaseAsset.
 func (AreaReleaseAsset) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.To("areaRelease", AreaRelease.Type).Required().StorageKey(edge.Column("id"), edge.Symbol("area_release_id")),
+		edge.From("release", AreaRelease.Type).Ref("assets").Unique(),
 	}
 }
 

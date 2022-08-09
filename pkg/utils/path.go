@@ -24,7 +24,7 @@ func IsDir(path string) bool {
 }
 
 // RootPath 获取此项目的绝对路径
-// 如果是以 go build 生成的二进制文件运行，则返回 bin 目录的上级目录的绝对路径
+// 如果是以 go build 生成的二进制文件运行，则返回 二进制文件的目录路径
 // 如果是以 go run 运行，则返回在此项目的绝对路径
 func RootPath() string {
 	if rootPath != "" {
@@ -37,7 +37,7 @@ func RootPath() string {
 		panic(err)
 	}
 
-	binDir = filepath.Dir(filepath.Dir(exePath))
+	binDir = filepath.Dir(exePath)
 
 	tmpDir := os.TempDir()
 	if strings.Contains(exePath, tmpDir) {
@@ -64,19 +64,9 @@ func RuntimePath() string {
 // RelativePath 返回相对路径
 func RelativePath(path string) string {
 	rp := RootPath()
-	if rp == path {
-		return "./"
-	}
-	rpl := len(rp)
-	pl := len(path)
-	if rpl < pl {
-		return path
-	} else if pl > rpl {
-		pp := path[0:rpl]
-		if pp != rp {
-			return path
-		}
-		return path[rpl:]
+	if strings.HasPrefix(path, rp) {
+		rpl := len(rp)
+		return path[rpl+1:]
 	}
 	return path
 }

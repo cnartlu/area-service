@@ -8,12 +8,12 @@ import (
 )
 
 type Querier interface {
+	FindListByReleaseID(ctx context.Context, areaReleaseID uint64) ([]*ent.AreaReleaseAsset, error)
 }
 
-type FindListParam struct {
+func (s *Service) FindListByReleaseID(ctx context.Context, areaReleaseID uint64) ([]*ent.AreaReleaseAsset, error) {
+	var params = asset.FindListParam{
+		AreaReleaseID: areaReleaseID,
+	}
+	return s.repo.FindList(ctx, params, []string{})
 }
-
-func (s *Service) FindList(ctx context.Context, params FindListParam) ([]*ent.AreaReleaseAsset, error) {
-	return s.repo.FindList(ctx, asset.FindListParam{}, []string{})
-}
- 

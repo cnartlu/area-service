@@ -12,10 +12,14 @@ import (
 	"github.com/cnartlu/area-service/internal/cron"
 	"github.com/cnartlu/area-service/internal/cron/jobs"
 	"github.com/cnartlu/area-service/internal/repository/area/release"
+	"github.com/cnartlu/area-service/internal/repository/area/release/asset"
+	"github.com/cnartlu/area-service/internal/service/area"
+	release2 "github.com/cnartlu/area-service/internal/service/area/release"
+	asset2 "github.com/cnartlu/area-service/internal/service/area/release/asset"
 	"github.com/cnartlu/area-service/internal/transport"
 	"github.com/cnartlu/area-service/internal/transport/grpc"
 	"github.com/cnartlu/area-service/internal/transport/http"
-	"github.com/cnartlu/area-service/internal/transport/http/handler/v1/area"
+	area2 "github.com/cnartlu/area-service/internal/transport/http/handler/v1/area"
 	"github.com/cnartlu/area-service/internal/transport/http/router"
 	"github.com/cnartlu/area-service/pkg/component/log"
 	"github.com/cnartlu/area-service/pkg/component/redis"
@@ -38,17 +42,21 @@ func initApp(logger *log.Logger, configConfig *config.Config) (*app.App, func(),
 		return nil, nil, err
 	}
 	repository := release.NewRepository(entClient, client)
-	syncArea := jobs.NewSyncArea(repository)
+	assetRepository := asset.NewRepository(entClient, client)
+	service := release2.NewService(logger, repository, assetRepository)
+	application := bootstrap.Application
+	assetService := asset2.NewService(logger, application, assetRepository)
+	syncArea := jobs.NewSyncArea(logger, service, assetService)
 	cronCron, err := cron.New(logger, client, entClient, syncArea)
 	if err != nil {
 		cleanup2()
 		cleanup()
 		return nil, nil, err
 	}
-	application := bootstrap.Application
 	server := bootstrap.Server
 	server_HTTP := server.Http
-	handler := area.NewHandler()
+	areaService := area.NewService(logger)
+	handler := area2.NewHandler(areaService)
 	engine := router.New(logger, application, server_HTTP, handler)
 	httpServer := http.NewHTTPServer(logger, server_HTTP, engine)
 	server_GRPC := server.Grpc

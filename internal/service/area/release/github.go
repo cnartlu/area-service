@@ -10,6 +10,7 @@ import (
 	"github.com/cnartlu/area-service/internal/component/ent/areareleaseasset"
 	"github.com/cnartlu/area-service/pkg/utils"
 	"github.com/google/go-github/v45/github"
+	"github.com/pkg/errors"
 )
 
 const (
@@ -19,19 +20,19 @@ const (
 )
 
 type GithubInterface interface {
-	LoadLatestRelease(ctx context.Context) error
+	LoadLatestRelease(ctx context.Context) (*ent.AreaRelease, error)
 }
 
-func (s *Service) LoadLatestRelease(ctx context.Context) error {
+func (s *Service) LoadLatestRelease(ctx context.Context) (*ent.AreaRelease, error) {
 	client := github.NewClient(nil)
 	rep, _, err := client.Repositories.GetLatestRelease(ctx, defaultOwner, defaultRepo)
 	if err != nil {
-		return err
+		return nil, errors.Wrap(err, "failed to getLatestRelease by github client")
 	}
 	areaRelease, err := s.releaseRepo.FindByReleaseID(ctx, uint64(rep.GetID()))
 	if err != nil {
 		if !ent.IsNotFound(err) {
-			return err
+			return nil, errors.Wrap(err, "failed to FindByReleaseID by release repository")
 		}
 		areaRelease, err = s.releaseRepo.Create(ctx, &ent.AreaRelease{
 			Owner:              defaultOwner,
@@ -44,7 +45,7 @@ func (s *Service) LoadLatestRelease(ctx context.Context) error {
 			Status:             arearelease.StatusWaitLoaded,
 		})
 		if err != nil {
-			return err
+			return nil, errors.Wrap(err, "failed to create area.release repository")
 		}
 	}
 	// 只是存在ID
@@ -53,7 +54,7 @@ func (s *Service) LoadLatestRelease(ctx context.Context) error {
 			_, err := s.assetRepo.FindOneByAssetID(ctx, uint64(asset.GetID()))
 			if err != nil {
 				if !ent.IsNotFound(err) {
-					return err
+					return nil, errors.Wrap(err, "failed to FindOneByAssetID by area.release.asset repository")
 				}
 				downloadUrl := asset.GetBrowserDownloadURL()
 				uri, _ := url.Parse(downloadUrl)
@@ -69,11 +70,11 @@ func (s *Service) LoadLatestRelease(ctx context.Context) error {
 					Status:        areareleaseasset.StatusWaitLoaded,
 				})
 				if err != nil {
-					return err
+					return nil, errors.Wrap(err, "failed to create area.release.asset repository")
 				}
 			}
 		}
 	}
 
-	return nil
+	return areaRelease, nil
 }

@@ -6,13 +6,14 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
 )
 
 // IsFile 是否是文件路径
 func IsFile(path string) bool {
 	f, err := os.Stat(path)
 	if err != nil {
-		return os.IsExist(err)
+		return false
 	}
 	return !f.IsDir()
 }
@@ -35,6 +36,13 @@ func (h *HttpClient) Download(ctx context.Context, downloadUrl, filename string)
 		return err
 	}
 	defer resp.Body.Close()
+	filePath := filepath.Dir(filename)
+	if !IsDir(filePath) {
+		err = os.MkdirAll(filePath, 0664)
+		if err != nil {
+			return err
+		}
+	}
 	out, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
 		return err
@@ -46,6 +54,15 @@ func (h *HttpClient) Download(ctx context.Context, downloadUrl, filename string)
 		return err
 	}
 	return nil
+}
+
+func NewHttpClient(c *http.Client) *HttpClient {
+	if c == nil {
+		c = http.DefaultClient
+	}
+	return &HttpClient{
+		client: c,
+	}
 }
 
 func Download(ctx context.Context, url, filename string) error {

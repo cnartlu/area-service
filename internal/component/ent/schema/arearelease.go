@@ -5,6 +5,7 @@ import (
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema"
+	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"github.com/cnartlu/area-service/pkg/ent/fields/mixin"
 
@@ -55,7 +56,9 @@ func (AreaRelease) Fields() []ent.Field {
 
 // Edges of the AreaRelease.
 func (AreaRelease) Edges() []ent.Edge {
-	return nil
+	return []ent.Edge{
+		edge.To("assets", AreaReleaseAsset.Type).StorageKey(edge.Symbol("area_release_id")),
+	}
 }
 
 // Indexes of the schema.
