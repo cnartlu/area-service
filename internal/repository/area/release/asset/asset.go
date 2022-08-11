@@ -5,7 +5,7 @@ import (
 	"github.com/go-redis/redis/v8"
 )
 
-type RepositoryInterface interface {
+type RepositoryManager interface {
 	Querier
 	Creator
 	Updater
@@ -16,6 +16,8 @@ type Repository struct {
 	ent *ent.Client
 	rdb *redis.Client
 }
+
+var _ RepositoryManager = (*Repository)(nil)
 
 func NewRepository(ent *ent.Client, rdb *redis.Client) *Repository {
 	return &Repository{ent, rdb}

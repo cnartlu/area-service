@@ -8,40 +8,30 @@ import (
 	"github.com/cnartlu/area-service/internal/component/ent/areareleaseasset"
 )
 
-type FindListParam struct {
-	AreaReleaseID uint64
-	Kw            string
-	Status        string
-	Offset        *int
-	Limit         int
-}
-
 type Querier interface {
 	// FindList 查找列表
-	FindList(ctx context.Context, params FindListParam, columns []string) ([]*ent.AreaReleaseAsset, error)
+	FindList(ctx context.Context, params *FindListParam) ([]*ent.AreaReleaseAsset, error)
 	FindOneByID(ctx context.Context, id uint64) (*ent.AreaReleaseAsset, error)
 	FindOneByAssetID(ctx context.Context, assetID uint64) (*ent.AreaReleaseAsset, error)
 }
 
-func (r *Repository) FindList(ctx context.Context, params FindListParam, columns []string) ([]*ent.AreaReleaseAsset, error) {
+var _ Querier = (*Repository)(nil)
+
+func (r *Repository) FindList(ctx context.Context, params *FindListParam) ([]*ent.AreaReleaseAsset, error) {
 	query := r.ent.AreaReleaseAsset.Query()
-	if params.AreaReleaseID > 0 {
-		query.Where(areareleaseasset.AreaReleaseIDEQ(params.AreaReleaseID))
-	}
-	if params.Status != "" {
-		query.Where(areareleaseasset.StatusEQ(areareleaseasset.Status(params.Status)))
-	}
-	if params.Kw == "" {
-		query.Where(areareleaseasset.AssetNameContains(params.Kw))
-	}
-	if params.Offset != nil {
-		query.Offset(*params.Offset)
-		if params.Limit > 0 {
-			query.Limit(params.Limit)
+	if params != nil {
+		if params.AreaReleaseID > 0 {
+			query.Where(areareleaseasset.AreaReleaseIDEQ(params.AreaReleaseID))
 		}
-	}
-	if len(columns) > 0 {
-		query.Select(columns...)
+		if params.Status != "" {
+			query.Where(areareleaseasset.StatusEQ(areareleaseasset.Status(params.Status)))
+		}
+		if params.Keyword == "" {
+			query.Where(areareleaseasset.AssetNameContains(params.Keyword))
+		}
+		if params.Pagination {
+			query.Offset(params.Offset).Limit(params.Limit)
+		}
 	}
 	return query.All(ctx)
 }

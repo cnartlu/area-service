@@ -9,9 +9,9 @@ import (
 
 var ProviderSet = wire.NewSet(
 	asset.NewRepository,
-	wire.Bind(new(asset.RepositoryInterface), new(*asset.Repository)),
+	wire.Bind(new(asset.RepositoryManager), new(*asset.Repository)),
 	release.NewRepository,
-	wire.Bind(new(release.RepositoryInterface), new(*release.Repository)),
+	wire.Bind(new(release.RepositoryManager), new(*release.Repository)),
 	area.NewRepository,
-	wire.Bind(new(area.RepositoryInterface), new(*area.Repository)),
+	wire.Bind(new(area.RepositoryManager), new(*area.Repository)),
 )

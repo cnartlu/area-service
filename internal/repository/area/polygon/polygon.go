@@ -5,8 +5,10 @@ import (
 	"github.com/go-redis/redis/v8"
 )
 
-type RepositoryInterface interface {
+type RepositoryManager interface {
 }
+
+var _ RepositoryManager = (*RepositoryManager)(nil)
 
 type Repository struct {
 	ent *ent.Client

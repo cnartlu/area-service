@@ -6,7 +6,7 @@ import (
 )
 
 type Handler struct {
-	areaService area.ServiceInterface
+	areaService area.Servicer
 }
 
 func (h *Handler) Import(c *gin.Context) {
@@ -14,7 +14,7 @@ func (h *Handler) Import(c *gin.Context) {
 }
 
 // NewHandler 请求
-func NewHandler(areaService area.ServiceInterface) *Handler {
+func NewHandler(areaService area.Servicer) *Handler {
 	return &Handler{
 		areaService: areaService,
 	}

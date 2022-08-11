@@ -5,13 +5,13 @@ import (
 	"github.com/go-redis/redis/v8"
 )
 
-type RepositoryInterface interface {
+type RepositoryManager interface {
 	Querier
 	Creator
 	Updater
 }
 
-var _ RepositoryInterface = (*Repository)(nil)
+var _ RepositoryManager = (*Repository)(nil)
 
 type Repository struct {
 	ent *ent.Client

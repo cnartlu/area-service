@@ -68,3 +68,7 @@ func NewHttpClient(c *http.Client) *HttpClient {
 func Download(ctx context.Context, url, filename string) error {
 	return httpClient.Download(ctx, url, filename)
 }
+
+func SetHttpClient(client *HttpClient) {
+	httpClient = client
+}

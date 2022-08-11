@@ -7,10 +7,11 @@ package tests
 
 import (
 	component2 "github.com/cnartlu/area-service/internal/component"
+	"github.com/cnartlu/area-service/internal/component/db"
 	"github.com/cnartlu/area-service/internal/config"
-	"github.com/cnartlu/area-service/internal/cron"
 	"github.com/cnartlu/area-service/pkg/component"
 	"github.com/cnartlu/area-service/pkg/component/log"
+	"github.com/cnartlu/area-service/pkg/component/redis"
 	"github.com/google/wire"
 )
 
@@ -25,13 +26,27 @@ func Init() (*Tests, func(), error) {
 	if err != nil {
 		return nil, nil, err
 	}
-	tests := New(logger, config)
+	bootstrap := config.Bootstrap
+	dbConfig := bootstrap.Database
+	client, cleanup, err := db.NewEnt(dbConfig, logger)
+	if err != nil {
+		return nil, nil, err
+	}
+	redisConfig := bootstrap.Redis
+	redisClient, cleanup2, err := redis.New(redisConfig, logger)
+	if err != nil {
+		cleanup()
+		return nil, nil, err
+	}
+	tests := New(logger, config, client, redisClient)
 	return tests, func() {
+		cleanup2()
+		cleanup()
 	}, nil
 }
 
 // wire.go:
 
 var providerSet = wire.NewSet(
-	NewConfig, log.NewDefault, config.ProviderSet, component.ProviderSet, component2.ProviderSet, cron.ProviderSet,
+	NewConfig, log.NewDefault, config.ProviderSet, component.ProviderSet, component2.ProviderSet,
 )

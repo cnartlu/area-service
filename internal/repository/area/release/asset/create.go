@@ -11,6 +11,8 @@ type Creator interface {
 	Create(ctx context.Context, data *ent.AreaReleaseAsset) (*ent.AreaReleaseAsset, error)
 }
 
+var _ Creator = (*Repository)(nil)
+
 // Create 创建记录
 func (r *Repository) Create(ctx context.Context, data *ent.AreaReleaseAsset) (*ent.AreaReleaseAsset, error) {
 	return r.ent.AreaReleaseAsset.Create().

@@ -13,6 +13,8 @@ type Updater interface {
 	UpdateOrCreate(ctx context.Context, model *ent.AreaReleaseAsset) (*ent.AreaReleaseAsset, error)
 }
 
+var _ Updater = (*Repository)(nil)
+
 // Update 创建记录
 func (r *Repository) Update(ctx context.Context, model *ent.AreaReleaseAsset) (*ent.AreaReleaseAsset, error) {
 	return model.Update().Save(ctx)

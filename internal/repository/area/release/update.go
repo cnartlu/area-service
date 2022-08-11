@@ -11,11 +11,13 @@ type Updater interface {
 	Update(ctx context.Context, data *ent.AreaRelease) (*ent.AreaRelease, error)
 }
 
+var _ Updater = (*Repository)(nil)
+
 // Update 创建记录
 func (r *Repository) Update(ctx context.Context, data *ent.AreaRelease) (*ent.AreaRelease, error) {
 	return data.Update().
 		SetOwner(data.Owner).
-		SetRepo(data.Repo).
+		SetRepo(data.Repository).
 		SetReleaseID(data.ReleaseID).
 		SetReleaseName(data.ReleaseName).
 		SetReleaseNodeID(data.ReleaseNodeID).

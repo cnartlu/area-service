@@ -18,7 +18,7 @@ import (
 	"github.com/cnartlu/area-service/internal/repository/area/release/asset"
 	"github.com/cnartlu/area-service/internal/service/area"
 	release2 "github.com/cnartlu/area-service/internal/service/area/release"
-	asset2 "github.com/cnartlu/area-service/internal/service/area/release/asset"
+	"github.com/cnartlu/area-service/internal/service/area/release/asset/importer"
 	"github.com/cnartlu/area-service/internal/transport"
 	"github.com/cnartlu/area-service/internal/transport/grpc"
 	"github.com/cnartlu/area-service/internal/transport/http"
@@ -46,10 +46,10 @@ func initApp(logger *log.Logger, configConfig *config.Config) (*app.App, func(),
 	}
 	repository := release.NewRepository(entClient, client)
 	assetRepository := asset.NewRepository(entClient, client)
-	service := release2.NewService(logger, repository, assetRepository)
 	application := bootstrap.Application
-	assetService := asset2.NewService(logger, application, assetRepository)
-	syncArea := jobs.NewSyncArea(logger, service, assetService)
+	service := importer.NewService(logger, application)
+	releaseService := release2.NewService(logger, repository, assetRepository, service)
+	syncArea := jobs.NewSyncArea(logger, releaseService)
 	cronCron, err := cron.New(logger, client, entClient, syncArea)
 	if err != nil {
 		cleanup2()

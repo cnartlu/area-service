@@ -36,7 +36,7 @@ func (s *Service) LoadLatestRelease(ctx context.Context) (*ent.AreaRelease, erro
 		}
 		areaRelease, err = s.releaseRepo.Create(ctx, &ent.AreaRelease{
 			Owner:              defaultOwner,
-			Repo:               defaultRepo,
+			Repository:         defaultRepo,
 			ReleaseID:          uint64(rep.GetID()),
 			ReleaseName:        rep.GetName(),
 			ReleaseNodeID:      rep.GetNodeID(),

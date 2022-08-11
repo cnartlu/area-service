@@ -12,8 +12,8 @@ type Querier interface {
 }
 
 func (s *Service) FindListByReleaseID(ctx context.Context, areaReleaseID uint64) ([]*ent.AreaReleaseAsset, error) {
-	var params = asset.FindListParam{
+	var params = &asset.FindListParam{
 		AreaReleaseID: areaReleaseID,
 	}
-	return s.repo.FindList(ctx, params, []string{})
+	return s.repo.FindList(ctx, params)
 }

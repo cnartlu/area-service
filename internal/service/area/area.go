@@ -2,7 +2,7 @@ package area
 
 import "github.com/cnartlu/area-service/pkg/component/log"
 
-type ServiceInterface interface {
+type Servicer interface {
 	Importer
 }
 

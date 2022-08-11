@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/cnartlu/area-service/pkg/utils"
 	kconfig "github.com/go-kratos/kratos/v2/config"
 	kconfigFile "github.com/go-kratos/kratos/v2/config/file"
 )
@@ -32,6 +33,8 @@ func New(filename string) (*Config, error) {
 		filepath.Join("config", filename),
 		filepath.Join("..", "config", filename),
 		filepath.Join("etc", filename),
+		filepath.Join(utils.RootPath(), "etc", filename),
+		filepath.Join(utils.RootPath(), "../etc", filename),
 	)
 	for _, filename := range filenames {
 		_, err := os.Stat(filename)

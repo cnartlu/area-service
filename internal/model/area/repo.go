@@ -1,5 +1,4 @@
 package area
 
-type Repo struct {
-
+type Repository struct {
 }

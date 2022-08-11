@@ -11,11 +11,13 @@ type Creator interface {
 	Create(ctx context.Context, data *ent.AreaRelease) (*ent.AreaRelease, error)
 }
 
+var _ Creator = (*Repository)(nil)
+
 // Create 创建记录
 func (r *Repository) Create(ctx context.Context, data *ent.AreaRelease) (*ent.AreaRelease, error) {
 	return r.ent.AreaRelease.Create().
 		SetOwner(data.Owner).
-		SetRepo(data.Repo).
+		SetRepo(data.Repository).
 		SetReleaseID(data.ReleaseID).
 		SetReleaseName(data.ReleaseName).
 		SetReleaseNodeID(data.ReleaseNodeID).

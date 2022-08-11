@@ -9,32 +9,44 @@ import (
 
 type Querier interface {
 	// FindList 查找列表
-	FindList(ctx context.Context, params FindListParam, columns []string) ([]*ent.AreaRelease, error)
+	FindList(ctx context.Context, params *FindListParam) ([]*ent.AreaRelease, error)
 	FindByReleaseID(ctx context.Context, releaseID uint64) (*ent.AreaRelease, error)
+	FindOneWithLastRecord(ctx context.Context) (*ent.AreaRelease, error)
 }
 
-type FindListParam struct {
-	Kw       string
-	ParentID uint64
-	// 偏移
-	Offset *int64
-	// 限量
-	Limit int64
-}
+var _ Querier = (*Repository)(nil)
 
-func (r *Repository) FindList(ctx context.Context, params FindListParam, columns []string) ([]*ent.AreaRelease, error) {
-	// query := r.ent.AreaRelease.Query()
-
-	if params.Kw == "" {
-		// query.Where(arearelease.T)
+// FindList 查找数据列表
+func (r *Repository) FindList(ctx context.Context, params *FindListParam) ([]*ent.AreaRelease, error) {
+	query := r.ent.AreaRelease.Query()
+	if params != nil {
+		if params.Keyword != "" {
+			query.Where(arearelease.ReleaseNameContains(params.Keyword))
+		}
+		if params.Owner != "" {
+			query.Where(arearelease.OwnerContains(params.Owner))
+		}
+		if params.Repository != "" {
+			query.Where(arearelease.RepoContains(params.Repository))
+		}
+		if params.Pagination {
+			query.Offset(params.Offset).Limit(params.Limit)
+		}
 	}
-	return nil, nil
+	return query.All(ctx)
 }
 
 // FindByReleaseID 通过releaseID查找记录
 func (r *Repository) FindByReleaseID(ctx context.Context, releaseID uint64) (*ent.AreaRelease, error) {
 	return r.ent.AreaRelease.Query().
 		Where(arearelease.ReleaseIDEQ(releaseID)).
+		Order(ent.Desc(arearelease.FieldID)).
+		First(ctx)
+}
+
+// FindOneWithLastRecord 查找最后一条记录
+func (r *Repository) FindOneWithLastRecord(ctx context.Context) (*ent.AreaRelease, error) {
+	return r.ent.AreaRelease.Query().
 		Order(ent.Desc(arearelease.FieldID)).
 		First(ctx)
 }

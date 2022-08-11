@@ -9,33 +9,25 @@ import (
 
 type Querier interface {
 	// FindList 列表查询
-	FindList(ctx context.Context, param FindListParam, columns []string, order string) ([]*ent.Area, error)
+	FindList(ctx context.Context, params *FindListParam) ([]*ent.Area, error)
 	// FindOneById 根据 id 查询详情
 	FindOneById(ctx context.Context, id uint64, columns []string) (*ent.Area, error)
 }
 
-type FindListParam struct {
-	Kw       string
-	ParentID uint64
-}
-
 // FindList 列表查询
-func (r *Repository) FindList(ctx context.Context, param FindListParam, columns []string, order string) ([]*ent.Area, error) {
+func (r *Repository) FindList(ctx context.Context, params *FindListParam) ([]*ent.Area, error) {
 	client := r.ent
 	query := client.Area.Query().
-		Where(area.ParentIDEQ(param.ParentID), area.DeleteTimeEQ(0))
-	if param.Kw != "" {
-		query.Where(area.TitleContains(param.Kw))
+		Where(area.DeleteTimeEQ(0))
+	if params == nil {
+		query.Where(area.ParentIDEQ(0))
+	} else {
+		query.Where(area.ParentIDEQ(params.ParentID))
+		if params.Keyword != "" {
+			query.Where(area.TitleContains(params.Keyword))
+		}
 	}
-	if len(columns) > 0 {
-		query.Select(columns...)
-	}
-	switch order {
-	case area.FieldPinyin:
-		query.Order(ent.Desc(area.FieldPinyin))
-	default:
-		query.Order(ent.Desc(area.FieldID))
-	}
+	query.Order(ent.Desc(area.FieldID))
 	return query.All(ctx)
 }
 

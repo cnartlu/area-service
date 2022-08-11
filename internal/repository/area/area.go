@@ -19,7 +19,7 @@ var (
 	ErrorParentIDSubordinateRecord = fmt.Errorf("the changed %s cannot be its subordinate record", area.FieldParentID)
 )
 
-type RepositoryInterface interface {
+type RepositoryManager interface {
 	Querier
 	Creator
 	Updater
@@ -31,7 +31,7 @@ type Repository struct {
 	rdb *redis.Client
 }
 
-var _ RepositoryInterface = (*Repository)(nil)
+var _ RepositoryManager = (*Repository)(nil)
 
 // NewRepository 实例化存储数据
 func NewRepository(ent *ent.Client, rdb *redis.Client) *Repository {
