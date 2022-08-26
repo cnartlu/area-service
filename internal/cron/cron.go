@@ -5,7 +5,6 @@ import (
 
 	"github.com/cnartlu/area-service/pkg/component/log"
 
-	"github.com/cnartlu/area-service/internal/component/ent"
 	"github.com/cnartlu/area-service/internal/cron/jobs"
 
 	"github.com/go-redis/redis/v8"
@@ -15,7 +14,6 @@ import (
 type Cron struct {
 	logger *log.Logger
 	rdb    *redis.Client
-	db     *ent.Client
 	server *cron.Cron
 
 	syncArea *jobs.SyncArea
@@ -56,7 +54,6 @@ func (c *Cron) Stop(ctx context.Context) (err error) {
 func New(
 	logger *log.Logger,
 	rdb *redis.Client,
-	db *ent.Client,
 	// .... 此处开始注入job
 	sa *jobs.SyncArea,
 ) (*Cron, error) {
@@ -71,7 +68,6 @@ func New(
 	return &Cron{
 		logger:   logger,
 		rdb:      rdb,
-		db:       db,
 		server:   server,
 		syncArea: sa,
 	}, nil

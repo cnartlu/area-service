@@ -6,7 +6,8 @@
 package main
 
 import (
-	"github.com/cnartlu/area-service/internal/app"
+	"github.com/cnartlu/area-service/internal"
+	"github.com/cnartlu/area-service/internal/server"
 	"github.com/cnartlu/area-service/internal/command"
 	"github.com/cnartlu/area-service/internal/config"
 	"github.com/cnartlu/area-service/pkg/component/log"
@@ -14,11 +15,11 @@ import (
 )
 
 // initApp 初始化应用
-func initApp(*log.Logger, *config.Config) (*app.App, func(), error) {
+func initApp(*log.Logger, *config.Config) (*server.Server, func(), error) {
 	panic(
 		wire.Build(
-			app.ProviderSet,
-			app.New,
+			internal.ProviderSet,
+			server.NewServer,
 		),
 	)
 }

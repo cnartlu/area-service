@@ -1,16 +1,13 @@
 package tests
 
 import (
-	"testing"
-
-	"github.com/cnartlu/area-service/internal/component/ent"
 	"github.com/cnartlu/area-service/internal/config"
-	"github.com/cnartlu/area-service/pkg/component/log"
+	// "github.com/cnartlu/area-service/pkg/component/log"
 	"github.com/go-redis/redis/v8"
 )
 
 func init() {
-	testing.Init()
+	// testing.Init()
 }
 
 func NewConfig() (*config.Config, error) {
@@ -18,22 +15,19 @@ func NewConfig() (*config.Config, error) {
 }
 
 type Tests struct {
-	Logger *log.Logger
+	// Logger *log.Logger
 	Config *config.Config
-	Ent    *ent.Client
 	Redis  *redis.Client
 }
 
 func New(
-	logger *log.Logger,
+	// logger *log.Logger,
 	config *config.Config,
-	ent *ent.Client,
 	rdb *redis.Client,
 ) *Tests {
 	return &Tests{
-		Logger: logger,
+		// Logger: logger,
 		Config: config,
-		Ent:    ent,
 		Redis:  rdb,
 	}
 }

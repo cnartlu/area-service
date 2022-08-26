@@ -1,56 +1,140 @@
 package log
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
-	"path/filepath"
+	"strings"
 
-	"github.com/cnartlu/area-service/pkg/utils"
 	kconfig "github.com/go-kratos/kratos/v2/config"
 	"github.com/go-kratos/kratos/v2/log"
-	"gopkg.in/natefinch/lumberjack.v2"
-
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
 
-var logger, _ = NewDefault()
-
 type Logger struct {
-	configure kconfig.Config
-	config    *Config
-	log       *zap.Logger
+	// 日志配置
+	config kconfig.Config
+	// 日志器名称
+	name string
 	// 日志配置器
-	loggers map[string]*zap.Logger
+	zap *zap.Logger
+	// Targets 记录器
+	Targets map[string]Target `json:"targets,omitempty"`
+	// Stdout 输出到控制台
+	Stdout *bool `json:"stdout,omitempty"`
+	// TraceLevel 记录堆栈行号
+	TraceLevel int `json:"trace_level,omitempty"`
+	// Messages 记录固定的消息
+	Messages map[string]string `json:"messages,omitempty"`
 }
 
+type TargetContent struct {
+	Type string `json:"type,omitempty"`
+	Target
+}
+
+// init 实例化日志
+func (l *Logger) init() {
+	err := l.config.Value(l.name).Scan(l)
+	if err != nil {
+		panic(err)
+	}
+	var (
+		encoderConfig zapcore.EncoderConfig
+		encoder       zapcore.Encoder
+		cores         []zapcore.Core
+		zapOptions    []zap.Option
+	)
+	// 解析配置
+	encoderConfig = zap.NewProductionEncoderConfig()
+	encoderConfig.EncodeLevel = zapcore.LowercaseLevelEncoder
+	encoderConfig.EncodeTime = zapcore.RFC3339TimeEncoder
+	encoderConfig.EncodeCaller = zapcore.ShortCallerEncoder
+	encoder = zapcore.NewJSONEncoder(encoderConfig)
+	// zap选项
+	zapOptions = append(zapOptions, zap.AddCaller(), zap.AddCallerSkip(1))
+	// 输出到控制台
+	if l.Stdout == nil || *l.Stdout {
+		cores = append(cores, zapcore.NewCore(encoder, zapcore.AddSync(os.Stdout), zap.DebugLevel))
+	}
+	// 输出到其他路径
+	for _, target := range l.Targets {
+		// 查找数据
+		l.config.Value(fmt.Sprintf("%s.%s.%s", l.name, "targets", target.Name())).String()
+
+		cores = append(cores, zapcore.NewCore(encoder, zapcore.AddSync(target), zap.DebugLevel))
+	}
+
+	core := zapcore.NewTee(cores...)
+	l.zap = zap.New(core, zapOptions...)
+}
+
+// UnmarshalJSON 实现json反解
+func (l *Logger) UnmarshalJSON(data []byte) error {
+	var tmp struct {
+		Logger
+		Targets map[string][]byte `json:"targets,omitempty"`
+	}
+	err := json.Unmarshal(data, &tmp)
+	if err != nil {
+		return err
+	}
+	l.Stdout = tmp.Stdout
+	l.TraceLevel = tmp.TraceLevel
+	l.Messages = tmp.Messages
+	if tmp.Targets != nil {
+		l.Targets = make(map[string]Target)
+		for name, bytes := range tmp.Targets {
+			var p struct {
+				Type string `json:"type,omitempty"`
+			}
+			err := json.Unmarshal(bytes, &p)
+			if err != nil {
+				return err
+			}
+			t := strings.ToLower(strings.TrimSpace(p.Type))
+			ta := GetTarget(t)
+			err = json.Unmarshal(bytes, &ta)
+			if err != nil {
+				return err
+			}
+			l.Targets[name] = ta
+		}
+	}
+	return nil
+}
+
+// Use 使用其他的日志
 func (l *Logger) Use(name string) *Logger {
-	adefault := l.config.Default
-	logger := Logger{
-		configure: l.configure,
-		config:    l.config,
-		log:       l.Zap(name),
-		loggers: map[string]*zap.Logger{
-			adefault: l.Zap(name),
-		},
-	}
-	return &logger
+	return l
 }
 
-// Zap 获取日志配置器
-func (l *Logger) Zap(name string) *zap.Logger {
-	if name == "" {
-		return l.log
-	} else if logger, ok := l.loggers[name]; ok {
-		return logger
+// Clone 复制日志
+func (l *Logger) Clone() *Logger {
+	targets = make(map[string]Target)
+	if l.Targets != nil && len(l.Targets) > 0 {
+		for k, v := range l.Targets {
+			targets[k] = v.Clone()
+		}
 	}
-	return l.log
+	stdout := *l.Stdout
+	c := &Logger{
+		config:   l.config,
+		name:     l.name,
+		zap:      nil,
+		Targets:  targets,
+		Stdout:   &stdout,
+		Messages: l.Messages,
+	}
+	c.init()
+	return c
 }
 
 // 实现日志器的方法
 func (l *Logger) Log(level log.Level, keyvals ...interface{}) error {
 	if len(keyvals) == 0 || len(keyvals)%2 != 0 {
-		l.log.Warn(fmt.Sprint("Keyvalues must appear in pairs: ", keyvals))
+		l.zap.Warn(fmt.Sprint("Keyvalues must appear in pairs: ", keyvals))
 		return nil
 	}
 
@@ -61,72 +145,51 @@ func (l *Logger) Log(level log.Level, keyvals ...interface{}) error {
 
 	switch level {
 	case log.LevelDebug:
-		l.log.Debug("", data...)
+		l.zap.Debug("", data...)
 	case log.LevelInfo:
-		l.log.Info("", data...)
+		l.zap.Info("", data...)
 	case log.LevelWarn:
-		l.log.Warn("", data...)
+		l.zap.Warn("", data...)
 	case log.LevelError:
-		l.log.Error("", data...)
+		l.zap.Error("", data...)
 	case log.LevelFatal:
-		l.log.Fatal("", data...)
+		l.zap.Fatal("", data...)
 	}
 	return nil
 }
 
 func (l *Logger) DebugLog(data ...interface{}) {
-	zap := l.log.WithOptions(zap.AddCallerSkip(1))
-	clone := &Logger{log: zap}
+	clone := l.Clone()
+	clone.zap = clone.zap.WithOptions(zap.AddCallerSkip(1))
 	clone.Log(log.LevelDebug, data...)
 }
 
-func Debug(msg string, fields ...zapcore.Field) {
-	logger.Debug(msg, fields...)
-}
 func (l *Logger) Debug(msg string, fields ...zapcore.Field) {
-	l.log.Debug(msg, fields...)
+	l.zap.Debug(msg, fields...)
 }
 
-func Info(msg string, fields ...zapcore.Field) {
-	logger.Info(msg, fields...)
-}
 func (l *Logger) Info(msg string, fields ...zapcore.Field) {
-	l.log.Info(msg, fields...)
+	l.zap.Info(msg, fields...)
 }
 
-func Warn(msg string, fields ...zapcore.Field) {
-	logger.Warn(msg, fields...)
-}
 func (l *Logger) Warn(msg string, fields ...zapcore.Field) {
-	l.log.Warn(msg, fields...)
+	l.zap.Warn(msg, fields...)
 }
 
-func Error(msg string, fields ...zapcore.Field) {
-	logger.Error(msg, fields...)
-}
 func (l *Logger) Error(msg string, fields ...zapcore.Field) {
-	l.log.Error(msg, fields...)
+	l.zap.Error(msg, fields...)
 }
 
-func DPanic(msg string, fields ...zapcore.Field) {
-	logger.DPanic(msg, fields...)
-}
 func (l *Logger) DPanic(msg string, fields ...zapcore.Field) {
-	l.log.DPanic(msg, fields...)
+	l.zap.DPanic(msg, fields...)
 }
 
-func Panic(msg string, fields ...zapcore.Field) {
-	logger.Panic(msg, fields...)
-}
 func (l *Logger) Panic(msg string, fields ...zapcore.Field) {
-	l.log.Panic(msg, fields...)
+	l.zap.Panic(msg, fields...)
 }
 
-func Fatal(msg string, fields ...zapcore.Field) {
-	logger.Fatal(msg, fields...)
-}
 func (l *Logger) Fatal(msg string, fields ...zapcore.Field) {
-	l.log.Fatal(msg, fields...)
+	l.zap.Fatal(msg, fields...)
 }
 
 // Printf 实现Log日志
@@ -135,109 +198,19 @@ func (l *Logger) Printf(format string, v ...interface{}) {
 }
 
 func (l *Logger) Sync() error {
-	return l.log.Sync()
+	return l.zap.Sync()
 }
 
 func (l *Logger) Close() error {
-	return l.log.Sync()
+	return l.zap.Sync()
 }
 
-func New(options ...Option) (*Logger, error) {
-	logger := Logger{}
-	for _, option := range options {
-		option(&logger)
+// NewLogger 实例化日志器
+func NewLogger(config kconfig.Config) *Logger {
+	l := &Logger{
+		config: config,
+		name:   "logger",
 	}
-	// 初始化配置
-	// 监听配置文件的修改
-	if logger.configure != nil {
-		logger.configure.Watch("logger", func(key string, v kconfig.Value) {
-
-		})
-	}
-	// 实例化zap日志
-	logger.log = newLogger(nil)
-	if logger.config != nil {
-		config := logger.config
-		if config.Loggers != nil {
-			for name, loggerConfig := range config.Loggers {
-				zapLogger := newLogger(loggerConfig)
-				logger.loggers[name] = zapLogger
-			}
-		}
-		// 默认配置
-		if config.Default != "" {
-			if defaultLogger, ok := logger.loggers[config.Default]; ok {
-				logger.log = defaultLogger
-			}
-		}
-	}
-
-	return &logger, nil
-}
-
-func NewDefault() (*Logger, error) {
-	return New()
-}
-
-func newLogger(c *Config_Logger) *zap.Logger {
-	var (
-		encoderConfig zapcore.EncoderConfig
-		encoder       zapcore.Encoder
-		writeSyncer   zapcore.WriteSyncer
-		core          zapcore.Core
-		zapOptions    []zap.Option
-		zapFields     []zapcore.Field
-	)
-	encoderConfig = zap.NewProductionEncoderConfig()
-	encoderConfig.EncodeLevel = zapcore.LowercaseLevelEncoder
-	encoderConfig.EncodeTime = zapcore.RFC3339TimeEncoder
-	encoderConfig.EncodeCaller = zapcore.ShortCallerEncoder
-	encoder = zapcore.NewJSONEncoder(encoderConfig)
-	writeSyncer = zapcore.AddSync(os.Stdout)
-	zapOptions = append(zapOptions, zap.AddCaller(), zap.AddCallerSkip(1))
-
-	if c != nil {
-		if c.Path != "" {
-			c.Path = utils.RootPath()
-			if c.File == "" {
-				c.File = "{Y-m-d}.log"
-			}
-			writeSyncer = zapcore.AddSync(os.Stdout)
-		}
-		if c.Stdout == nil || c.Stdout.GetValue() {
-			writeSyncer = zapcore.AddSync(os.Stdout)
-		}
-		if c.Header == nil || c.Header.GetValue() {
-			zapFields = append(zapFields, zap.Any("headers", ""))
-		}
-		if len(c.CtxKeys) > 0 {
-			for k, v := range c.CtxKeys {
-				zapFields = append(zapFields, zap.Any(k, v.GetValue()))
-			}
-		}
-	}
-
-	_ = os.MkdirAll(filepath.Join(utils.RootPath(), "logs"), 0666)
-	core = zapcore.NewTee(
-		zapcore.NewCore(
-			encoder,
-			writeSyncer,
-			zap.DebugLevel,
-		),
-		zapcore.NewCore(
-			encoder,
-			zapcore.AddSync(&lumberjack.Logger{
-				Filename:   filepath.Join(utils.RootPath(), "logs", "app.log"),
-				MaxSize:    500, // megabytes
-				MaxBackups: 3,
-				MaxAge:     28,   //days
-				Compress:   true, // disabled by default
-			}),
-			zap.DebugLevel,
-		),
-	)
-
-	core.With(zapFields)
-	zap := zap.New(core, zapOptions...)
-	return zap
+	l.init()
+	return l
 }

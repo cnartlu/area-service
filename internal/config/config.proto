@@ -6,7 +6,6 @@ option go_package = "area-service/internal/config;config";
 import "google/protobuf/duration.proto";
 import "google/protobuf/any.proto";
 import "pkg/component/redis/redis.proto";
-import "pkg/component/log/log.proto";
 import "internal/component/db/db.proto";
 
 // Application 应用基础配置
@@ -14,7 +13,7 @@ message Application {
   bool debug = 1;
   string env = 2;
   string name = 3;
-string proxy = 4;
+  string proxy = 4;
 }
 
 // Server 服务
@@ -72,9 +71,8 @@ message Bootstrap {
   Server server = 2;
   internal.component.db.Config database = 3;
   FileSystem filesystem = 4;
-  pkg.component.log.Config logger = 5;
-  Cache cache = 6;
-  pkg.component.redis.Config redis = 7;
+  Cache cache = 5;
+  pkg.component.redis.Config redis = 6;
 }
 
 message Nacos {

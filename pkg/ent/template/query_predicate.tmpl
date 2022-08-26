@@ -1,0 +1,18 @@
+{{/*
+Copyright 2019-present Facebook Inc. All rights reserved.
+This source code is licensed under the Apache 2.0 license found
+in the LICENSE file in the root directory of this source tree.
+*/}}
+
+{{/* gotype: entgo.io/ent/entc/gen.typeScope */}}
+
+
+{{/* Additional fields for the builder. */}}
+{{ define "dialect/sql/query/additional/predicate" }}
+{{ $builder := pascal $.Scope.Builder }}
+{{ $receiver := receiver $builder }}
+	// GetPredicates get all predicates
+	func ({{ $receiver }} *{{ $builder }}) GetPredicates() []predicate.{{ $.Name }} {
+		return {{ $receiver }}.predicates
+	}
+{{- end }}
