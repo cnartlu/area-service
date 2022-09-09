@@ -2,40 +2,70 @@ package release
 
 import (
 	"context"
-	"time"
+	"net/url"
+	"path/filepath"
+
+	"github.com/cnartlu/area-service/internal/biz/area/release/asset"
+	pkgfilepath "github.com/cnartlu/area-service/pkg/filepath"
+	"github.com/google/go-github/v45/github"
+	"github.com/pkg/errors"
 )
 
-type ManagerData struct {
-	ID, ReleaseID uint64
-	Owner, Repo   string
-	Name, NodeID  string
-	Content       string
-	PublishedAt   time.Time
-	Status        int
+type ManagerUsecase struct {
+	repo         Releasor
+	assetRepo    asset.Asseter
+	githubClient *github.Client
 }
 
-type Manager interface {
-	Count(ctx context.Context, options ...Option) int
-	// FindList 查找数据列表
-	FindList(ctx context.Context, options ...Option) ([]*ManagerData, error)
-	// FindOne 查找数据
-	FindOne(ctx context.Context, options ...Option) (*ManagerData, error)
-	// Save 新增或保存数据
-	// Save(ctx context.Context, data *ManagerData) (*ManagerData, error)
-	// // Remove 移除数据
-	// Remove(ctx context.Context, options ...Option) error
+func (m *ManagerUsecase) List(ctx context.Context) ([]*Release, error) {
+	return m.repo.FindList(ctx)
 }
 
-type Management struct {
-	manager Manager
+func (m *ManagerUsecase) PullTheLatestFromGithubRelease(ctx context.Context) (*ReleaseWithAssets, error) {
+	owner := GITHUB_OWNER
+	repo := GITHUB_REPOSITORY
+	rep, _, err := m.githubClient.Repositories.GetLatestRelease(ctx, owner, repo)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to getLatestRelease by github client")
+	}
+
+	release, err := m.repo.Save(ctx, &Release{})
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to find latest release")
+	}
+	var assets []*asset.Asset
+	for _, repAsset := range rep.Assets {
+		downloadUrl := repAsset.GetBrowserDownloadURL()
+		uri, err := url.Parse(downloadUrl)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to parse url")
+		}
+		asset, err := m.assetRepo.Save(ctx, &asset.Asset{
+			AreaReleaseId: release.GetId(),
+			AssetName:     repAsset.GetName(),
+			AssetId:       uint64(repAsset.GetID()),
+			AssetLabel:    repAsset.GetLabel(),
+			AssetState:    repAsset.GetState(),
+			FileSize:      uint32(repAsset.GetSize()),
+			FilePath:      pkgfilepath.RelativePath(filepath.Join(pkgfilepath.RuntimePath(), release.GetNodeId(), filepath.Base(uri.Path))),
+			DownloadUrl:   downloadUrl,
+			Status:        nil,
+		})
+		if err != nil {
+			return nil, err
+		}
+		assets = append(assets, asset)
+	}
+	result := ReleaseWithAssets{
+		Release: release,
+		Assets:  assets,
+	}
+	return &result, nil
 }
 
-func (m *Management) List(ctx context.Context) {
-	m.manager.FindList(ctx)
-}
-
-func NewManaement(manager Manager) *Management {
-	return &Management{
-		manager: manager,
+func NewManaement(repo Releasor, assetRepo asset.Asseter) *ManagerUsecase {
+	return &ManagerUsecase{
+		repo:      repo,
+		assetRepo: assetRepo,
 	}
 }

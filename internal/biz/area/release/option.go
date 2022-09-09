@@ -36,6 +36,12 @@ func Limit(limit int) Option {
 	}
 }
 
+func DescByID() Option {
+	return func(r OptionInterface) {
+
+	}
+}
+
 func WithID(id uint64) Option {
 	return func(r OptionInterface) {
 		i, ok := r.(interface{ WithID(uint64) })
@@ -45,11 +51,11 @@ func WithID(id uint64) Option {
 	}
 }
 
-func WithReiginIDAndLevel(regionID string, level uint8) Option {
+func WithReleaseID(releaseID uint64) Option {
 	return func(r OptionInterface) {
-		i, ok := r.(interface{ WithReiginIDAndLevel(string, uint8) })
+		i, ok := r.(interface{ WithReleaseID(uint64) })
 		if ok {
-			i.WithReiginIDAndLevel(regionID, level)
+			i.WithReleaseID(releaseID)
 		}
 	}
 }

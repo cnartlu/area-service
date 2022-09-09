@@ -1,0 +1,19 @@
+syntax = "proto3";
+package kratos.biz.area.release.asset;
+
+option go_package = "github.com/cnartlu/area-service/internal/biz/area/release/asset;asset";
+
+import "google/protobuf/wrappers.proto";
+
+message Asset {
+    uint64 id = 1;
+    uint64 area_release_id = 2;
+	uint64 asset_id = 3;
+	string asset_name = 4;
+	string asset_label = 5;
+	string asset_state = 6;
+	string file_path = 7;
+	uint32 file_size = 8;
+	string download_url = 9;
+	google.protobuf.Int32Value status = 10;
+}

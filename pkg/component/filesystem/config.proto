@@ -1,0 +1,15 @@
+syntax = "proto3";
+package pkg.component.filesystem;
+
+option go_package = "area-service/internal/component/filesystem;filesystem";
+
+// import "google/protobuf/duration.proto";
+// import "google/protobuf/any.proto";
+// import "pkg/component/redis/redis.proto";
+// import "internal/component/db/db.proto";
+
+message Disk {}
+
+message Config {
+
+}

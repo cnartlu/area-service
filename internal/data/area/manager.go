@@ -28,7 +28,7 @@ func (r *AreaRepo) Count(ctx context.Context, options ...bizArea.Option) int {
 }
 
 // FindList 查找数据
-func (r *AreaRepo) FindList(ctx context.Context, options ...bizArea.Option) (list []*bizArea.ManagerData, err error) {
+func (r *AreaRepo) FindList(ctx context.Context, options ...bizArea.Option) (list []*bizArea.Area, err error) {
 	query := r.ent.Area.Query()
 	if len(options) > 0 {
 		q := newOption(query)
@@ -41,7 +41,7 @@ func (r *AreaRepo) FindList(ctx context.Context, options ...bizArea.Option) (lis
 		return nil, err
 	}
 	for _, result := range results {
-		list = append(list, &bizArea.ManagerData{
+		list = append(list, &bizArea.Area{
 			ID:       result.ID,
 			Title:    result.Title,
 			Pinyin:   result.Pinyin,
@@ -54,7 +54,7 @@ func (r *AreaRepo) FindList(ctx context.Context, options ...bizArea.Option) (lis
 }
 
 // FindList 查找数据
-func (r *AreaRepo) FindOne(ctx context.Context, options ...bizArea.Option) (*bizArea.ManagerData, error) {
+func (r *AreaRepo) FindOne(ctx context.Context, options ...bizArea.Option) (*bizArea.Area, error) {
 	query := r.ent.Area.Query()
 	if len(options) > 0 {
 		q := newOption(query)
@@ -66,7 +66,7 @@ func (r *AreaRepo) FindOne(ctx context.Context, options ...bizArea.Option) (*biz
 	if err != nil {
 		return nil, err
 	}
-	data := &bizArea.ManagerData{
+	data := &bizArea.Area{
 		ID:       result.ID,
 		Title:    result.Title,
 		Pinyin:   result.Pinyin,
@@ -78,19 +78,19 @@ func (r *AreaRepo) FindOne(ctx context.Context, options ...bizArea.Option) (*biz
 }
 
 // FindList 查找数据
-func (r *AreaRepo) Save(ctx context.Context, options ...bizArea.Option) (*bizArea.ManagerData, error) {
+func (r *AreaRepo) Save(ctx context.Context, x *bizArea.Area) (*bizArea.Area, error) {
 	query := r.ent.Area.Query()
-	if len(options) > 0 {
-		q := newOption(query)
-		for _, option := range options {
-			option(q)
-		}
-	}
+	// if len(options) > 0 {
+	// 	q := newOption(query)
+	// 	for _, option := range options {
+	// 		option(q)
+	// 	}
+	// }
 	result, err := query.First(ctx)
 	if err != nil {
 		return nil, err
 	}
-	data := &bizArea.ManagerData{
+	data := &bizArea.Area{
 		ID:       result.ID,
 		Title:    result.Title,
 		Pinyin:   result.Pinyin,

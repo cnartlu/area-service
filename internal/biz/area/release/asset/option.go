@@ -45,11 +45,11 @@ func WithID(id uint64) Option {
 	}
 }
 
-func WithReiginIDAndLevel(regionID string, level uint8) Option {
+func WithAreaReleaseID(areaReleaseID uint64) Option {
 	return func(r OptionInterface) {
-		i, ok := r.(interface{ WithReiginIDAndLevel(string, uint8) })
+		i, ok := r.(interface{ WithAreaReleaseID(uint64) })
 		if ok {
-			i.WithReiginIDAndLevel(regionID, level)
+			i.WithAreaReleaseID(areaReleaseID)
 		}
 	}
 }

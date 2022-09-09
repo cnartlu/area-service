@@ -7,6 +7,6 @@ import (
 )
 
 var ProviderSet = wire.NewSet(
-	area.NewManaement,
+	area.NewManagerUsecase,
 	release.NewManaement,
 )

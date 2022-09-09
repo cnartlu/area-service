@@ -1,6 +1,7 @@
 package component
 
 import (
+	"github.com/cnartlu/area-service/pkg/component/app"
 	"github.com/cnartlu/area-service/pkg/component/casbin"
 	"github.com/cnartlu/area-service/pkg/component/discovery"
 	"github.com/cnartlu/area-service/pkg/component/proxy"
@@ -11,6 +12,7 @@ import (
 )
 
 var ProviderSet = wire.NewSet(
+	wire.NewSet(app.New),
 	wire.NewSet(proxy.New),
 	wire.NewSet(redis.New),
 	wire.NewSet(trace.New),

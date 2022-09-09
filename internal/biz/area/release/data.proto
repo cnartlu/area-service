@@ -1,0 +1,40 @@
+syntax = "proto3";
+package kratos.biz.area.release;
+
+option go_package = "github.com/cnartlu/area-service/internal/biz/area/release;release";
+
+import "google/protobuf/struct.proto";
+import "google/protobuf/wrappers.proto";
+import "internal/biz/area/release/asset/data.proto";
+
+enum status {
+    Wait = 0;
+    Success = 1;
+}
+
+message Release {
+    uint64 id = 1;
+    uint64 release_id = 2;
+    string owner = 3;
+    string repo = 4;
+    string name = 5;
+    string node_id = 6;
+    string content = 7;
+    string published_at = 8;
+    int32 status = 9;
+    map<string, google.protobuf.Value> a = 10;
+    map<string, google.protobuf.BoolValue> b = 11;
+
+}
+
+message ListRelease {
+    int64 page = 1;
+    int64 page_size = 2;
+    int64 total_count = 3;
+    repeated Release items = 4;
+}
+
+message ReleaseWithAssets {
+    Release release = 1;
+    repeated asset.Asset assets = 2;
+}

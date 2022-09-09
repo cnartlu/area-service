@@ -22,6 +22,7 @@ type OptionInterface interface {
 	querier
 }
 
+// Option 请求条件接口
 type Option func(OptionInterface)
 
 func Offset(offset int) Option {

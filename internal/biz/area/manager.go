@@ -4,37 +4,41 @@ import (
 	"context"
 )
 
-type ManagerData struct {
-	ID       uint64
-	Title    string
-	Pinyin   string
-	Ucfirst  string
-	CityCode string
-	ZipCode  string
+type FindListParam struct {
+	ParentID uint64
+	Keyword  string
 }
 
 type Manager interface {
 	Count(ctx context.Context, options ...Option) int
 	// FindList 查找数据列表
-	FindList(ctx context.Context, options ...Option) ([]*ManagerData, error)
+	FindList(ctx context.Context, options ...Option) ([]*Area, error)
 	// FindOne 查找数据
-	FindOne(ctx context.Context, options ...Option) (*ManagerData, error)
+	FindOne(ctx context.Context, options ...Option) (*Area, error)
 	// Save 新增或保存数据
-	// Save(ctx context.Context, data *ManagerData) (*ManagerData, error)
-	// // Remove 移除数据
-	// Remove(ctx context.Context, options ...Option) error
+	Save(ctx context.Context, data *Area) (*Area, error)
+	// Remove 移除数据
+	Remove(ctx context.Context, options ...Option) error
 }
 
-type Management struct {
+type ManagerUsecase struct {
 	manager Manager
 }
 
-func (m *Management) List(ctx context.Context) {
-	m.manager.FindList(ctx)
+func (m *ManagerUsecase) List(ctx context.Context, params FindListParam) ([]*Area, error) {
+	return m.manager.FindList(ctx)
 }
 
-func NewManaement(manager Manager) *Management {
-	return &Management{
+func (m *ManagerUsecase) CascadeList(ctx context.Context, options ...Option) ([]*Area, error) {
+	return nil, nil
+}
+
+func (m *ManagerUsecase) Delete(ctx context.Context, id uint64) error {
+	return nil
+}
+
+func NewManagerUsecase(manager Manager) *ManagerUsecase {
+	return &ManagerUsecase{
 		manager: manager,
 	}
 }

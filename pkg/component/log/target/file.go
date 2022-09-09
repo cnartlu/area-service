@@ -3,7 +3,6 @@ package target
 import (
 	"path/filepath"
 
-	"github.com/cnartlu/area-service/pkg/utils"
 	"gopkg.in/natefinch/lumberjack.v2"
 )
 
@@ -22,21 +21,22 @@ type File struct {
 	logger *lumberjack.Logger
 }
 
-func (f *File) Init() error {
-	f.logger = &lumberjack.Logger{
-		Filename:   filepath.Join(utils.RootPath(), "logs", "app.log"),
-		MaxSize:    500,
-		MaxBackups: 3,
-		MaxAge:     28,
-		Compress:   true,
-	}
-	return nil
-}
-
 func (f *File) Write(p []byte) (int, error) {
 	return f.logger.Write(p)
 }
 
 func (f *File) Close() error {
 	return f.logger.Close()
+}
+
+func NewFile() *File {
+	return &File{
+		logger: &lumberjack.Logger{
+			Filename:   filepath.Join("logs", "app.log"),
+			MaxSize:    500,
+			MaxBackups: 3,
+			MaxAge:     28,
+			Compress:   true,
+		},
+	}
 }
