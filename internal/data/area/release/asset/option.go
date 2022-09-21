@@ -1,8 +1,8 @@
 package asset
 
 import (
-	"github.com/cnartlu/area-service/internal/component/ent"
-	"github.com/cnartlu/area-service/internal/component/ent/areareleaseasset"
+	"github.com/cnartlu/area-service/internal/data/ent"
+	"github.com/cnartlu/area-service/internal/data/ent/areareleaseasset"
 )
 
 type option func(*ent.AreaReleaseAssetQuery)

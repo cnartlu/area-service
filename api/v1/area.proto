@@ -2,47 +2,41 @@ syntax = "proto3";
 
 package api.v1;
 
-import "google/api/annotations.proto";
 
 option go_package = "github.com/cnartlu/area-service/api/v1;v1";
 option java_multiple_files = true;
 option java_package = "api.v1";
 
 service Area {
-	rpc ListArea (ListAreaRequest) returns (ListAreaReply) {
-		option (google.api.http) = {
-			get: "/area/list",
-			additional_bindings: {
-				get: "/area/list/{parent_level}/{parent_region_id}",
-			}
-		};
-	};
-	rpc GetArea (GetAreaRequest) returns (GetAreaReply) {
-		option (google.api.http) = {
-			get: "/area/{level}/{region_id}",
-		};
-	};
-	rpc CascadeListArea (CascadeListAreaRequest) returns (CascadeListAreaReply) {
-		option (google.api.http) = {
-			get: "/area/cascade-list"
-		};
-	};
+	// List 列表
+	rpc List (ListAreaRequest) returns (ListAreaReply) {};
+	// View 详情
+	rpc View (GetAreaRequest) returns (GetAreaReply) {};
+	// CascadeList 级联列表
+	rpc CascadeList (CascadeListAreaRequest) returns (CascadeListAreaReply) {};
+	// Create 新增
+	rpc Create(CreateAreaRequest) returns (CreateAreaReply) {};
+	// Update 更新
+	rpc Update(UpdateAreaRequest) returns (UpdateAreaReply) {};
+	// Delete 删除
+	rpc Delete(DeleteAreaRequest) returns (DeleteAreaReply) {};
 }
 
 message ListAreaRequest {
-	// 搜索关键字
-	string kw = 1;
-	// 父级区域标识
-	uint64 parent_region_id = 2;
-	// 父级标识级别
-	uint32 parent_level = 3;
+	oneof parent {
+		uint64 parent_id = 1;
+		string region_id = 2;
+	}
+	int32 level = 3;
+	string kw = 4;
+	string order = 9;
 }
+
 message ListAreaReply {
 	message Item {
-		uint64 region_id = 1;
-		string title = 2;
-		string lat = 3;
-		string lng = 4;
+		uint64 id = 1;
+		string region_id = 2;
+		string title = 3;
 		string ucfirst = 5;
 		string pinyin = 6;
 		string city_code = 7;
@@ -52,22 +46,18 @@ message ListAreaReply {
 		uint64 update_time = 11;
 	}
 	repeated Item items = 1;
-	// uint64 total_count = 2;
-	// uint64 page = 3;
-	// uint64 page_size = 4;
-	// bool first_page = 5;
-	// bool last_page = 6;
-	// int64 prev_page = 7;
-	// int64 next_page = 8;
 }
 
 message GetAreaRequest {
-	// 区域标识
-	uint64 region_id = 1;
-	// 标识级别
-	uint32 level = 2;
+	oneof parent {
+		uint64 id = 1;
+		uint64 region_id = 2;
+	}
+	uint32 level = 3;
 }
+
 message GetAreaReply {
+	uint64 id = 1;
 	uint64 region_id = 2;
 	string title = 3;
 	string lat = 4;
@@ -76,11 +66,10 @@ message GetAreaReply {
 	string pinyin = 7;
 	string city_code = 8;
 	string zip_code = 9;
-	uint32 children_number = 10;
-	uint32 level = 11;
-	uint64 create_time = 12;
-	uint64 update_time = 13;
-	GetAreaReply parent = 14;
+	uint32 level = 10;
+	uint64 create_time = 11;
+	uint64 update_time = 12;
+	GetAreaReply parent = 13;
 }
 
 message CascadeListAreaRequest {
@@ -93,6 +82,7 @@ message CascadeListAreaRequest {
 	// 拉取数据深度，超出部分忽略，0不限制
 	uint32 deep = 4;
 }
+
 message CascadeListAreaReply {
 	message Item {
 		uint64 region_id = 1;
@@ -105,4 +95,47 @@ message CascadeListAreaReply {
 		repeated Item items = 8;
 	}
 	repeated Item items = 1;
+}
+
+message CreateAreaRequest {
+	oneof parent {
+		uint64 parent_id = 1;
+		string parent_region_id = 10;
+	}
+	string region_id = 2;
+	string title = 3;
+	string lat = 4;
+	string lng = 5;
+	string city_code = 6;
+	string zip_code = 7;
+	uint32 children_number = 8;
+	int32 parent_level = 11;
+}
+
+message CreateAreaReply {
+	uint64 id = 1;
+}
+
+message UpdateAreaRequest {
+	int64 id = 1;
+	string parent_id = 2;
+	string region_id = 3;
+	string title = 4;
+	string lat = 5;
+	string lng = 6;
+	string city_code = 7;
+	string zip_code = 8;
+	uint32 children_number = 9;
+}
+
+message UpdateAreaReply {
+	uint64 id = 1;
+}
+
+message DeleteAreaRequest {
+	uint64 id = 1;
+	repeated uint64 ids = 2;
+}
+
+message DeleteAreaReply {
 }

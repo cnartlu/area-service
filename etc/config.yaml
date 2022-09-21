@@ -1,14 +1,14 @@
-application:
-  name: kk
-  proxy: http://127.0.0.1:7890
-server:
-  http:
-    addr: 0.0.0.0:8000
-    timeout: 1s
-  grpc:
-    addr: 0.0.0.0:9000
-    timeout: 1s
-database:
+debug: true
+env: development
+name: kk
+proxy: http://127.0.0.1:7890
+http:
+  addr: 0.0.0.0:8000
+  timeout: 1s
+grpc:
+  addr: 0.0.0.0:9000
+  timeout: 1s
+db:
   driver: mysql
   source: root:xingyun@tcp(127.0.0.1:3306)/ad_area_service  
 redis:

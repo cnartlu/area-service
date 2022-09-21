@@ -8,10 +8,7 @@ import (
 
 // ProviderSet 配置项的功能
 var ProviderSet = wire.NewSet(
-	wire.FieldsOf(new(*Config), "Bootstrap"),
-	// new(*Redis),
-	wire.FieldsOf(new(*Bootstrap), "*"),
-	wire.FieldsOf(new(*Server), "Http", "Grpc"),
-	wire.FieldsOf(new(*FileSystem), "Disks"),
-	wire.FieldsOf(new(*Cache), "Stores"),
+	// wire.NewSet(wire.Bind(new(kconfig.Config), new(*Config))),
+	wire.FieldsOf(new(*Config), "Config"),
+	wire.FieldsOf(new(*App), "Http", "Grpc", "Cron", "Logger", "Redis", "Db"),
 )

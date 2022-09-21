@@ -2,20 +2,20 @@
 package internal
 
 import (
+	"github.com/cnartlu/area-service/internal/biz"
 	"github.com/cnartlu/area-service/internal/component"
 	"github.com/cnartlu/area-service/internal/config"
-	"github.com/cnartlu/area-service/internal/cron"
 	"github.com/cnartlu/area-service/internal/server"
 	"github.com/cnartlu/area-service/internal/service"
-	pCompant "github.com/cnartlu/area-service/pkg/component"
+	pkgcompant "github.com/cnartlu/area-service/pkg/component"
 	"github.com/google/wire"
 )
 
 var ProviderSet = wire.NewSet(
 	config.ProviderSet,
-	pCompant.ProviderSet,
+	pkgcompant.ProviderSet,
 	component.ProviderSet,
-	cron.ProviderSet,
+	biz.ProviderSet,
 	service.ProviderSet,
 	wire.NewSet(
 		server.NewCronServer,

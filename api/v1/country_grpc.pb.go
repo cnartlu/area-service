@@ -22,8 +22,11 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type CountryClient interface {
-	ListCountry(ctx context.Context, in *ListCountryRequest, opts ...grpc.CallOption) (*ListCountryReply, error)
+	CreateCountry(ctx context.Context, in *CreateCountryRequest, opts ...grpc.CallOption) (*CreateCountryReply, error)
+	UpdateCountry(ctx context.Context, in *UpdateCountryRequest, opts ...grpc.CallOption) (*UpdateCountryReply, error)
+	DeleteCountry(ctx context.Context, in *DeleteCountryRequest, opts ...grpc.CallOption) (*DeleteCountryReply, error)
 	GetCountry(ctx context.Context, in *GetCountryRequest, opts ...grpc.CallOption) (*GetCountryReply, error)
+	ListCountry(ctx context.Context, in *ListCountryRequest, opts ...grpc.CallOption) (*ListCountryReply, error)
 }
 
 type countryClient struct {
@@ -34,9 +37,27 @@ func NewCountryClient(cc grpc.ClientConnInterface) CountryClient {
 	return &countryClient{cc}
 }
 
-func (c *countryClient) ListCountry(ctx context.Context, in *ListCountryRequest, opts ...grpc.CallOption) (*ListCountryReply, error) {
-	out := new(ListCountryReply)
-	err := c.cc.Invoke(ctx, "/api.v1.Country/ListCountry", in, out, opts...)
+func (c *countryClient) CreateCountry(ctx context.Context, in *CreateCountryRequest, opts ...grpc.CallOption) (*CreateCountryReply, error) {
+	out := new(CreateCountryReply)
+	err := c.cc.Invoke(ctx, "/api.v1.Country/CreateCountry", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *countryClient) UpdateCountry(ctx context.Context, in *UpdateCountryRequest, opts ...grpc.CallOption) (*UpdateCountryReply, error) {
+	out := new(UpdateCountryReply)
+	err := c.cc.Invoke(ctx, "/api.v1.Country/UpdateCountry", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *countryClient) DeleteCountry(ctx context.Context, in *DeleteCountryRequest, opts ...grpc.CallOption) (*DeleteCountryReply, error) {
+	out := new(DeleteCountryReply)
+	err := c.cc.Invoke(ctx, "/api.v1.Country/DeleteCountry", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -52,12 +73,24 @@ func (c *countryClient) GetCountry(ctx context.Context, in *GetCountryRequest, o
 	return out, nil
 }
 
+func (c *countryClient) ListCountry(ctx context.Context, in *ListCountryRequest, opts ...grpc.CallOption) (*ListCountryReply, error) {
+	out := new(ListCountryReply)
+	err := c.cc.Invoke(ctx, "/api.v1.Country/ListCountry", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // CountryServer is the server API for Country service.
 // All implementations must embed UnimplementedCountryServer
 // for forward compatibility
 type CountryServer interface {
-	ListCountry(context.Context, *ListCountryRequest) (*ListCountryReply, error)
+	CreateCountry(context.Context, *CreateCountryRequest) (*CreateCountryReply, error)
+	UpdateCountry(context.Context, *UpdateCountryRequest) (*UpdateCountryReply, error)
+	DeleteCountry(context.Context, *DeleteCountryRequest) (*DeleteCountryReply, error)
 	GetCountry(context.Context, *GetCountryRequest) (*GetCountryReply, error)
+	ListCountry(context.Context, *ListCountryRequest) (*ListCountryReply, error)
 	mustEmbedUnimplementedCountryServer()
 }
 
@@ -65,11 +98,20 @@ type CountryServer interface {
 type UnimplementedCountryServer struct {
 }
 
-func (UnimplementedCountryServer) ListCountry(context.Context, *ListCountryRequest) (*ListCountryReply, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ListCountry not implemented")
+func (UnimplementedCountryServer) CreateCountry(context.Context, *CreateCountryRequest) (*CreateCountryReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateCountry not implemented")
+}
+func (UnimplementedCountryServer) UpdateCountry(context.Context, *UpdateCountryRequest) (*UpdateCountryReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateCountry not implemented")
+}
+func (UnimplementedCountryServer) DeleteCountry(context.Context, *DeleteCountryRequest) (*DeleteCountryReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteCountry not implemented")
 }
 func (UnimplementedCountryServer) GetCountry(context.Context, *GetCountryRequest) (*GetCountryReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetCountry not implemented")
+}
+func (UnimplementedCountryServer) ListCountry(context.Context, *ListCountryRequest) (*ListCountryReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListCountry not implemented")
 }
 func (UnimplementedCountryServer) mustEmbedUnimplementedCountryServer() {}
 
@@ -84,20 +126,56 @@ func RegisterCountryServer(s grpc.ServiceRegistrar, srv CountryServer) {
 	s.RegisterService(&Country_ServiceDesc, srv)
 }
 
-func _Country_ListCountry_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ListCountryRequest)
+func _Country_CreateCountry_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateCountryRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(CountryServer).ListCountry(ctx, in)
+		return srv.(CountryServer).CreateCountry(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/api.v1.Country/ListCountry",
+		FullMethod: "/api.v1.Country/CreateCountry",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CountryServer).ListCountry(ctx, req.(*ListCountryRequest))
+		return srv.(CountryServer).CreateCountry(ctx, req.(*CreateCountryRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Country_UpdateCountry_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateCountryRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CountryServer).UpdateCountry(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.v1.Country/UpdateCountry",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CountryServer).UpdateCountry(ctx, req.(*UpdateCountryRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Country_DeleteCountry_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteCountryRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CountryServer).DeleteCountry(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.v1.Country/DeleteCountry",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CountryServer).DeleteCountry(ctx, req.(*DeleteCountryRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -120,6 +198,24 @@ func _Country_GetCountry_Handler(srv interface{}, ctx context.Context, dec func(
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Country_ListCountry_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListCountryRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CountryServer).ListCountry(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.v1.Country/ListCountry",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CountryServer).ListCountry(ctx, req.(*ListCountryRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Country_ServiceDesc is the grpc.ServiceDesc for Country service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -128,12 +224,24 @@ var Country_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*CountryServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "ListCountry",
-			Handler:    _Country_ListCountry_Handler,
+			MethodName: "CreateCountry",
+			Handler:    _Country_CreateCountry_Handler,
+		},
+		{
+			MethodName: "UpdateCountry",
+			Handler:    _Country_UpdateCountry_Handler,
+		},
+		{
+			MethodName: "DeleteCountry",
+			Handler:    _Country_DeleteCountry_Handler,
 		},
 		{
 			MethodName: "GetCountry",
 			Handler:    _Country_GetCountry_Handler,
+		},
+		{
+			MethodName: "ListCountry",
+			Handler:    _Country_ListCountry_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

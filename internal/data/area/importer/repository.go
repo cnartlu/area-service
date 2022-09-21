@@ -5,9 +5,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/cnartlu/area-service/internal/component/ent"
-	"github.com/cnartlu/area-service/internal/component/ent/area"
-	pstrings "github.com/cnartlu/area-service/pkg/utils/strings"
+	"github.com/cnartlu/area-service/internal/data/ent"
+	"github.com/cnartlu/area-service/internal/data/ent/area"
+	pstrings "github.com/cnartlu/area-service/pkg/strings"
 	"github.com/mozillazg/go-pinyin"
 )
 

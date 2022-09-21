@@ -9,7 +9,7 @@ import (
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
 	"github.com/cnartlu/area-service/internal/data/ent"
-	"github.com/cnartlu/area-service/pkg/component/log"
+	"github.com/cnartlu/area-service/pkg/log"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
@@ -46,7 +46,7 @@ func WithTx(ctx context.Context, client *ent.Client, fn func(tx *ent.Tx) error) 
 // NewEnt 实例化数据库客户端
 func NewEnt(config *Config, logger *log.Logger) (*ent.Client, func(), error) {
 	if config == nil {
-		return nil, func() {}, nil
+		return nil, func() {}, fmt.Errorf("db ent config is nil")
 	}
 	switch config.Driver {
 	case dialect.SQLite:

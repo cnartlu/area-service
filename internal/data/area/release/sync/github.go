@@ -3,12 +3,10 @@ package sync
 import (
 	"context"
 	"net/url"
-	"path/filepath"
 
-	"github.com/cnartlu/area-service/internal/component/ent"
-	"github.com/cnartlu/area-service/internal/component/ent/arearelease"
-	"github.com/cnartlu/area-service/internal/component/ent/areareleaseasset"
-	"github.com/cnartlu/area-service/pkg/utils"
+	"github.com/cnartlu/area-service/internal/data/ent"
+	"github.com/cnartlu/area-service/internal/data/ent/arearelease"
+	"github.com/cnartlu/area-service/internal/data/ent/areareleaseasset"
 	"github.com/google/go-github/v45/github"
 	"github.com/pkg/errors"
 )
@@ -74,7 +72,7 @@ func (r *GithubRepo) LoadRemoteLatestRelease(ctx context.Context, owner, repo st
 					return nil, errors.Wrap(err, "failed to FindOneByAssetID by area.release.asset repository")
 				}
 				downloadUrl := asset.GetBrowserDownloadURL()
-				uri, err := url.Parse(downloadUrl)
+				_, err := url.Parse(downloadUrl)
 				if err != nil {
 					return nil, errors.Wrap(err, "failed to parse url")
 				}
@@ -85,7 +83,7 @@ func (r *GithubRepo) LoadRemoteLatestRelease(ctx context.Context, owner, repo st
 					SetAssetLabel(asset.GetLabel()).
 					SetAssetState(asset.GetState()).
 					SetDownloadURL(downloadUrl).
-					SetFilePath(utils.RelativePath(filepath.Join(utils.RuntimePath(), areaRelease.ReleaseNodeID, filepath.Base(uri.Path)))).
+					// SetFilePath(utils.RelativePath(filepath.Join(utils.RuntimePath(), areaRelease.ReleaseNodeID, filepath.Base(uri.Path)))).
 					SetFileSize(uint(asset.GetSize())).
 					SetStatus(areareleaseasset.StatusWaitLoaded))
 			}

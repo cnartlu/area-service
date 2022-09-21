@@ -6,6 +6,8 @@ import (
 
 type FindListParam struct {
 	ParentID uint64
+	RegionID string
+	Level    int
 	Keyword  string
 }
 
@@ -26,15 +28,34 @@ type ManagerUsecase struct {
 }
 
 func (m *ManagerUsecase) List(ctx context.Context, params FindListParam) ([]*Area, error) {
-	return m.manager.FindList(ctx)
+	options := []Option{}
+
+	if params.RegionID != "" {
+		options = append(options, WithReiginIDAndLevel(params.RegionID, uint8(params.Level)))
+	} else {
+		options = append(options, WithParentID(params.ParentID))
+	}
+
+	if params.Keyword != "" {
+		options = append(options, WithKeywordContains(params.Keyword))
+	}
+
+	return m.manager.FindList(ctx, options...)
 }
 
-func (m *ManagerUsecase) CascadeList(ctx context.Context, options ...Option) ([]*Area, error) {
+func (m *ManagerUsecase) CascadeList(ctx context.Context, options ...Option) ([]*CascadeArea, error) {
+	// 查找数据
 	return nil, nil
 }
 
-func (m *ManagerUsecase) Delete(ctx context.Context, id uint64) error {
-	return nil
+// ViewWithIDEQ 查询ID值等价
+func (m *ManagerUsecase) ViewWithIDEQ(ctx context.Context, id uint64) (*Area, error) {
+	return m.manager.FindOne(ctx, WithID(id))
+}
+
+// DeleteWithID 删除值
+func (m *ManagerUsecase) DeleteWithID(ctx context.Context, id uint64) error {
+	return m.manager.Remove(ctx, WithID(id))
 }
 
 func NewManagerUsecase(manager Manager) *ManagerUsecase {

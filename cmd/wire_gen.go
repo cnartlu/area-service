@@ -6,77 +6,43 @@
 package main
 
 import (
-	"github.com/cnartlu/area-service/internal/app"
-	"github.com/cnartlu/area-service/internal/command"
-	"github.com/cnartlu/area-service/internal/command/handler/greet"
-	"github.com/cnartlu/area-service/internal/command/script"
+	area2 "github.com/cnartlu/area-service/internal/biz/area"
 	"github.com/cnartlu/area-service/internal/component/db"
 	"github.com/cnartlu/area-service/internal/config"
-	"github.com/cnartlu/area-service/internal/cron"
-	"github.com/cnartlu/area-service/internal/cron/jobs"
-	"github.com/cnartlu/area-service/internal/repository/area/release"
-	"github.com/cnartlu/area-service/internal/repository/area/release/asset"
-	"github.com/cnartlu/area-service/internal/service/area"
-	release2 "github.com/cnartlu/area-service/internal/service/area/release"
-	"github.com/cnartlu/area-service/internal/service/area/release/asset/importer"
-	"github.com/cnartlu/area-service/internal/transport"
-	"github.com/cnartlu/area-service/internal/transport/grpc"
-	"github.com/cnartlu/area-service/internal/transport/http"
-	area2 "github.com/cnartlu/area-service/internal/transport/http/handler/v1/area"
-	"github.com/cnartlu/area-service/internal/transport/http/router"
-	"github.com/cnartlu/area-service/pkg/component/log"
+	"github.com/cnartlu/area-service/internal/data/area"
+	"github.com/cnartlu/area-service/internal/server"
+	"github.com/cnartlu/area-service/internal/service"
 	"github.com/cnartlu/area-service/pkg/component/redis"
+	"github.com/cnartlu/area-service/pkg/log"
 )
 
 // Injectors from wire.go:
 
 // initApp 初始化应用
-func initApp(logger *log.Logger, configConfig *config.Config) (*app.App, func(), error) {
-	bootstrap := configConfig.Bootstrap
-	redisConfig := bootstrap.Redis
-	client, cleanup, err := redis.New(redisConfig, logger)
+func initApp(logLogger *log.Logger, configConfig *config.Config) (*server.Server, func(), error) {
+	app := configConfig.Config
+	grpc := app.Grpc
+	dbConfig := app.Db
+	client, cleanup, err := db.NewEnt(dbConfig, logLogger)
 	if err != nil {
 		return nil, nil, err
 	}
-	dbConfig := bootstrap.Database
-	entClient, cleanup2, err := db.NewEnt(dbConfig, logger)
+	redisConfig := app.Redis
+	redisClient, cleanup2, err := redis.New(redisConfig)
 	if err != nil {
 		cleanup()
 		return nil, nil, err
 	}
-	repository := release.NewRepository(entClient, client)
-	assetRepository := asset.NewRepository(entClient, client)
-	application := bootstrap.Application
-	service := importer.NewService(logger, application)
-	releaseService := release2.NewService(logger, repository, assetRepository, service)
-	syncArea := jobs.NewSyncArea(logger, releaseService)
-	cronCron, err := cron.New(logger, client, entClient, syncArea)
-	if err != nil {
+	areaRepo := area.NewAreaRepo(client, redisClient)
+	managerUsecase := area2.NewManagerUsecase(areaRepo)
+	areaService := service.NewAreaService(managerUsecase)
+	grpcServer := server.NewGRPCServer(logLogger, grpc, areaService)
+	http := app.Http
+	httpServer := server.NewHTTPServer(logLogger, grpcServer, http)
+	cron := server.NewCronServer(logLogger)
+	serverServer := server.NewServer(logLogger, configConfig, grpcServer, httpServer, cron)
+	return serverServer, func() {
 		cleanup2()
 		cleanup()
-		return nil, nil, err
-	}
-	server := bootstrap.Server
-	server_HTTP := server.Http
-	areaService := area.NewService(logger)
-	handler := area2.NewHandler(areaService)
-	engine := router.New(logger, application, server_HTTP, handler)
-	httpServer := http.NewHTTPServer(logger, server_HTTP, engine)
-	server_GRPC := server.Grpc
-	grpcServer := grpc.NewGRPCServer(logger, server_GRPC)
-	transportTransport := transport.New(logger, application, httpServer, grpcServer)
-	appApp := app.New(logger, cronCron, transportTransport)
-	return appApp, func() {
-		cleanup2()
-		cleanup()
-	}, nil
-}
-
-// initCommand 初始化命令行
-func initCommand(logger *log.Logger, configConfig *config.Config) (*command.Command, func(), error) {
-	handler := greet.NewHandler(logger)
-	s0000000000 := script.NewS0000000000(logger)
-	commandCommand := command.New(handler, s0000000000)
-	return commandCommand, func() {
 	}, nil
 }

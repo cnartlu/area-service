@@ -22,9 +22,18 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AreaClient interface {
-	ListArea(ctx context.Context, in *ListAreaRequest, opts ...grpc.CallOption) (*ListAreaReply, error)
-	GetArea(ctx context.Context, in *GetAreaRequest, opts ...grpc.CallOption) (*GetAreaReply, error)
-	CascadeListArea(ctx context.Context, in *CascadeListAreaRequest, opts ...grpc.CallOption) (*CascadeListAreaReply, error)
+	// List 列表
+	List(ctx context.Context, in *ListAreaRequest, opts ...grpc.CallOption) (*ListAreaReply, error)
+	// View 详情
+	View(ctx context.Context, in *GetAreaRequest, opts ...grpc.CallOption) (*GetAreaReply, error)
+	// CascadeList 级联列表
+	CascadeList(ctx context.Context, in *CascadeListAreaRequest, opts ...grpc.CallOption) (*CascadeListAreaReply, error)
+	// Create 新增
+	Create(ctx context.Context, in *CreateAreaRequest, opts ...grpc.CallOption) (*CreateAreaReply, error)
+	// Update 更新
+	Update(ctx context.Context, in *UpdateAreaRequest, opts ...grpc.CallOption) (*UpdateAreaReply, error)
+	// Delete 删除
+	Delete(ctx context.Context, in *DeleteAreaRequest, opts ...grpc.CallOption) (*DeleteAreaReply, error)
 }
 
 type areaClient struct {
@@ -35,27 +44,54 @@ func NewAreaClient(cc grpc.ClientConnInterface) AreaClient {
 	return &areaClient{cc}
 }
 
-func (c *areaClient) ListArea(ctx context.Context, in *ListAreaRequest, opts ...grpc.CallOption) (*ListAreaReply, error) {
+func (c *areaClient) List(ctx context.Context, in *ListAreaRequest, opts ...grpc.CallOption) (*ListAreaReply, error) {
 	out := new(ListAreaReply)
-	err := c.cc.Invoke(ctx, "/api.v1.Area/ListArea", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/api.v1.Area/List", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *areaClient) GetArea(ctx context.Context, in *GetAreaRequest, opts ...grpc.CallOption) (*GetAreaReply, error) {
+func (c *areaClient) View(ctx context.Context, in *GetAreaRequest, opts ...grpc.CallOption) (*GetAreaReply, error) {
 	out := new(GetAreaReply)
-	err := c.cc.Invoke(ctx, "/api.v1.Area/GetArea", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/api.v1.Area/View", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *areaClient) CascadeListArea(ctx context.Context, in *CascadeListAreaRequest, opts ...grpc.CallOption) (*CascadeListAreaReply, error) {
+func (c *areaClient) CascadeList(ctx context.Context, in *CascadeListAreaRequest, opts ...grpc.CallOption) (*CascadeListAreaReply, error) {
 	out := new(CascadeListAreaReply)
-	err := c.cc.Invoke(ctx, "/api.v1.Area/CascadeListArea", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/api.v1.Area/CascadeList", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *areaClient) Create(ctx context.Context, in *CreateAreaRequest, opts ...grpc.CallOption) (*CreateAreaReply, error) {
+	out := new(CreateAreaReply)
+	err := c.cc.Invoke(ctx, "/api.v1.Area/Create", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *areaClient) Update(ctx context.Context, in *UpdateAreaRequest, opts ...grpc.CallOption) (*UpdateAreaReply, error) {
+	out := new(UpdateAreaReply)
+	err := c.cc.Invoke(ctx, "/api.v1.Area/Update", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *areaClient) Delete(ctx context.Context, in *DeleteAreaRequest, opts ...grpc.CallOption) (*DeleteAreaReply, error) {
+	out := new(DeleteAreaReply)
+	err := c.cc.Invoke(ctx, "/api.v1.Area/Delete", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -66,9 +102,18 @@ func (c *areaClient) CascadeListArea(ctx context.Context, in *CascadeListAreaReq
 // All implementations must embed UnimplementedAreaServer
 // for forward compatibility
 type AreaServer interface {
-	ListArea(context.Context, *ListAreaRequest) (*ListAreaReply, error)
-	GetArea(context.Context, *GetAreaRequest) (*GetAreaReply, error)
-	CascadeListArea(context.Context, *CascadeListAreaRequest) (*CascadeListAreaReply, error)
+	// List 列表
+	List(context.Context, *ListAreaRequest) (*ListAreaReply, error)
+	// View 详情
+	View(context.Context, *GetAreaRequest) (*GetAreaReply, error)
+	// CascadeList 级联列表
+	CascadeList(context.Context, *CascadeListAreaRequest) (*CascadeListAreaReply, error)
+	// Create 新增
+	Create(context.Context, *CreateAreaRequest) (*CreateAreaReply, error)
+	// Update 更新
+	Update(context.Context, *UpdateAreaRequest) (*UpdateAreaReply, error)
+	// Delete 删除
+	Delete(context.Context, *DeleteAreaRequest) (*DeleteAreaReply, error)
 	mustEmbedUnimplementedAreaServer()
 }
 
@@ -76,14 +121,23 @@ type AreaServer interface {
 type UnimplementedAreaServer struct {
 }
 
-func (UnimplementedAreaServer) ListArea(context.Context, *ListAreaRequest) (*ListAreaReply, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ListArea not implemented")
+func (UnimplementedAreaServer) List(context.Context, *ListAreaRequest) (*ListAreaReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method List not implemented")
 }
-func (UnimplementedAreaServer) GetArea(context.Context, *GetAreaRequest) (*GetAreaReply, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetArea not implemented")
+func (UnimplementedAreaServer) View(context.Context, *GetAreaRequest) (*GetAreaReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method View not implemented")
 }
-func (UnimplementedAreaServer) CascadeListArea(context.Context, *CascadeListAreaRequest) (*CascadeListAreaReply, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CascadeListArea not implemented")
+func (UnimplementedAreaServer) CascadeList(context.Context, *CascadeListAreaRequest) (*CascadeListAreaReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CascadeList not implemented")
+}
+func (UnimplementedAreaServer) Create(context.Context, *CreateAreaRequest) (*CreateAreaReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Create not implemented")
+}
+func (UnimplementedAreaServer) Update(context.Context, *UpdateAreaRequest) (*UpdateAreaReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Update not implemented")
+}
+func (UnimplementedAreaServer) Delete(context.Context, *DeleteAreaRequest) (*DeleteAreaReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
 }
 func (UnimplementedAreaServer) mustEmbedUnimplementedAreaServer() {}
 
@@ -98,56 +152,110 @@ func RegisterAreaServer(s grpc.ServiceRegistrar, srv AreaServer) {
 	s.RegisterService(&Area_ServiceDesc, srv)
 }
 
-func _Area_ListArea_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Area_List_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ListAreaRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AreaServer).ListArea(ctx, in)
+		return srv.(AreaServer).List(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/api.v1.Area/ListArea",
+		FullMethod: "/api.v1.Area/List",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AreaServer).ListArea(ctx, req.(*ListAreaRequest))
+		return srv.(AreaServer).List(ctx, req.(*ListAreaRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Area_GetArea_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Area_View_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetAreaRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AreaServer).GetArea(ctx, in)
+		return srv.(AreaServer).View(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/api.v1.Area/GetArea",
+		FullMethod: "/api.v1.Area/View",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AreaServer).GetArea(ctx, req.(*GetAreaRequest))
+		return srv.(AreaServer).View(ctx, req.(*GetAreaRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Area_CascadeListArea_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Area_CascadeList_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CascadeListAreaRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AreaServer).CascadeListArea(ctx, in)
+		return srv.(AreaServer).CascadeList(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/api.v1.Area/CascadeListArea",
+		FullMethod: "/api.v1.Area/CascadeList",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AreaServer).CascadeListArea(ctx, req.(*CascadeListAreaRequest))
+		return srv.(AreaServer).CascadeList(ctx, req.(*CascadeListAreaRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Area_Create_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateAreaRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AreaServer).Create(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.v1.Area/Create",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AreaServer).Create(ctx, req.(*CreateAreaRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Area_Update_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateAreaRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AreaServer).Update(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.v1.Area/Update",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AreaServer).Update(ctx, req.(*UpdateAreaRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Area_Delete_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteAreaRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AreaServer).Delete(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.v1.Area/Delete",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AreaServer).Delete(ctx, req.(*DeleteAreaRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -160,16 +268,28 @@ var Area_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*AreaServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "ListArea",
-			Handler:    _Area_ListArea_Handler,
+			MethodName: "List",
+			Handler:    _Area_List_Handler,
 		},
 		{
-			MethodName: "GetArea",
-			Handler:    _Area_GetArea_Handler,
+			MethodName: "View",
+			Handler:    _Area_View_Handler,
 		},
 		{
-			MethodName: "CascadeListArea",
-			Handler:    _Area_CascadeListArea_Handler,
+			MethodName: "CascadeList",
+			Handler:    _Area_CascadeList_Handler,
+		},
+		{
+			MethodName: "Create",
+			Handler:    _Area_Create_Handler,
+		},
+		{
+			MethodName: "Update",
+			Handler:    _Area_Update_Handler,
+		},
+		{
+			MethodName: "Delete",
+			Handler:    _Area_Delete_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

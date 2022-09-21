@@ -1,84 +1,40 @@
 syntax = "proto3";
-package kratos.api;
+package internal.config;
 
 option go_package = "area-service/internal/config;config";
 
 import "google/protobuf/duration.proto";
-import "google/protobuf/any.proto";
+// import "google/protobuf/any.proto";
+import "pkg/log/config.proto";
 import "pkg/component/redis/redis.proto";
 import "internal/component/db/db.proto";
 
-// Application 应用基础配置
-message Application {
+message Http {
+  string network = 1;
+  string addr = 2;
+  google.protobuf.Duration timeout = 3;
+}
+
+message Grpc {
+  string network = 1;
+  string addr = 2;
+  google.protobuf.Duration timeout = 3;
+}
+
+message Cron {
+
+}
+
+message App {
   bool debug = 1;
   string env = 2;
   string name = 3;
   string proxy = 4;
-}
 
-// Server 服务
-message Server {
-  message HTTP {
-    string network = 1;
-    string addr = 2;
-    google.protobuf.Duration timeout = 3;
-  }
-  message GRPC {
-    string network = 1;
-    string addr = 2;
-    google.protobuf.Duration timeout = 3;
-  }
-  HTTP http = 1;
-  GRPC grpc = 2;
-}
-
-// FileSystem 文件系统，
-message FileSystem {
-  message Disk {
-    // driver 驱动,可配置 local|oss|ucloud|qiniu等
-    string driver = 1;
-    // root 路径，默认为/
-    string root = 2;
-    // url 访问路径
-    string url = 3;
-    // params ...其他配置
-    map<string, google.protobuf.Any> params = 4;
-  }
-  // default 默认使用的磁盘
-  string default = 1;
-  // disks 磁盘配置项
-  map<string, Disk> disks = 2;
-}
-
-// Cache 缓存
-message Cache {
-  message Store {
-    // driver 驱动
-    string driver = 1;
-    // driver_name 驱动名称
-    string driver_name = 2;
-    // params 额外参数配置
-    map<string, google.protobuf.Any> params = 3;
-  }
-  // default 默认
-  string default = 1;
-  map<string, Store> stores = 2;
-}
-
-// Bootstrap 应用启动器
-message Bootstrap {
-  Application application = 1;
-  Server server = 2;
-  internal.component.db.Config database = 3;
-  FileSystem filesystem = 4;
-  Cache cache = 5;
-  pkg.component.redis.Config redis = 6;
-}
-
-message Nacos {
-  string server = 1;
-  string username = 2;
-  string password = 3;
-  string dataId = 4;
-  string group = 5;
+  Http http = 10;
+  Grpc grpc = 11;
+  Cron cron = 12;
+  pkg.log.Config logger = 13;
+  pkg.component.redis.Config redis = 14;
+  component.db.Config db = 15;
 }

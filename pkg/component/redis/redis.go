@@ -5,15 +5,14 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/cnartlu/area-service/pkg/component/log"
 	"github.com/go-redis/redis/v8"
-	"go.uber.org/zap"
 )
 
 // New 创建 redis 客户端
-func New(config *Config, logger *log.Logger) (*redis.Client, func(), error) {
+// 当 Close 客户端时
+func New(config *Config) (*redis.Client, func(), error) {
 	if config == nil {
-		return nil, func() {}, nil
+		return nil, nil, fmt.Errorf("component redis new error config is nil")
 	}
 	if config.Port < 1 {
 		config.Port = 6379
@@ -76,10 +75,10 @@ func New(config *Config, logger *log.Logger) (*redis.Client, func(), error) {
 	}
 
 	cleanup := func() {
-		logger.Info("closing the redis client")
 		if err := client.Close(); err != nil {
-			logger.Error("redis closing error", zap.Error(err))
+			return
 		}
+		return
 	}
 
 	return client, cleanup, nil

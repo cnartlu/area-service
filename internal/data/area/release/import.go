@@ -3,8 +3,8 @@ package release
 import (
 	"context"
 
-	"github.com/cnartlu/area-service/internal/component/ent"
-	"github.com/cnartlu/area-service/internal/component/ent/areareleaseasset"
+	"github.com/cnartlu/area-service/internal/data/ent"
+	"github.com/cnartlu/area-service/internal/data/ent/areareleaseasset"
 	"github.com/go-redis/redis/v8"
 )
 

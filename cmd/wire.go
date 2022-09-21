@@ -7,10 +7,10 @@ package main
 
 import (
 	"github.com/cnartlu/area-service/internal"
-	"github.com/cnartlu/area-service/internal/server"
-	"github.com/cnartlu/area-service/internal/command"
+	// "github.com/cnartlu/area-service/internal/command"
 	"github.com/cnartlu/area-service/internal/config"
-	"github.com/cnartlu/area-service/pkg/component/log"
+	"github.com/cnartlu/area-service/internal/server"
+	"github.com/cnartlu/area-service/pkg/log"
 	"github.com/google/wire"
 )
 
@@ -25,9 +25,9 @@ func initApp(*log.Logger, *config.Config) (*server.Server, func(), error) {
 }
 
 // initCommand 初始化命令行
-func initCommand(*log.Logger, *config.Config) (*command.Command, func(), error) {
-	panic(wire.Build(
-		command.ProviderSet,
-		command.New,
-	))
-}
+// func initCommand(*log.Logger, kconfig.Config) (*command.Command, func(), error) {
+// 	panic(wire.Build(
+// 		command.ProviderSet,
+// 		command.New,
+// 	))
+// }

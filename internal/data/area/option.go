@@ -23,8 +23,20 @@ func (o *option) Limit(limit int) {
 
 }
 
-func (o *option) IDEQ(id uint64) {
+func (o *option) WithID(id uint64) {
 	o.AreaQuery.Where(area.IDEQ(id))
+}
+
+func (o *option) WithParentID(pid uint64) {
+	o.AreaQuery.Where(area.ParentIDEQ(pid))
+}
+
+func (o *option) WithReiginIDAndLevel(regionID string, level uint8) {
+	o.AreaQuery.Where(area.RegionIDEQ(regionID), area.LevelEQ(level))
+}
+
+func (o *option) WithKeywordContains(keyword string) {
+	o.AreaQuery.Where(area.TitleContains(keyword))
 }
 
 func newOption(query *ent.AreaQuery) *option {

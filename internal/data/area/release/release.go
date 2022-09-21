@@ -3,8 +3,8 @@ package release
 import (
 	"context"
 
-	"github.com/cnartlu/area-service/internal/component/ent"
-	"github.com/cnartlu/area-service/internal/component/ent/arearelease"
+	"github.com/cnartlu/area-service/internal/data/ent"
+	"github.com/cnartlu/area-service/internal/data/ent/arearelease"
 	"github.com/go-redis/redis/v8"
 )
 
@@ -81,7 +81,7 @@ func (r *ReleaseRepo) Save(ctx context.Context, data *ent.AreaRelease) (model *e
 	if data.ID == 0 {
 		model, err = r.ent.AreaRelease.Create().
 			SetOwner(data.Owner).
-			SetRepo(data.Repository).
+			// SetRepo(data.Repository).
 			SetReleaseID(data.ReleaseID).
 			SetReleaseName(data.ReleaseName).
 			SetReleaseNodeID(data.ReleaseNodeID).
@@ -92,7 +92,7 @@ func (r *ReleaseRepo) Save(ctx context.Context, data *ent.AreaRelease) (model *e
 	} else {
 		model, err = r.ent.AreaRelease.UpdateOne(data).
 			SetOwner(data.Owner).
-			SetRepo(data.Repository).
+			// SetRepo(data.Repository).
 			SetReleaseID(data.ReleaseID).
 			SetReleaseName(data.ReleaseName).
 			SetReleaseNodeID(data.ReleaseNodeID).

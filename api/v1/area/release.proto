@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package api.v1.area;
+
+option go_package = "github.com/cnartlu/area-service/api/v1/area;area";
+option java_multiple_files = true;
+option java_package = "api.v1.area";
+
+service Release {
+	rpc CreateRelease (CreateReleaseRequest) returns (CreateReleaseReply);
+	rpc UpdateRelease (UpdateReleaseRequest) returns (UpdateReleaseReply);
+	rpc DeleteRelease (DeleteReleaseRequest) returns (DeleteReleaseReply);
+	rpc GetRelease (GetReleaseRequest) returns (GetReleaseReply);
+	rpc ListRelease (ListReleaseRequest) returns (ListReleaseReply);
+}
+
+message CreateReleaseRequest {}
+message CreateReleaseReply {}
+
+message UpdateReleaseRequest {}
+message UpdateReleaseReply {}
+
+message DeleteReleaseRequest {}
+message DeleteReleaseReply {}
+
+message GetReleaseRequest {}
+message GetReleaseReply {}
+
+message ListReleaseRequest {}
+message ListReleaseReply {}

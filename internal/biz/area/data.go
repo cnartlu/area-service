@@ -16,5 +16,10 @@ type Area struct {
 }
 
 type CascadeArea struct {
-	RegionID string
+	ID             uint64
+	RegionID       string
+	Title          string
+	Level          int
+	Items          []*CascadeArea
+	ChildrenNumber int
 }

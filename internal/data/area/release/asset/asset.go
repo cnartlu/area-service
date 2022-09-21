@@ -3,7 +3,7 @@ package asset
 import (
 	"context"
 
-	"github.com/cnartlu/area-service/internal/component/ent"
+	"github.com/cnartlu/area-service/internal/data/ent"
 	"github.com/go-redis/redis/v8"
 )
 

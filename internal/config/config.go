@@ -4,22 +4,55 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/cnartlu/area-service/pkg/utils"
+	pkgfilepath "github.com/cnartlu/area-service/pkg/filepath"
+
 	kconfig "github.com/go-kratos/kratos/v2/config"
 	kconfigFile "github.com/go-kratos/kratos/v2/config/file"
 )
 
+var _ kconfig.Config = &Config{}
+
 type Config struct {
-	Config    kconfig.Config
-	Bootstrap *Bootstrap
+	// 处理请求
+	// c 配置读取器
+	c      kconfig.Config
+	Config *App
 }
 
+// Load 加载数据
+func (c *Config) Load() error {
+	return c.c.Load()
+}
+
+// Scan 解析赋值
+func (c *Config) Scan(v any) error {
+	return c.c.Scan(v)
+}
+
+// Value 获取值
+func (c *Config) Value(key string) kconfig.Value {
+	return c.c.Value(key)
+}
+
+// Watch 监听修改
+func (c *Config) Watch(key string, w kconfig.Observer) error {
+	return c.c.Watch(key, w)
+}
+
+// Close 关闭配置器
 func (c *Config) Close() error {
-	return c.Config.Close()
+	return c.c.Close()
 }
 
-func New(filename string) (*Config, error) {
-	// 初始化配置器
+// Config 获取应用配置
+func (c *Config) GetConfig() *App {
+	if c.Config == nil {
+		return &App{}
+	}
+	return c.Config
+}
+
+func NewConfig(filename string) (*Config, error) {
 	var options []kconfig.Option
 	if filename == "" {
 		filename = "config.yaml"
@@ -33,8 +66,8 @@ func New(filename string) (*Config, error) {
 		filepath.Join("config", filename),
 		filepath.Join("..", "config", filename),
 		filepath.Join("etc", filename),
-		filepath.Join(utils.RootPath(), "etc", filename),
-		filepath.Join(utils.RootPath(), "../etc", filename),
+		filepath.Join(pkgfilepath.RootPath(), "etc", filename),
+		filepath.Join(pkgfilepath.RootPath(), "../etc", filename),
 	)
 	for _, filename := range filenames {
 		_, err := os.Stat(filename)
@@ -48,22 +81,13 @@ func New(filename string) (*Config, error) {
 	if err := config.Load(); err != nil {
 		return nil, err
 	}
-	var bootstrap Bootstrap
-	if err := config.Scan(&bootstrap); err != nil {
-		defer config.Close()
+	c := &Config{
+		c:      config,
+		Config: &App{},
+	}
+	if err := config.Scan(c.Config); err != nil {
+		config.Close()
 		return nil, err
 	}
-	// 初始化默认配置数据
-	if bootstrap.GetApplication() == nil {
-		bootstrap.Application = &Application{
-			Name:  "",
-			Debug: false,
-			Env:   "Prod",
-			Proxy: "",
-		}
-	}
-	return &Config{
-		Config:    config,
-		Bootstrap: &bootstrap,
-	}, nil
+	return c, nil
 }
