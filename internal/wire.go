@@ -1,4 +1,8 @@
+//go:build wireinject
+// +build wireinject
+
 // The build tag makes sure the stub is not built in the final build.
+
 package internal
 
 import (
@@ -17,9 +21,5 @@ var ProviderSet = wire.NewSet(
 	component.ProviderSet,
 	biz.ProviderSet,
 	service.ProviderSet,
-	wire.NewSet(
-		server.NewCronServer,
-		server.NewGRPCServer,
-		server.NewHTTPServer,
-	),
+	server.ProviderSet,
 )

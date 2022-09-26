@@ -3,13 +3,14 @@
 
 // The build tag makes sure the stub is not built in the final build.
 
-package component
+package server
 
 import (
-	"github.com/cnartlu/area-service/internal/component/db"
 	"github.com/google/wire"
 )
 
 var ProviderSet = wire.NewSet(
-	db.NewEnt,
+	NewCronServer,
+	NewGRPCServer,
+	NewHTTPServer,
 )
