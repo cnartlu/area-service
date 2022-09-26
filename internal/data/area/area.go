@@ -6,6 +6,8 @@ import (
 
 	bizArea "github.com/cnartlu/area-service/internal/biz/area"
 	"github.com/cnartlu/area-service/internal/data/ent"
+	"github.com/cnartlu/area-service/internal/data/ent/area"
+	"github.com/go-kratos/kratos/v2/errors"
 	"github.com/go-redis/redis/v8"
 )
 
@@ -74,26 +76,36 @@ func (r *AreaRepo) FindOne(ctx context.Context, options ...bizArea.Option) (*biz
 	}
 	result, err := query.First(ctx)
 	if err != nil {
+		if ent.IsNotFound(err) {
+			err = errors.NotFound("NOT_FOUND", err.Error()).WithCause(err)
+		}
 		return nil, err
 	}
 	data := r.toAreaData(result)
-	return &data, err
+	return &data, nil
 }
 
 // FindList 查找数据
 func (r *AreaRepo) Save(ctx context.Context, x *bizArea.Area) (*bizArea.Area, error) {
-	query := r.ent.Area.Query()
-	// if len(options) > 0 {
-	// 	q := newOption(query)
-	// 	for _, option := range options {
-	// 		option(q)
-	// 	}
-	// }
-	result, err := query.First(ctx)
+	var (
+		model    *ent.Area
+		err      error
+		isUpdate bool
+	)
+	if x.ID > 0 {
+		model, err = r.ent.Area.Query().Where(area.IDEQ(x.ID)).First(ctx)
+		if err != nil {
+		}
+	}
+	if isUpdate {
+		model, err = model.Update().Save(ctx)
+	} else {
+		model, err = r.ent.Area.Create().Save(ctx)
+	}
 	if err != nil {
 		return nil, err
 	}
-	data := r.toAreaData(result)
+	data := r.toAreaData(model)
 	return &data, err
 }
 

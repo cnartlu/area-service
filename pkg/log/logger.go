@@ -78,7 +78,6 @@ func (l *Logger) new() (err error) {
 
 // 实现日志器的方法
 func (l *Logger) Log(level log.Level, keyvals ...interface{}) error {
-	l.new()
 	if len(keyvals) == 0 || len(keyvals)%2 != 0 {
 		l.zap.Warn(fmt.Sprint("Keyvalues must appear in pairs: ", keyvals))
 		return nil
@@ -104,62 +103,39 @@ func (l *Logger) Log(level log.Level, keyvals ...interface{}) error {
 	return nil
 }
 
-func (l *Logger) DebugLog(keyvals ...interface{}) {
-	l.new()
-	if len(keyvals) == 0 || len(keyvals)%2 != 0 {
-		l.zap.Warn(fmt.Sprint("Keyvalues must appear in pairs: ", keyvals))
-		return
-	}
-	var data []zap.Field
-	for i := 0; i < len(keyvals); i += 2 {
-		data = append(data, zap.Any(fmt.Sprint(keyvals[i]), keyvals[i+1]))
-	}
-	zap := l.zap.WithOptions(zap.AddCallerSkip(1))
-	zap.Debug("", data...)
-}
-
 func (l *Logger) Debug(msg string, fields ...zapcore.Field) {
-	l.new()
 	l.zap.Debug(msg, fields...)
 }
 
 func (l *Logger) Info(msg string, fields ...zapcore.Field) {
-	l.new()
 	l.zap.Info(msg, fields...)
 }
 
 func (l *Logger) Warn(msg string, fields ...zapcore.Field) {
-	l.new()
 	l.zap.Warn(msg, fields...)
 }
 
 func (l *Logger) Error(msg string, fields ...zapcore.Field) {
-	l.new()
 	l.zap.Error(msg, fields...)
 }
 
 func (l *Logger) DPanic(msg string, fields ...zapcore.Field) {
-	l.new()
 	l.zap.DPanic(msg, fields...)
 }
 
 func (l *Logger) Panic(msg string, fields ...zapcore.Field) {
-	l.new()
 	l.zap.Panic(msg, fields...)
 }
 
 func (l *Logger) Fatal(msg string, fields ...zapcore.Field) {
-	l.new()
 	l.zap.Fatal(msg, fields...)
 }
 
 func (l *Logger) Sync() error {
-	l.new()
 	return l.zap.Sync()
 }
 
 func (l *Logger) Close() error {
-	l.new()
 	return l.zap.Sync()
 }
 

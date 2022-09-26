@@ -31,8 +31,12 @@ func (o *option) WithParentID(pid uint64) {
 	o.AreaQuery.Where(area.ParentIDEQ(pid))
 }
 
-func (o *option) WithReiginIDAndLevel(regionID string, level uint8) {
-	o.AreaQuery.Where(area.RegionIDEQ(regionID), area.LevelEQ(level))
+func (o *option) WithRegionID(regionID string) {
+	o.AreaQuery.Where(area.RegionIDEQ(regionID))
+}
+
+func (o *option) WithLevel(level int) {
+	o.AreaQuery.Where(area.LevelEQ(uint8(level)))
 }
 
 func (o *option) WithKeywordContains(keyword string) {

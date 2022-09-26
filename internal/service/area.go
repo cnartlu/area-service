@@ -4,6 +4,7 @@ import (
 	"context"
 
 	pb "github.com/cnartlu/area-service/api/v1"
+	"github.com/go-kratos/kratos/v2/errors"
 
 	"github.com/cnartlu/area-service/internal/biz/area"
 )
@@ -27,6 +28,7 @@ func (s *AreaService) List(ctx context.Context, req *pb.ListAreaRequest) (*pb.Li
 		RegionID: req.GetRegionId(),
 		Level:    int(req.GetLevel()),
 		Keyword:  req.GetKw(),
+		Order:    req.GetOrder(),
 	})
 	if err != nil {
 		return nil, err
@@ -35,34 +37,50 @@ func (s *AreaService) List(ctx context.Context, req *pb.ListAreaRequest) (*pb.Li
 	for _, result := range results {
 		result := result
 		reply.Items = append(reply.Items, &pb.ListAreaReply_Item{
-			Id:             result.ID,
-			RegionId:       result.RegionID,
-			Title:          result.Title,
-			Ucfirst:        result.Ucfirst,
-			Pinyin:         result.Pinyin,
-			CityCode:       result.CityCode,
-			ZipCode:        result.ZipCode,
-			Level:          uint32(result.Level),
-			UpdateTime:     uint64(result.UpddateAt.Unix()),
-			ChildrenNumber: 0,
+			Id:         result.ID,
+			RegionId:   result.RegionID,
+			Title:      result.Title,
+			Ucfirst:    result.Ucfirst,
+			Pinyin:     result.Pinyin,
+			CityCode:   result.CityCode,
+			ZipCode:    result.ZipCode,
+			Level:      uint32(result.Level),
+			UpdateTime: uint64(result.UpddateAt.Unix()),
 		})
 	}
 	return reply, nil
 }
 
 func (s *AreaService) View(ctx context.Context, req *pb.GetAreaRequest) (*pb.GetAreaReply, error) {
-	result, err := s.area.ViewWithIDEQ(ctx, req.GetId())
+	var (
+		id     = req.GetId()
+		result *area.Area
+		err    error
+	)
+	if id > 0 {
+		result, err = s.area.ViewWithIDEQ(ctx, id)
+	} else {
+		regionId := req.GetRegionId()
+		if regionId == "" {
+			return nil, errors.BadRequest("PARAMS_EMPTY", "参数不能为空")
+		}
+		result, err = s.area.ViewWithRegionID(ctx, regionId, int(req.GetLevel()))
+	}
 	if err != nil {
-		return nil, err
+		return nil, errors.NotFound("NOT_FOUND", err.Error())
 	}
 	return &pb.GetAreaReply{
+		Id:         result.ID,
+		RegionId:   result.RegionID,
 		Title:      result.Title,
 		Ucfirst:    result.Ucfirst,
 		Pinyin:     result.Pinyin,
 		CityCode:   result.CityCode,
 		ZipCode:    result.ZipCode,
 		Level:      uint32(result.Level),
+		CreateTime: uint64(result.CreateAt.Unix()),
 		UpdateTime: uint64(result.UpddateAt.Unix()),
+		Parent:     nil,
 	}, nil
 }
 

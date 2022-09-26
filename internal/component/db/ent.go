@@ -6,10 +6,12 @@ import (
 	"strconv"
 	"time"
 
+	"ariga.io/entcache"
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
 	"github.com/cnartlu/area-service/internal/data/ent"
 	"github.com/cnartlu/area-service/pkg/log"
+	"github.com/go-redis/redis/v8"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
@@ -18,6 +20,35 @@ import (
 	// 使用pgx驱动PostgreSQL​
 	_ "github.com/jackc/pgx/v4/stdlib"
 )
+
+type entLogger struct {
+	*log.Logger
+}
+
+// DebugLog 实现ent的日志记录器方法
+func (l *entLogger) DebugLog(keyvals ...interface{}) {
+	length := len(keyvals)
+	switch length {
+	case 0:
+	case 1:
+		l.Debug(fmt.Sprint(keyvals[0]))
+	default:
+		var (
+			msg  string
+			data []zap.Field
+		)
+		if length%2 == 0 {
+			for i := 0; i < len(keyvals); i += 2 {
+				data = append(data, zap.Any(fmt.Sprint(keyvals[i]), keyvals[i+1]))
+			}
+		} else {
+			for i := 1; i < len(keyvals); i += 2 {
+				data = append(data, zap.Any(fmt.Sprint(keyvals[i]), keyvals[i+1]))
+			}
+		}
+		l.Debug(msg, data...)
+	}
+}
 
 // WithTx 数据库事务
 func WithTx(ctx context.Context, client *ent.Client, fn func(tx *ent.Tx) error) error {
@@ -60,6 +91,7 @@ func NewEnt(config *Config, logger *log.Logger) (*ent.Client, func(), error) {
 	default:
 		config.Driver = dialect.MySQL
 	}
+
 	driver, err := sql.Open(config.Driver, buildSource(config))
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "ent open fail")
@@ -70,19 +102,6 @@ func NewEnt(config *Config, logger *log.Logger) (*ent.Client, func(), error) {
 	// 连接的最大生命周期
 	driver.DB().SetConnMaxLifetime(0)
 	driver.DB().SetConnMaxIdleTime(time.Second * 60 * 60)
-
-	// if config.MaxIdleConn > 0 {
-	// 	driver.DB().SetMaxIdleConns(config.MaxIdleConn)
-	// }
-	// if config.MaxOpenConn > 0 {
-	// 	driver.DB().SetMaxOpenConns(config.MaxOpenConn)
-	// }
-	// if config.ConnMaxIdleTime > 0 {
-	// 	driver.DB().SetConnMaxIdleTime(time.Duration(config.ConnMaxIdleTime) * time.Second)
-	// }
-	// if config.ConnMaxLifeTime > 0 {
-	// 	driver.DB().SetConnMaxLifetime(time.Duration(config.ConnMaxLifeTime) * time.Second)
-	// }
 
 	cleanup := func() {
 		logger.Info("closing the ent resources")
@@ -95,24 +114,44 @@ func NewEnt(config *Config, logger *log.Logger) (*ent.Client, func(), error) {
 
 	if err := driver.DB().Ping(); err != nil {
 		defer cleanup()
-		logger.Error("", zap.Error(err))
+		logger.Error("ping db resources failed", zap.Error(err))
 		return nil, nil, err
 	}
 
+	// 创建缓存
+	drv := entcache.NewDriver(
+		driver,
+		entcache.Hash(func(query string, args []any) (entcache.Key, error) {
+			v, err := entcache.DefaultHash(query, args)
+			if err != nil {
+				return 0, err
+			}
+			return fmt.Sprintf("area.ent.%d", v.(uint64)), nil
+		}),
+		entcache.TTL(3600*time.Second),
+		entcache.Levels(
+			entcache.NewLRU(180),
+			entcache.NewRedis(redis.NewClient(&redis.Options{
+				Addr: "127.0.0.1:6379",
+			})),
+		),
+	)
+
+	entlog := entLogger{Logger: logger}
 	client := ent.NewClient(
-		ent.Driver(driver),
+		ent.Debug(),
+		ent.Driver(drv),
 		ent.Log(func(i ...interface{}) {
-			logger.DebugLog(i)
+			entlog.DebugLog(i)
 		}),
 	)
 
 	// err = client.Schema.Create(
-	// 	context.Background(),
+	// 	entcache.Skip(context.Background()),
 	// 	migrate.WithForeignKeys(false),
 	// )
 	// if err != nil {
-	// 	hLogger.Errorf("failed to creat schema resources: %v", err)
-	// 	return nil, nil, err
+	// 	return client, cleanup, err
 	// }
 
 	return client, cleanup, nil

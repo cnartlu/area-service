@@ -6,14 +6,12 @@ type pager interface {
 	Offset(int)
 }
 
-// order 排序
-type order interface {
-}
-
 type OptionInterface interface {
 	pager
-	order
 	WithID(uint64)
+	WithParentID(pid uint64)
+	WithRegionID(regionID string)
+	WithLevel(int)
 }
 
 // Option 请求条件接口
@@ -36,30 +34,28 @@ func Limit(limit int) Option {
 // WithID 查询具体ID
 func WithID(id uint64) Option {
 	return func(r OptionInterface) {
-		i, ok := r.(interface{ WithID(uint64) })
-		if ok {
-			i.WithID(id)
-		}
+		r.WithID(id)
 	}
 }
 
 // WithParentIDEQ 父级ID等价
-func WithParentID(id uint64) Option {
+func WithParentID(pid uint64) Option {
 	return func(r OptionInterface) {
-		i, ok := r.(interface{ WithParentID(uint64) })
-		if ok {
-			i.WithParentID(id)
-		}
+		r.WithParentID(pid)
 	}
 }
 
-// WithReiginIDAndLevel 查询区域ID和级别
-func WithReiginIDAndLevel(regionID string, level uint8) Option {
+// WithRegionID 区域标识
+func WithRegionID(regionID string) Option {
 	return func(r OptionInterface) {
-		i, ok := r.(interface{ WithReiginIDAndLevel(string, uint8) })
-		if ok {
-			i.WithReiginIDAndLevel(regionID, level)
-		}
+		r.WithRegionID(regionID)
+	}
+}
+
+// WithLevel 级别
+func WithLevel(level int) Option {
+	return func(r OptionInterface) {
+		r.WithLevel(level)
 	}
 }
 

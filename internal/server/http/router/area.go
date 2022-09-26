@@ -6,6 +6,7 @@ import (
 	v1 "github.com/cnartlu/area-service/api/v1"
 	"github.com/cnartlu/area-service/internal/server/http/response"
 	"github.com/gin-gonic/gin"
+	"github.com/go-kratos/kratos/v2/errors"
 	"github.com/go-kratos/kratos/v2/transport/http/binding"
 	"google.golang.org/grpc"
 )
@@ -21,29 +22,34 @@ func NewArea(
 			param := &v1.ListAreaRequest{}
 			err := binding.BindQuery(c.Request.URL.Query(), param)
 			if err != nil {
-				c.AbortWithStatusJSON(http.StatusBadRequest, err)
+				c.AbortWithStatusJSON(errors.Code(err), err)
 				return
 			}
 			res, err := client.List(c.Request.Context(), param)
 			if err != nil {
-				c.AbortWithStatusJSON(http.StatusBadGateway, err)
+				err := errors.FromError(err)
+				c.AbortWithStatusJSON(int(err.GetCode()), err)
 				return
 			}
-			c.JSON(http.StatusOK, response.NewSuccessDataResponse(res))
+			c.JSON(errors.Code(nil), response.NewSuccessDataResponse(res))
 		})
+
 		g1.GET("/view", func(c *gin.Context) {
 			param := &v1.GetAreaRequest{}
-			if err := c.MustBindWith(param, nil); err != nil {
-				c.AbortWithError(http.StatusOK, err)
+			err := binding.BindQuery(c.Request.URL.Query(), param)
+			if err != nil {
+				c.AbortWithStatusJSON(errors.Code(err), err)
 				return
 			}
 			res, err := client.View(c.Request.Context(), param)
 			if err != nil {
-				c.AbortWithError(http.StatusOK, err)
+				err := errors.FromError(err)
+				c.AbortWithStatusJSON(int(err.GetCode()), err)
 				return
 			}
-			c.JSON(http.StatusOK, response.NewSuccessDataResponse(res))
+			c.JSON(errors.Code(nil), response.NewSuccessDataResponse(res))
 		})
+
 		g1.POST("/create", func(c *gin.Context) {
 			res, err := client.Create(c.Request.Context(), &v1.CreateAreaRequest{})
 			if err != nil {

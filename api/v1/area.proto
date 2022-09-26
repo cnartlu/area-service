@@ -41,9 +41,8 @@ message ListAreaReply {
 		string pinyin = 6;
 		string city_code = 7;
 		string zip_code = 8;
-		uint32 children_number = 9;
-		uint32 level = 10;
-		uint64 update_time = 11;
+		uint32 level = 9;
+		uint64 update_time = 10;
 	}
 	repeated Item items = 1;
 }
@@ -51,14 +50,14 @@ message ListAreaReply {
 message GetAreaRequest {
 	oneof parent {
 		uint64 id = 1;
-		uint64 region_id = 2;
+		string region_id = 2;
 	}
 	uint32 level = 3;
 }
 
 message GetAreaReply {
 	uint64 id = 1;
-	uint64 region_id = 2;
+	string region_id = 2;
 	string title = 3;
 	string lat = 4;
 	string lng = 5;
@@ -73,26 +72,26 @@ message GetAreaReply {
 }
 
 message CascadeListAreaRequest {
-	// 父级标识ID
-	uint64 parent_region_id = 1;
-	// 父级标识级别
-	uint32 parent_level = 2;
-	// 搜索关键字
-	string kw = 3;
-	// 拉取数据深度，超出部分忽略，0不限制
-	uint32 deep = 4;
+	oneof parent {
+		uint64 id = 1;
+		string region_id = 2;
+	}
+	int32 level = 3;
+	int32 deep = 4;
+	string kw = 5;
 }
 
 message CascadeListAreaReply {
 	message Item {
-		uint64 region_id = 1;
-		string title = 2;
-		string lat = 3;
-		string lng = 4;
-		string ucfirst = 5;
-		string pinyin = 6;
-		uint32 level = 7;
-		repeated Item items = 8;
+		uint64 id = 1;
+		string region_id = 2;
+		string title = 3;
+		string lat = 4;
+		string lng = 5;
+		string ucfirst = 6;
+		string pinyin = 7;
+		uint32 level = 8;
+		repeated Item items = 9;
 	}
 	repeated Item items = 1;
 }

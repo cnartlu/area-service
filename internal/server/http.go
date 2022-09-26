@@ -4,7 +4,6 @@ import (
 	"github.com/cnartlu/area-service/internal/config"
 	serverhttp "github.com/cnartlu/area-service/internal/server/http"
 	"github.com/cnartlu/area-service/pkg/log"
-	"github.com/go-kratos/kratos/v2/middleware/recovery"
 	"github.com/go-kratos/kratos/v2/transport/grpc"
 	"github.com/go-kratos/kratos/v2/transport/http"
 	"go.uber.org/zap"
@@ -16,11 +15,7 @@ func NewHTTPServer(
 	g *grpc.Server,
 	c *config.Http,
 ) *http.Server {
-	var opts = []http.ServerOption{
-		http.Middleware(
-			recovery.Recovery(),
-		),
-	}
+	var opts = []http.ServerOption{}
 	if c == nil {
 		c = &config.Http{}
 	}
@@ -33,13 +28,17 @@ func NewHTTPServer(
 	if c.Timeout != nil {
 		opts = append(opts, http.Timeout(c.Timeout.AsDuration()))
 	}
+
 	srv := http.NewServer(opts...)
+
 	grpcEndpoint, _ := g.Endpoint()
 	engine, err := serverhttp.NewGin(grpcEndpoint.Host)
 	if err != nil {
 		logger.Error("http init failed", zap.Error(err))
 		return srv
 	}
-	srv.HandlePrefix("", engine)
+
+	srv.HandlePrefix("/", engine)
+
 	return srv
 }
