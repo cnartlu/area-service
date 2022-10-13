@@ -6,17 +6,22 @@ import (
 
 	pkgfilepath "github.com/cnartlu/area-service/pkg/filepath"
 
+	_ "github.com/cnartlu/area-service/pkg/log/target"
 	kconfig "github.com/go-kratos/kratos/v2/config"
 	kconfigFile "github.com/go-kratos/kratos/v2/config/file"
 )
 
-var _ kconfig.Config = &Config{}
+var (
+	_ Configure = (*Config)(nil)
+)
+
+type Configure interface {
+	kconfig.Config
+}
 
 type Config struct {
-	// 处理请求
-	// c 配置读取器
-	c      kconfig.Config
-	Config *App
+	c   kconfig.Config
+	App *App
 }
 
 // Load 加载数据
@@ -25,7 +30,7 @@ func (c *Config) Load() error {
 }
 
 // Scan 解析赋值
-func (c *Config) Scan(v any) error {
+func (c *Config) Scan(v interface{}) error {
 	return c.c.Scan(v)
 }
 
@@ -45,11 +50,11 @@ func (c *Config) Close() error {
 }
 
 // Config 获取应用配置
-func (c *Config) GetConfig() *App {
-	if c.Config == nil {
-		return &App{}
+func (c *Config) GetApp() *App {
+	if c.App == nil {
+		c.App.Reset()
 	}
-	return c.Config
+	return c.App
 }
 
 func NewConfig(filename string) (*Config, error) {
@@ -82,10 +87,10 @@ func NewConfig(filename string) (*Config, error) {
 		return nil, err
 	}
 	c := &Config{
-		c:      config,
-		Config: &App{},
+		c:   config,
+		App: &App{},
 	}
-	if err := config.Scan(c.Config); err != nil {
+	if err := config.Scan(c.App); err != nil {
 		config.Close()
 		return nil, err
 	}

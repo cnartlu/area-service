@@ -26,7 +26,7 @@ message Cron {
 }
 
 message App {
-  bool debug = 1;
+  optional bool debug = 1;
   string env = 2;
   string name = 3;
   string proxy = 4;

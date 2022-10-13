@@ -1,3 +1,14 @@
+package http
+
+import (
+	"net/http"
+	"text/template"
+
+	"github.com/gin-gonic/gin"
+	"github.com/go-kratos/kratos/v2/errors"
+)
+
+var pageTemplate, _ = template.New("").Parse(`
 <!DOCTYPE html>
 <html lang="en" >
 <head>
@@ -43,3 +54,28 @@
   </script>
 </body>
 </html>
+`)
+
+func NoRoute(e *gin.Engine) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		switch c.ContentType() {
+		case "application/json":
+			c.AbortWithStatusJSON(http.StatusNotFound, errors.NotFound("PageNotFound", "page not found."))
+		default:
+			c.Abort()
+			c.HTML(http.StatusNotFound, "", gin.H{})
+		}
+	}
+}
+
+func NoMethod(data []byte) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		switch c.ContentType() {
+		case "application/json":
+			c.AbortWithStatusJSON(http.StatusMethodNotAllowed, errors.NotFound("MethodNotAllowed", "request method not allowed."))
+		default:
+			c.Abort()
+			c.HTML(http.StatusNotFound, "", gin.H{})
+		}
+	}
+}

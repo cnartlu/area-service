@@ -7,7 +7,7 @@ http:
   timeout: 1s
 grpc:
   addr: 0.0.0.0:9000
-  timeout: 1s
+  timeout: 30s
 db:
   driver: mysql
   source: root:xingyun@tcp(127.0.0.1:3306)/ad_area_service  
@@ -16,3 +16,7 @@ redis:
   port: 6379
   read_timeout: 0.2s
   write_timeout: 0.2s
+logger:
+  targets:
+    file:
+      type: file

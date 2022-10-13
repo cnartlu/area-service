@@ -4,7 +4,6 @@ import (
 	"context"
 
 	pb "github.com/cnartlu/area-service/api/v1"
-	"github.com/go-kratos/kratos/v2/errors"
 
 	"github.com/cnartlu/area-service/internal/biz/area"
 )
@@ -60,14 +59,10 @@ func (s *AreaService) View(ctx context.Context, req *pb.GetAreaRequest) (*pb.Get
 	if id > 0 {
 		result, err = s.area.ViewWithIDEQ(ctx, id)
 	} else {
-		regionId := req.GetRegionId()
-		if regionId == "" {
-			return nil, errors.BadRequest("PARAMS_EMPTY", "参数不能为空")
-		}
-		result, err = s.area.ViewWithRegionID(ctx, regionId, int(req.GetLevel()))
+		result, err = s.area.ViewWithRegionID(ctx, req.GetRegionId(), int(req.GetLevel()))
 	}
 	if err != nil {
-		return nil, errors.NotFound("NOT_FOUND", err.Error())
+		return nil, err
 	}
 	return &pb.GetAreaReply{
 		Id:         result.ID,
@@ -85,7 +80,33 @@ func (s *AreaService) View(ctx context.Context, req *pb.GetAreaRequest) (*pb.Get
 }
 
 func (s *AreaService) CascadeList(ctx context.Context, req *pb.CascadeListAreaRequest) (*pb.CascadeListAreaReply, error) {
-	return &pb.CascadeListAreaReply{}, nil
+	results, err := s.area.CascadeList(ctx, req.GetId(), 0)
+	if err != nil {
+		return nil, err
+	}
+	xy := &pb.CascadeListAreaReply{}
+	var handlerFunc func([]*area.CascadeArea) []*pb.CascadeListAreaReply_Item
+	handlerFunc = func(results []*area.CascadeArea) []*pb.CascadeListAreaReply_Item {
+		items := make([]*pb.CascadeListAreaReply_Item, len(results))
+		for k, result := range results {
+			result := result
+			item := pb.CascadeListAreaReply_Item{
+				Id:       result.ID,
+				RegionId: result.RegionID,
+				Title:    result.Title,
+				Level:    uint32(result.Level),
+				Items:    make([]*pb.CascadeListAreaReply_Item, result.ChildrenNumber),
+			}
+			if result.ChildrenNumber > 0 {
+				item.Items = handlerFunc(result.Items)
+			}
+			items[k] = &item
+		}
+		return items
+	}
+
+	xy.Items = handlerFunc(results)
+	return xy, nil
 }
 
 func (s *AreaService) Create(ctx context.Context, req *pb.CreateAreaRequest) (*pb.CreateAreaReply, error) {

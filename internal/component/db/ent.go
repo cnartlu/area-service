@@ -31,7 +31,7 @@ func (l *entLogger) DebugLog(keyvals ...interface{}) {
 	switch length {
 	case 0:
 	case 1:
-		l.Debug(fmt.Sprint(keyvals[0]))
+		l.AddCallerSkip(1).Debug(fmt.Sprint(keyvals[0]))
 	default:
 		var (
 			msg  string
@@ -46,7 +46,7 @@ func (l *entLogger) DebugLog(keyvals ...interface{}) {
 				data = append(data, zap.Any(fmt.Sprint(keyvals[i]), keyvals[i+1]))
 			}
 		}
-		l.Debug(msg, data...)
+		l.AddCallerSkip(1).Debug(msg, data...)
 	}
 }
 
@@ -104,11 +104,10 @@ func NewEnt(config *Config, logger *log.Logger) (*ent.Client, func(), error) {
 	driver.DB().SetConnMaxIdleTime(time.Second * 60 * 60)
 
 	cleanup := func() {
-		logger.Info("closing the ent resources")
-
+		logger.Info("[ent] db client stopping")
 		err = driver.Close()
 		if err != nil {
-			logger.Error("close db resources failed", zap.Error(err))
+			logger.Error("[ent] db client stopping error", zap.Error(err))
 		}
 	}
 

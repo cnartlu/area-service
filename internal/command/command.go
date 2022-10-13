@@ -9,8 +9,40 @@ import (
 
 func Setup(rootCommand *cobra.Command, newCommand func() (*Command, func(), error)) {
 	set := commandset.NewCommandSet(rootCommand)
+	// 默认执行的方法
+	rootCommand.Run = func(cmd *cobra.Command, args []string) {
+	}
 
 	// TODO 编写子命令
+	set.Register([]*commandset.Command{
+		{
+			Entity: &cobra.Command{
+				Use:   "start",
+				Short: "reload the application",
+				RunE: func(cmd *cobra.Command, args []string) error {
+					return nil
+				},
+			},
+		},
+		{
+			Entity: &cobra.Command{
+				Use:   "restart",
+				Short: "reload the application",
+				RunE: func(cmd *cobra.Command, args []string) error {
+					return nil
+				},
+			},
+		},
+		{
+			Entity: &cobra.Command{
+				Use:   "config",
+				Short: "config configure",
+				RunE: func(cmd *cobra.Command, args []string) error {
+					return nil
+				},
+			},
+		},
+	})
 
 	// 注册业务的子命令
 	set.RegisterBusiness([]*commandset.Command{

@@ -2,6 +2,7 @@ package area
 
 import (
 	"context"
+	"sync"
 )
 
 type FindListParam struct {
@@ -56,9 +57,62 @@ func (m *ManagerUsecase) List(ctx context.Context, params FindListParam) ([]*Are
 	return m.manager.FindList(ctx, options...)
 }
 
-func (m *ManagerUsecase) CascadeList(ctx context.Context, options ...Option) ([]*CascadeArea, error) {
-	// 查找数据
-	return nil, nil
+// CascadeList 级联列表
+// parentID 父级ID，为0时表示顶级
+// maxDeep 最大获取深度，小于等于0标识不限制，一直往下取
+func (m *ManagerUsecase) CascadeList(ctx context.Context, parentID uint64, maxDeep int) ([]*CascadeArea, error) {
+	var handlerFunc func(parentID uint64, deep int) ([]*CascadeArea, error)
+	var cancelCtx, cancelFun = context.WithCancel(ctx)
+	var cerr error
+	var nolimitDeep bool = maxDeep <= 0
+	handlerFunc = func(parentID uint64, deep int) ([]*CascadeArea, error) {
+		var g = &sync.WaitGroup{}
+		results, err := m.manager.FindList(cancelCtx, WithParentID(parentID))
+		if err != nil {
+			cancelFun()
+			return nil, err
+		}
+		items := make([]*CascadeArea, len(results))
+		for k, result := range results {
+			result := result
+			item := &CascadeArea{
+				ID:             result.ID,
+				RegionID:       result.RegionID,
+				Title:          result.Title,
+				Level:          result.Level,
+				ChildrenNumber: 0,
+				Items:          make([]*CascadeArea, 0),
+			}
+			items[k] = item
+			// 深度达到
+			if nolimitDeep || deep < maxDeep {
+				// 并发获取
+				g.Add(1)
+				go func(r *CascadeArea) {
+					defer g.Done()
+					items, _ := handlerFunc(result.ID, deep+1)
+					if err != nil {
+						cerr = err
+						cancelFun()
+						return
+					}
+					r.Items = items
+					r.ChildrenNumber = len(items)
+				}(item)
+			}
+		}
+		g.Wait()
+		if cerr != nil {
+			return nil, cerr
+		}
+		return items, nil
+	}
+	results, err := handlerFunc(parentID, 0)
+	if err != nil {
+		return nil, err
+	}
+
+	return results, nil
 }
 
 // ViewWithIDEQ 查询ID值等价

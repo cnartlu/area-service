@@ -12,6 +12,7 @@ import (
 )
 
 var ProviderSet = wire.NewSet(
+	// 这里应该加入 db 存储系统
 	area.NewAreaRepo,
 	wire.Bind(new(bizarea.Manager), new(*area.AreaRepo)),
 )

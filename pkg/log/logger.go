@@ -1,10 +1,9 @@
 package log
 
 import (
-	"encoding/json"
 	"fmt"
-	"io"
 	"os"
+	"strings"
 	"sync"
 
 	"github.com/go-kratos/kratos/v2/log"
@@ -18,7 +17,7 @@ type Logger struct {
 	// c 配置装置
 	c *Config
 	// targets 记录目标
-	targets map[string]io.WriteCloser
+	targets map[string]Target
 	// 日志配置器
 	zap *zap.Logger
 }
@@ -29,21 +28,23 @@ func (l *Logger) new() (err error) {
 		if l.c == nil {
 			l.c = &Config{}
 		}
-		for field, value := range l.c.GetTargets() {
+		configTargets := l.c.GetTargets()
+		l.targets = make(map[string]Target, len(configTargets))
+		for field, value := range configTargets {
+			value := value
 			r := value.GetFields()
 			targetType := field
 			if t, ok := r["type"]; ok {
-				targetType = t.String()
+				targetType = t.GetStringValue()
 			}
 			// 检查类型是否被注册
 			target := GetTarget(targetType)
 			if target == nil {
-				err = fmt.Errorf("logger target not registered, type is \"%s\"", field)
+				err = fmt.Errorf("logger target name [%s] not registered, type is [%s] ", field, targetType)
 				return
 			}
 			b, _ := value.MarshalJSON()
-			err = json.Unmarshal(b, target)
-			if err != nil {
+			if err := target.UnmarshalJSON(b); err != nil {
 				return
 			}
 			l.targets[field] = target
@@ -56,9 +57,15 @@ func (l *Logger) new() (err error) {
 		)
 		// 解析配置
 		encoderConfig = zap.NewProductionEncoderConfig()
+		encoderConfig.MessageKey = log.DefaultMessageKey
 		encoderConfig.EncodeLevel = zapcore.LowercaseLevelEncoder
 		encoderConfig.EncodeTime = zapcore.RFC3339TimeEncoder
-		encoderConfig.EncodeCaller = zapcore.ShortCallerEncoder
+		encoderConfig.EncodeCaller = func(caller zapcore.EntryCaller, enc zapcore.PrimitiveArrayEncoder) {
+			s := caller.FullPath()
+			// 清除项目mod路径
+			s = strings.TrimPrefix(s, "github.com/cnartlu/area-service/")
+			enc.AppendString(s)
+		}
 		encoder = zapcore.NewJSONEncoder(encoderConfig)
 		// zap选项
 		zapOptions = append(zapOptions, zap.AddCaller(), zap.AddCallerSkip(1+int(l.c.GetTraceLevel())))
@@ -78,31 +85,60 @@ func (l *Logger) new() (err error) {
 
 // 实现日志器的方法
 func (l *Logger) Log(level log.Level, keyvals ...interface{}) error {
-	if len(keyvals) == 0 || len(keyvals)%2 != 0 {
-		l.zap.Warn(fmt.Sprint("Keyvalues must appear in pairs: ", keyvals))
+	msg := ""
+	data := []zap.Field{}
+	switch len(keyvals) {
+	case 0:
 		return nil
+	case 1:
+		msg = fmt.Sprint(keyvals[0])
+	default:
+		if len(keyvals)%2 != 0 {
+			msg = fmt.Sprint(keyvals[0])
+			for i := 1; i < len(keyvals); i += 2 {
+				data = append(data, zap.Any(fmt.Sprint(keyvals[i]), keyvals[i+1]))
+			}
+		} else {
+			for i := 0; i < len(keyvals); i += 2 {
+				key := fmt.Sprint(keyvals[i])
+				switch key {
+				case log.DefaultMessageKey:
+					msg = fmt.Sprint(keyvals[i+1])
+				default:
+					data = append(data, zap.Any(key, keyvals[i+1]))
+				}
+			}
+		}
 	}
-
-	var data []zap.Field
-	for i := 0; i < len(keyvals); i += 2 {
-		data = append(data, zap.Any(fmt.Sprint(keyvals[i]), keyvals[i+1]))
-	}
-
+	l = l.AddCallerSkip(1)
 	switch level {
 	case log.LevelDebug:
-		l.zap.Debug("", data...)
+		l.zap.Debug(msg, data...)
 	case log.LevelInfo:
-		l.zap.Info("", data...)
+		l.zap.Info(msg, data...)
 	case log.LevelWarn:
-		l.zap.Warn("", data...)
+		l.zap.Warn(msg, data...)
 	case log.LevelError:
-		l.zap.Error("", data...)
+		l.zap.Error(msg, data...)
 	case log.LevelFatal:
-		l.zap.Fatal("", data...)
+		l.zap.Fatal(msg, data...)
 	}
 	return nil
 }
 
+// AddCallerSkip 增加过滤长度
+func (l *Logger) AddCallerSkip(skip int) *Logger {
+	logger := &Logger{
+		once:    l.once,
+		targets: l.targets,
+		c:       l.c,
+		zap:     nil,
+	}
+	logger.zap = l.zap.WithOptions(zap.AddCallerSkip(skip))
+	return logger
+}
+
+// Debug 记录debug日志
 func (l *Logger) Debug(msg string, fields ...zapcore.Field) {
 	l.zap.Debug(msg, fields...)
 }

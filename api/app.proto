@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+// 定义包名
+package api.kratos.v1;
+import "errors/errors.proto";
+
+// 多语言特定包名，用于源代码引用
+option go_package = "kratos/api/errors;errors";
+option java_multiple_files = true;
+option java_package = "api.errors";
+
+enum Query {
+  NotFound = 0;
+  ValueEmpty = 1;
+}
+
+enum Param {
+  option (errors.default_code) = 500;
+
+  NotFound = 0 [(errors.code) = 404];
+  NotAuthorized = 1 [(errors.code) = 403];
+}
+

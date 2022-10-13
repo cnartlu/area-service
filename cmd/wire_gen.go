@@ -7,10 +7,17 @@ package main
 
 import (
 	area2 "github.com/cnartlu/area-service/internal/biz/area"
+	"github.com/cnartlu/area-service/internal/command"
+	"github.com/cnartlu/area-service/internal/command/handler/greet"
+	"github.com/cnartlu/area-service/internal/command/script"
 	"github.com/cnartlu/area-service/internal/component/db"
 	"github.com/cnartlu/area-service/internal/config"
 	"github.com/cnartlu/area-service/internal/data/area"
 	"github.com/cnartlu/area-service/internal/server"
+	"github.com/cnartlu/area-service/internal/server/cron"
+	"github.com/cnartlu/area-service/internal/server/cron/job"
+	"github.com/cnartlu/area-service/internal/server/grpc"
+	"github.com/cnartlu/area-service/internal/server/http"
 	"github.com/cnartlu/area-service/internal/service"
 	"github.com/cnartlu/area-service/pkg/component/redis"
 	"github.com/cnartlu/area-service/pkg/log"
@@ -20,15 +27,15 @@ import (
 
 // initApp 初始化应用
 func initApp(logLogger *log.Logger, configConfig *config.Config) (*server.Server, func(), error) {
-	app := configConfig.Config
-	grpc := app.Grpc
+	app := configConfig.App
+	configGrpc := app.Grpc
 	dbConfig := app.Db
 	client, cleanup, err := db.NewEnt(dbConfig, logLogger)
 	if err != nil {
 		return nil, nil, err
 	}
 	redisConfig := app.Redis
-	redisClient, cleanup2, err := redis.New(redisConfig)
+	redisClient, cleanup2, err := redis.New(redisConfig, logLogger)
 	if err != nil {
 		cleanup()
 		return nil, nil, err
@@ -36,13 +43,22 @@ func initApp(logLogger *log.Logger, configConfig *config.Config) (*server.Server
 	areaRepo := area.NewAreaRepo(client, redisClient)
 	managerUsecase := area2.NewManagerUsecase(areaRepo)
 	areaService := service.NewAreaService(managerUsecase)
-	grpcServer := server.NewGRPCServer(logLogger, grpc, areaService)
-	http := app.Http
-	httpServer := server.NewHTTPServer(logLogger, grpcServer, http)
-	cron := server.NewCronServer(logLogger)
-	serverServer := server.NewServer(logLogger, configConfig, grpcServer, httpServer, cron)
+	grpcServer := grpc.NewServer(logLogger, configGrpc, areaService)
+	httpServer := http.NewServer(logLogger, configConfig, grpcServer)
+	daily := job.NewDaily(logLogger)
+	cronServer := cron.NewServer(logLogger, daily)
+	serverServer := server.NewServer(logLogger, configConfig, grpcServer, httpServer, cronServer)
 	return serverServer, func() {
 		cleanup2()
 		cleanup()
+	}, nil
+}
+
+// initCommand 初始化命令行
+func initCommand(logLogger *log.Logger, configConfig *config.Config) (*command.Command, func(), error) {
+	handler := greet.NewHandler(logLogger)
+	s0000000000 := script.NewS0000000000(logLogger)
+	commandCommand := command.New(handler, s0000000000)
+	return commandCommand, func() {
 	}, nil
 }

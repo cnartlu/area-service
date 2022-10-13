@@ -34,6 +34,22 @@ func NewArea(
 			c.JSON(errors.Code(nil), response.NewSuccessDataResponse(res))
 		})
 
+		g1.GET("/cascade-list", func(c *gin.Context) {
+			param := &v1.CascadeListAreaRequest{}
+			err := binding.BindQuery(c.Request.URL.Query(), param)
+			if err != nil {
+				c.AbortWithStatusJSON(errors.Code(err), err)
+				return
+			}
+			res, err := client.CascadeList(c.Request.Context(), param)
+			if err != nil {
+				err := errors.FromError(err)
+				c.AbortWithStatusJSON(int(err.GetCode()), err)
+				return
+			}
+			c.JSON(errors.Code(nil), response.NewSuccessDataResponse(res))
+		})
+
 		g1.GET("/view", func(c *gin.Context) {
 			param := &v1.GetAreaRequest{}
 			err := binding.BindQuery(c.Request.URL.Query(), param)

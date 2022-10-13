@@ -1,10 +1,7 @@
 package main
 
 import (
-	"os"
-	"path/filepath"
-	"strings"
-
+	"github.com/cnartlu/area-service/internal/command"
 	"github.com/cnartlu/area-service/internal/config"
 	"github.com/cnartlu/area-service/pkg/log"
 	klog "github.com/go-kratos/kratos/v2/log"
@@ -20,29 +17,54 @@ var (
 	Name string
 	// Version is the version of the compiled software.
 	Version string = "0.0.1beta"
+	// Config 配置文件
+	Config string
+	// logger 配置器
+	logger, _ = log.NewLogger(nil)
+	// configure 配置器
+	configure *config.Config
 	// cmd 命令行组件
 	cmd = &cobra.Command{
-		Version: Version,
+		Use:           "",
+		Short:         ``,
+		Long:          ``,
+		Version:       Version,
+		SilenceErrors: true,
+		SilenceUsage:  true,
 		FParseErrWhitelist: cobra.FParseErrWhitelist{
 			UnknownFlags: true,
 		},
+
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			logger.Debug("", zap.Strings("args", args))
+			return nil
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			appServ, appCleanup, err := initApp(logger, configure)
+			if err != nil {
+				return err
+			}
+			defer appCleanup()
+			return appServ.Start()
+		},
 	}
-	logger, _ = log.NewLogger(nil)
 )
 
 func main() {
-	configFilename := ""
-	cmd.Flags().StringVarP(&configFilename, "config", "c", "config.yaml", "config paths")
-	configure, err := config.NewConfig(configFilename)
-	if err != nil {
-		logger.Error("load config error", zap.Error(err))
-		return
+	{
+		cmd.Flags().StringVarP(&Config, "config", "c", "config.yaml", "config paths")
+		c, err := config.NewConfig(Config)
+		if err != nil {
+			logger.Error("load config error", zap.Error(err))
+			return
+		}
+		configure = c
+		defer configure.Close()
 	}
-	defer configure.Close()
 
 	// 日志初始化
 	{
-		l, err := log.NewLogger(configure.GetConfig().GetLogger())
+		l, err := log.NewLogger(configure.App.GetLogger())
 		if err != nil {
 			logger.Error("logger init failed", zap.Error(err))
 			return
@@ -51,38 +73,11 @@ func main() {
 		klog.SetLogger(logger)
 	}
 
-	// 配置执行方法
-	cmd.RunE = func(cmd *cobra.Command, args []string) error {
-		appServ, appCleanup, err := initApp(logger, configure)
-		if err != nil {
-			return err
-		}
-		defer appCleanup()
-		if err := appServ.Start(); err != nil {
-			return err
-		}
-		if err := appServ.Stop(); err != nil {
-			return err
-		}
-		return nil
-	}
-
-	// command.Setup(cmd, func() (*command.Command, func(), error) {
-	// 	return initCommand(logger, configure)
-	// })
+	command.Setup(cmd, func() (*command.Command, func(), error) {
+		return initCommand(logger, configure)
+	})
 
 	if err := cmd.Execute(); err != nil {
 		logger.Error("execute app error", zap.Error(err))
-		return
 	}
-}
-
-// getExecutableName 获取执行命令的名称
-func getExecutableName() string {
-	binPath, err := os.Executable()
-	if err != nil {
-		return ""
-	}
-	filenameWithSuffix := filepath.Base(binPath)
-	return strings.TrimSuffix(filenameWithSuffix, "."+filepath.Ext(binPath))
 }

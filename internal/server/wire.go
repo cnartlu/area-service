@@ -6,11 +6,14 @@
 package server
 
 import (
+	"github.com/cnartlu/area-service/internal/server/cron"
+	"github.com/cnartlu/area-service/internal/server/grpc"
+	"github.com/cnartlu/area-service/internal/server/http"
 	"github.com/google/wire"
 )
 
 var ProviderSet = wire.NewSet(
-	NewCronServer,
-	NewGRPCServer,
-	NewHTTPServer,
+	cron.ProviderSet,
+	grpc.NewServer,
+	http.NewServer,
 )

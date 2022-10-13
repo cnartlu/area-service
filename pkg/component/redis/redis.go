@@ -1,84 +1,90 @@
 package redis
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"strconv"
 	"time"
+
+	"github.com/cnartlu/area-service/pkg/log"
+	"go.uber.org/zap"
 
 	"github.com/go-redis/redis/v8"
 )
 
 // New 创建 redis 客户端
 // 当 Close 客户端时
-func New(config *Config) (*redis.Client, func(), error) {
-	if config == nil {
-		return nil, nil, fmt.Errorf("component redis new error config is nil")
+func New(config *Config, logger *log.Logger) (*redis.Client, func(), error) {
+	addr := bytes.Buffer{}
+	if config.GetHost() != "" {
+		addr.WriteString(config.GetHost())
 	}
-	if config.Port < 1 {
-		config.Port = 6379
+	if config.GetPort() < 0 {
+		addr.WriteString(":")
+		addr.Write([]byte(strconv.FormatInt(config.GetPort(), 10)))
 	}
 	option := &redis.Options{
-		Addr: fmt.Sprintf("%s:%d", config.Host, config.Port),
+		Addr: addr.String(),
 	}
-	if config.Username != "" {
-		option.Username = config.Username
+	if config.GetUsername() != "" {
+		option.Username = config.GetUsername()
 	}
-	if config.Password != "" {
-		option.Password = config.Password
+	if config.GetPassword() != "" {
+		option.Password = config.GetPassword()
 	}
-	if config.Db != 0 {
-		option.DB = int(config.Db)
+	if config.GetDb() != 0 {
+		option.DB = int(config.GetDb())
 	}
-	if config.MaxRetries != 0 {
-		option.MaxRetries = int(config.MaxRetries)
+	if config.GetMaxRetries() != 0 {
+		option.MaxRetries = int(config.GetMaxRetries())
 	}
-	if config.MinRetryBackoff != 0 {
-		option.MinRetryBackoff = time.Duration(config.MinRetryBackoff) * time.Second
+	if config.GetMinRetryBackoff() != 0 {
+		option.MinRetryBackoff = time.Duration(config.GetMinRetryBackoff()) * time.Second
 	}
-	if config.MaxRetryBackoff != 0 {
-		option.MaxRetryBackoff = time.Duration(config.MaxRetryBackoff) * time.Second
+	if config.GetMaxRetryBackoff() != 0 {
+		option.MaxRetryBackoff = time.Duration(config.GetMaxRetryBackoff()) * time.Second
 	}
-	if config.GetDialTimeout() != nil && config.GetDialTimeout().IsValid() {
+	if config.GetDialTimeout().IsValid() {
 		option.DialTimeout = config.GetDialTimeout().AsDuration() * time.Second
 	}
-	if config.GetReadTimeout() != nil && config.GetReadTimeout().IsValid() {
+	if config.GetReadTimeout().IsValid() {
 		option.ReadTimeout = config.GetReadTimeout().AsDuration() * time.Second
 	}
-	if config.GetWriteTimeout() != nil && config.GetWriteTimeout().IsValid() {
+	if config.GetWriteTimeout().IsValid() {
 		option.WriteTimeout = config.GetWriteTimeout().AsDuration() * time.Second
 	}
-	if config.PoolSize != 0 {
-		option.PoolSize = int(config.PoolSize)
+	if config.GetPoolSize() != 0 {
+		option.PoolSize = int(config.GetPoolSize())
 	}
-	if config.MinIdleConns != 0 {
-		option.MinIdleConns = int(config.MinIdleConns)
+	if config.GetMinIdleConns() != 0 {
+		option.MinIdleConns = int(config.GetMinIdleConns())
 	}
-	if config.MaxConnAge != 0 {
-		option.MaxConnAge = time.Duration(config.MaxConnAge) * time.Second
+	if config.GetMaxConnAge() != 0 {
+		option.MaxConnAge = time.Duration(config.GetMaxConnAge()) * time.Second
 	}
-	if config.PoolTimeout != nil && config.PoolTimeout.IsValid() {
-		option.PoolTimeout = config.PoolTimeout.AsDuration() * time.Second
+	if config.GetPoolTimeout().IsValid() {
+		option.PoolTimeout = config.GetPoolTimeout().AsDuration() * time.Second
 	}
-	if config.IdleTimeout != nil && config.IdleTimeout.IsValid() {
-		option.IdleTimeout = config.IdleTimeout.AsDuration() * time.Second
+	if config.GetIdleTimeout().IsValid() {
+		option.IdleTimeout = config.GetIdleTimeout().AsDuration() * time.Second
 	}
-	if config.IdleCheckFrequency != 0 {
-		option.IdleCheckFrequency = time.Duration(config.IdleCheckFrequency) * time.Second
+	if config.GetIdleCheckFrequency() != 0 {
+		option.IdleCheckFrequency = time.Duration(config.GetIdleCheckFrequency()) * time.Second
 	}
 
 	client := redis.NewClient(option)
 
 	ctx := context.Background()
-
 	if _, err := client.Ping(ctx).Result(); err != nil {
-		return nil, nil, fmt.Errorf("redis ping connection error: %w", err)
+		return nil, func() {}, fmt.Errorf("redis ping connection error: %w", err)
 	}
 
 	cleanup := func() {
 		if err := client.Close(); err != nil {
-			return
+			// 记录关闭的错误日志
+			logger.Error("", zap.Error(err))
 		}
-		return
 	}
 
 	return client, cleanup, nil

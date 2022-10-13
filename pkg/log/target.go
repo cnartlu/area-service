@@ -1,12 +1,14 @@
 package log
 
 import (
+	"encoding/json"
 	"io"
 	"strings"
 )
 
 type Target interface {
 	io.WriteCloser
+	json.Unmarshaler
 	Name() string
 }
 
@@ -29,5 +31,6 @@ func RegisterTarget(target Target) {
 //
 // The content-subtype is expected to be lowercase.
 func GetTarget(contentSubtype string) Target {
+	contentSubtype = strings.ToLower(contentSubtype)
 	return registeredTargets[contentSubtype]
 }
