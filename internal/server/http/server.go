@@ -3,17 +3,17 @@ package http
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net"
 	"net/http"
 	"os"
+	"strings"
 	"syscall"
 
-	"github.com/cnartlu/area-service/internal/config"
 	"github.com/cnartlu/area-service/component/log"
+	"github.com/cnartlu/area-service/internal/config"
+	"github.com/cnartlu/area-service/pkg/env"
 	"github.com/gin-gonic/gin"
 	grpctransport "github.com/go-kratos/kratos/v2/transport/grpc"
-	"golang.org/x/sys/windows"
 )
 
 type Server struct {
@@ -21,13 +21,9 @@ type Server struct {
 	// logger 日志
 	logger *log.Logger
 	// config 配置
-	config *config.Config
+	config *config.Http
 	// router 引擎
 	router *gin.Engine
-	// lis 监听器
-	lis net.Listener
-	// fd 文件
-	fd *os.File
 }
 
 // ServeHTTP should write reply headers and data to the ResponseWriter and then return.
@@ -37,87 +33,52 @@ func (s *Server) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 
 // Start start the HTTP server.
 func (s *Server) Start(ctx context.Context) error {
-	// log.Infof("[HTTP] server listening on: %s", s.lis.Addr().String())
-	// 实例化gin
-	// if c.App.GetHttp() != nil {
-	// 	// ch := c.App.GetHttp()
-	// 	if c.App.GetDebug() {
-	// 		gin.SetMode(gin.DebugMode)
-	// 	} else {
-	// 		switch c.App.GetEnv() {
-	// 		case "prod", "production":
-	// 			gin.SetMode(gin.ReleaseMode)
-	// 		default:
-	// 			gin.SetMode(gin.TestMode)
-	// 		}
-	// 	}
-	// }
-
-	httpConfig := s.config.GetHttp()
-	addr := httpConfig.GetAddr()
+	addr := s.config.GetAddr()
 	if addr == "" {
 		addr = ":http"
 	}
-
-	// 需要先检查相关操作
-	// 是否存在fd的数据入参
-	if s.lis != nil {
-		tcpAddr, err := net.ResolveTCPAddr(httpConfig.GetNetwork(), addr)
-		if err == nil {
-			return err
-		}
-		addr := s.lis.Addr()
-		if addr.Network() == tcpAddr.Network() && addr.String() == tcpAddr.String() {
-			s.lis.Close()
-			s.lis = nil
+	tcpAddr, err := net.ResolveTCPAddr("tcp", addr)
+	if err != nil {
+		return err
+	}
+	s.logger.Info("[HTTP] server listening on: [::]" + tcpAddr.String())
+	// 判断是否为子进程
+	// 1、当为子进程时，需要继承父进程的socket监听
+	lis := env.ParentHttpListener()
+	if lis != nil {
+		// 检查地址是否一致
+		lisAddr := lis.Addr()
+		if lisAddr.Network() != tcpAddr.Network() || lisAddr.String() != tcpAddr.String() {
+			// 关闭父级的连接失败，则设置启动失败
+			if err := lis.Close(); err != nil {
+				return err
+			}
+			lis = nil
 		}
 	}
-
-	// 启动默认的监听器
-	if s.lis == nil {
+	// 默认监听器
+	if lis == nil {
 		l := net.ListenConfig{
 			Control: func(network, address string, c syscall.RawConn) error {
-				c.Control(func(fd uintptr) {
-					err := windows.SetsockoptInt(windows.Handle(fd), windows.SOL_SOCKET, windows.SO_REUSEADDR, 1)
-					if err != nil {
-						panic(err)
-					}
-					// syscall.SetsockoptInt(syscall.Handle(fd), syscall.SOL_SOCKET, syscall.SO_REUSEADDR, 1)
-					// syscall.SetsockoptInt(syscall.Handle(fd), syscall.SOL_SOCKET, syscall.SO_REUSEADDR, 1)
-					// unix.SetsockoptInt(int(fd), unix.SOL_SOCKET, unix.SO_REUSEADDR, 1)
-					// unix.SetsockoptInt(int(fd), unix.SOL_SOCKET, unix.SO_REUSEPORT, 1)
-					fmt.Println("open http fd", int(fd))
-				})
 				return nil
 			},
 		}
-		ln, err := l.Listen(ctx, "tcp", addr)
+		var err error
+		lis, err = l.Listen(ctx, tcpAddr.Network(), tcpAddr.String())
 		if err != nil {
 			return err
 		}
-		var ff *os.File
-		switch v := ln.(type) {
-		case *net.TCPListener:
-			ff, err = v.File()
-		case *net.UnixListener:
-			ff, err = v.File()
-		}
-		if err != nil {
-			fmt.Println("os failed.error", err)
-		} else {
-			s.fd = ff
-			lis, err := net.FileListener(s.fd)
-			if err != nil {
-				fmt.Println("FileListener.error", err)
-			} else {
-				fmt.Println("lis", lis.Addr())
-			}
-		}
-
-		s.lis = ln
+		defer lis.Close()
+		ln := lis.(*net.TCPListener)
+		_, err = ln.File()
+		// if err != nil && syscall.geterror() != err {
+		// 	return err
+		// }
+		// if err := os.Setenv(env.NameSocketHttp, strconv.FormatInt(int64(fd.Fd()), 10)); err != nil {
+		// 	return err
+		// }
 	}
-
-	if err := s.Serve(s.lis); err != nil {
+	if err := s.Serve(lis); err != nil {
 		if !errors.Is(err, http.ErrServerClosed) {
 			return err
 		}
@@ -134,16 +95,27 @@ func (s *Server) Stop(ctx context.Context) error {
 // NewServer new a HTTP server.
 func NewServer(
 	logger *log.Logger,
-	c *config.Config,
+	httpConfig *config.Http,
 	g *grpctransport.Server,
 	// 其他数据
 ) *Server {
+	switch strings.ToLower(os.Getenv(env.NameEnv)) {
+	case "dev", "development":
+		gin.SetMode(gin.DebugMode)
+	case "test":
+		gin.SetMode(gin.TestMode)
+	case "prod", "production":
+		fallthrough
+	default:
+		gin.SetMode(gin.ReleaseMode)
+	}
 	h := http.Server{
 		Handler: gin.New(),
 	}
 	srv := Server{
 		Server: &h,
 		logger: logger,
+		config: httpConfig,
 	}
 	return &srv
 }

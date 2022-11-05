@@ -50,7 +50,8 @@ func initApp(configConfig config.Config) (*server.Server, func(), error) {
 	managerUsecase := area2.NewManagerUsecase(areaRepo)
 	areaService := service.NewAreaService(managerUsecase)
 	grpcServer := grpc.NewServer(logger, configGrpc, areaService)
-	httpServer := http.NewServer(logger, config3, grpcServer)
+	configHttp := config3.Http
+	httpServer := http.NewServer(logger, configHttp, grpcServer)
 	daily := job.NewDaily(logger)
 	cronServer := cron.NewServer(logger, daily)
 	serverServer := server.NewServer(logger, config3, grpcServer, httpServer, cronServer)

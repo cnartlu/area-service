@@ -29,8 +29,6 @@ type App struct {
 	pwd string
 	// config 配置
 	config kconfig.Config
-	// containers 容器
-	containers map[string]Container
 	// flag 解析值
 	flag Flag
 	// start 执行启动函数
@@ -65,28 +63,6 @@ func (a *App) WithOptions(options ...Option) {
 	for _, o := range options {
 		o(a)
 	}
-}
-
-// Get returns container
-func (a *App) Get(name string) Container {
-	if a.containers != nil {
-		if container, ok := a.containers[name]; ok {
-			return container
-		}
-	}
-	return nil
-}
-
-// Set container
-func (a *App) Set(name string, container Container) {
-	a.mux.Lock()
-	defer a.mux.Unlock()
-	if a.containers == nil {
-		if a.containers == nil {
-			a.containers = make(map[string]Container)
-		}
-	}
-	a.containers[name] = container
 }
 
 // Run the application
@@ -171,6 +147,8 @@ func (a *App) Run() (err error) {
 					fmt.Println("Error: ", err)
 					continue
 				}
+				// 获取当前进程的socket数据
+
 				cmd := exec.Command(os.Args[0], os.Args[1:]...)
 				cmd.Stdout = os.Stdout
 				cmd.Stderr = os.Stderr
@@ -189,7 +167,6 @@ func (a *App) Run() (err error) {
 			}
 		}
 	}()
-	// 运行应用
 	if a.start != nil {
 		return a.start()
 	}
@@ -200,15 +177,11 @@ func (a *App) Run() (err error) {
 func New(options ...Option) *App {
 	wd, _ := os.Getwd()
 	v := &App{
-		pwd:        wd,
-		containers: map[string]Container{},
+		pwd: wd,
 	}
 	os.Chdir(pkgpath.RootPath())
 	for _, fun := range options {
 		fun(v)
-	}
-	for _, container := range v.containers {
-		container.Setup(v.Config(), nil)
 	}
 	return v
 }

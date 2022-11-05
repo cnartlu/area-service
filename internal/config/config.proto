@@ -10,7 +10,7 @@ import "component/redis/redis.proto";
 import "internal/component/db/db.proto";
 
 message Config {
-  optional bool debug = 1;
+  bool debug = 1;
   string env = 2;
   string name = 3;
   string proxy = 4;

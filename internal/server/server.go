@@ -1,9 +1,6 @@
 package server
 
 import (
-	"os"
-	"os/exec"
-
 	"github.com/cnartlu/area-service/component/log"
 	"github.com/cnartlu/area-service/internal/config"
 	"github.com/cnartlu/area-service/internal/server/cron"
@@ -16,24 +13,10 @@ import (
 type Server struct {
 	logger *log.Logger
 	server *kratos.App
-	//
-	apps []interface{ Restart() }
 }
 
 func (s *Server) Start() error {
 	return s.server.Run()
-}
-
-func (s *Server) Restart() error {
-	if os.Getenv("parent") == "" {
-		cmd := exec.Command(os.Args[0], os.Args[1:]...)
-		cmd.Stdin = os.Stdin
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		cmd.Env = append(os.Environ(), "listener=", "parent=1")
-		return cmd.Run()
-	}
-	return nil
 }
 
 func (s *Server) Stop() error {
