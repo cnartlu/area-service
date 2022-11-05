@@ -1,12 +1,18 @@
 package grpc
 
 import (
+	"context"
+	"fmt"
+	"net"
+	"syscall"
+
 	v1 "github.com/cnartlu/area-service/api/v1"
 	"github.com/cnartlu/area-service/internal/config"
 	"github.com/cnartlu/area-service/internal/service"
-	"github.com/cnartlu/area-service/pkg/log"
+	"github.com/cnartlu/area-service/component/log"
 	"github.com/go-kratos/kratos/v2/middleware/recovery"
 	"github.com/go-kratos/kratos/v2/transport/grpc"
+	"golang.org/x/sys/windows"
 )
 
 type Server = grpc.Server
@@ -19,15 +25,35 @@ func NewServer(
 	// 服务
 	sArea *service.AreaService,
 ) *Server {
+	var network = c.GetNetwork()
+	var addr = c.GetAddr()
+	if network == "" {
+		network = "tcp"
+	}
+	if addr == "" {
+		addr = ":0"
+	}
+	l := net.ListenConfig{
+		Control: func(network, address string, c syscall.RawConn) error {
+			c.Control(func(fd uintptr) {
+				err := windows.SetsockoptInt(windows.Handle(fd), windows.SOL_SOCKET, windows.SO_REUSEADDR, 1)
+				if err != nil {
+					panic(err)
+				}
+				// syscall.SetsockoptInt(syscall.Handle(fd), syscall.SOL_SOCKET, syscall.SO_REUSEADDR, 1)
+				// syscall.SetsockoptInt(syscall.Handle(fd), syscall.SOL_SOCKET, syscall.SO_REUSEADDR, 1)
+				fmt.Println("open grpc fd", int(fd))
+			})
+			return nil
+		},
+	}
+	lis, _ := l.Listen(context.Background(), network, addr)
 	var opts = []grpc.ServerOption{
-		grpc.Logger(logger.AddCallerSkip(1)),
+		grpc.Network(network),
+		grpc.Address(addr),
+		grpc.Listener(lis),
+		grpc.Logger(log.NewKratosLogger(logger.AddCallerSkip(1))),
 		grpc.Middleware(recovery.Recovery()),
-	}
-	if c.GetNetwork() != "" {
-		opts = append(opts, grpc.Network(c.GetNetwork()))
-	}
-	if c.GetAddr() != "" {
-		opts = append(opts, grpc.Address(c.GetAddr()))
 	}
 	if c.GetTimeout() != nil {
 		opts = append(opts, grpc.Timeout(c.GetTimeout().AsDuration()))

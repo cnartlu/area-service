@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/cnartlu/area-service/internal/biz/area/release/asset"
-	pkgfilepath "github.com/cnartlu/area-service/pkg/filepath"
+	pkgfilepath "github.com/cnartlu/area-service/pkg/path"
 	"github.com/google/go-github/v45/github"
 	"github.com/pkg/errors"
 )

@@ -1,7 +1,7 @@
 package sync
 
 import (
-	"github.com/cnartlu/area-service/pkg/log"
+	"github.com/cnartlu/area-service/component/log"
 )
 
 type Handler interface {

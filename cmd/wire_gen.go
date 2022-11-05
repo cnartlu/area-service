@@ -6,12 +6,11 @@
 package main
 
 import (
+	"github.com/cnartlu/area-service/component/log"
+	"github.com/cnartlu/area-service/component/redis"
 	area2 "github.com/cnartlu/area-service/internal/biz/area"
-	"github.com/cnartlu/area-service/internal/command"
-	"github.com/cnartlu/area-service/internal/command/handler/greet"
-	"github.com/cnartlu/area-service/internal/command/script"
 	"github.com/cnartlu/area-service/internal/component/db"
-	"github.com/cnartlu/area-service/internal/config"
+	config2 "github.com/cnartlu/area-service/internal/config"
 	"github.com/cnartlu/area-service/internal/data/area"
 	"github.com/cnartlu/area-service/internal/server"
 	"github.com/cnartlu/area-service/internal/server/cron"
@@ -19,23 +18,30 @@ import (
 	"github.com/cnartlu/area-service/internal/server/grpc"
 	"github.com/cnartlu/area-service/internal/server/http"
 	"github.com/cnartlu/area-service/internal/service"
-	"github.com/cnartlu/area-service/pkg/component/redis"
-	"github.com/cnartlu/area-service/pkg/log"
+	"github.com/go-kratos/kratos/v2/config"
 )
 
 // Injectors from wire.go:
 
 // initApp 初始化应用
-func initApp(logLogger *log.Logger, configConfig *config.Config) (*server.Server, func(), error) {
-	app := configConfig.App
-	configGrpc := app.Grpc
-	dbConfig := app.Db
-	client, cleanup, err := db.NewEnt(dbConfig, logLogger)
+func initApp(configConfig config.Config) (*server.Server, func(), error) {
+	config3, err := config2.New(configConfig)
 	if err != nil {
 		return nil, nil, err
 	}
-	redisConfig := app.Redis
-	redisClient, cleanup2, err := redis.New(redisConfig, logLogger)
+	logConfig := config3.Logger
+	logger, err := log.New(logConfig)
+	if err != nil {
+		return nil, nil, err
+	}
+	configGrpc := config3.Grpc
+	dbConfig := config3.Db
+	client, cleanup, err := db.NewEnt(dbConfig, logger)
+	if err != nil {
+		return nil, nil, err
+	}
+	redisConfig := config3.Redis
+	redisClient, cleanup2, err := redis.New(redisConfig, logger)
 	if err != nil {
 		cleanup()
 		return nil, nil, err
@@ -43,22 +49,13 @@ func initApp(logLogger *log.Logger, configConfig *config.Config) (*server.Server
 	areaRepo := area.NewAreaRepo(client, redisClient)
 	managerUsecase := area2.NewManagerUsecase(areaRepo)
 	areaService := service.NewAreaService(managerUsecase)
-	grpcServer := grpc.NewServer(logLogger, configGrpc, areaService)
-	httpServer := http.NewServer(logLogger, configConfig, grpcServer)
-	daily := job.NewDaily(logLogger)
-	cronServer := cron.NewServer(logLogger, daily)
-	serverServer := server.NewServer(logLogger, configConfig, grpcServer, httpServer, cronServer)
+	grpcServer := grpc.NewServer(logger, configGrpc, areaService)
+	httpServer := http.NewServer(logger, config3, grpcServer)
+	daily := job.NewDaily(logger)
+	cronServer := cron.NewServer(logger, daily)
+	serverServer := server.NewServer(logger, config3, grpcServer, httpServer, cronServer)
 	return serverServer, func() {
 		cleanup2()
 		cleanup()
-	}, nil
-}
-
-// initCommand 初始化命令行
-func initCommand(logLogger *log.Logger, configConfig *config.Config) (*command.Command, func(), error) {
-	handler := greet.NewHandler(logLogger)
-	s0000000000 := script.NewS0000000000(logLogger)
-	commandCommand := command.New(handler, s0000000000)
-	return commandCommand, func() {
 	}, nil
 }

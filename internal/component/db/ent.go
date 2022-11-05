@@ -10,7 +10,7 @@ import (
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
 	"github.com/cnartlu/area-service/internal/data/ent"
-	"github.com/cnartlu/area-service/pkg/log"
+	"github.com/cnartlu/area-service/component/log"
 	"github.com/go-redis/redis/v8"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"

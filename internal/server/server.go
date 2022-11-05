@@ -1,11 +1,14 @@
 package server
 
 import (
+	"os"
+	"os/exec"
+
+	"github.com/cnartlu/area-service/component/log"
 	"github.com/cnartlu/area-service/internal/config"
 	"github.com/cnartlu/area-service/internal/server/cron"
 	"github.com/cnartlu/area-service/internal/server/grpc"
 	"github.com/cnartlu/area-service/internal/server/http"
-	"github.com/cnartlu/area-service/pkg/log"
 	"github.com/go-kratos/kratos/v2"
 	"github.com/go-kratos/kratos/v2/transport"
 )
@@ -13,10 +16,24 @@ import (
 type Server struct {
 	logger *log.Logger
 	server *kratos.App
+	//
+	apps []interface{ Restart() }
 }
 
 func (s *Server) Start() error {
 	return s.server.Run()
+}
+
+func (s *Server) Restart() error {
+	if os.Getenv("parent") == "" {
+		cmd := exec.Command(os.Args[0], os.Args[1:]...)
+		cmd.Stdin = os.Stdin
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		cmd.Env = append(os.Environ(), "listener=", "parent=1")
+		return cmd.Run()
+	}
+	return nil
 }
 
 func (s *Server) Stop() error {
@@ -44,10 +61,10 @@ func NewServer(
 	}
 
 	options := []kratos.Option{
-		kratos.ID(config.GetApp().GetName()),
-		kratos.Name(config.GetApp().GetName()),
+		kratos.ID(config.GetName()),
+		kratos.Name(config.GetName()),
 		kratos.Metadata(map[string]string{}),
-		kratos.Logger(logger),
+		kratos.Logger(log.NewKratosLogger(logger)),
 		kratos.Server(servers...),
 	}
 

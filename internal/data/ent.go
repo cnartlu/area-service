@@ -7,12 +7,10 @@ import (
 	"entgo.io/ent/dialect/sql"
 
 	"ariga.io/entcache"
+	"github.com/cnartlu/area-service/component/db"
 	"github.com/cnartlu/area-service/internal/data/ent"
-	"github.com/cnartlu/area-service/pkg/component/db"
 	klog "github.com/go-kratos/kratos/v2/log"
 	"github.com/go-redis/redis/v8"
-
-	
 )
 
 type entConfig struct {

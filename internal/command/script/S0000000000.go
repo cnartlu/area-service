@@ -1,7 +1,7 @@
 package script
 
 import (
-	"github.com/cnartlu/area-service/pkg/log"
+	"github.com/cnartlu/area-service/component/log"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 )

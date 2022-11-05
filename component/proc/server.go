@@ -1,0 +1,4 @@
+package proc
+
+func b() {
+}

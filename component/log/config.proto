@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package component.log;
+
+option go_package = "github.com/cnartlu/area-service/component/log;log";
+option java_multiple_files = true;
+option java_package = "component.log";
+
+import "google/protobuf/struct.proto";
+
+message Config {
+    // Targets 记录器
+	map<string, google.protobuf.Struct> targets = 1;
+	// Stdout 输出到控制台
+	optional bool stdout = 2;
+	// TraceLevel 记录堆栈行号
+	int32 trace_level = 3;
+	// log_level 日志等级
+	string log_level = 4;
+	// Messages 记录固定的消息
+	map<string, google.protobuf.Value> messages = 5;
+}

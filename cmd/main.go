@@ -1,83 +1,79 @@
 package main
 
 import (
-	"github.com/cnartlu/area-service/internal/command"
-	"github.com/cnartlu/area-service/internal/config"
-	"github.com/cnartlu/area-service/pkg/log"
-	klog "github.com/go-kratos/kratos/v2/log"
+	"context"
+	"fmt"
+	"os"
 
-	"go.uber.org/zap"
-
-	"github.com/spf13/cobra"
+	"github.com/cnartlu/area-service/component/app"
+	"github.com/urfave/cli/v2"
 )
 
 // go build -ldflags "-X main.Version=x.y.z"
 var (
 	// Name is the name of the compiled software.
-	Name string
+	Name string = ""
 	// Version is the version of the compiled software.
 	Version string = "0.0.1beta"
-	// Config 配置文件
-	Config string
-	// logger 配置器
-	logger, _ = log.NewLogger(nil)
-	// configure 配置器
-	configure *config.Config
-	// cmd 命令行组件
-	cmd = &cobra.Command{
-		Use:           "",
-		Short:         ``,
-		Long:          ``,
-		Version:       Version,
-		SilenceErrors: true,
-		SilenceUsage:  true,
-		FParseErrWhitelist: cobra.FParseErrWhitelist{
-			UnknownFlags: true,
-		},
-
-		PreRunE: func(cmd *cobra.Command, args []string) error {
-			logger.Debug("", zap.Strings("args", args))
-			return nil
-		},
-		RunE: func(cmd *cobra.Command, args []string) error {
-			appServ, appCleanup, err := initApp(logger, configure)
-			if err != nil {
-				return err
-			}
-			defer appCleanup()
-			return appServ.Start()
-		},
-	}
 )
 
 func main() {
-	{
-		cmd.Flags().StringVarP(&Config, "config", "c", "config.yaml", "config paths")
-		c, err := config.NewConfig(Config)
-		if err != nil {
-			logger.Error("load config error", zap.Error(err))
-			return
+	defer func() {
+		if err := recover(); err != nil {
+			fmt.Println("recover", err)
 		}
-		configure = c
-		defer configure.Close()
+	}()
+	var ctx = context.Background()
+	var application *app.App
+	var cmd = cli.App{
+		Name:    Name,
+		Version: Version,
+		// Usage:                  fmt.Sprintf("%s [-hvt] [-s signal] [-c filename]", Name),
+		HideHelpCommand:        true,
+		UseShortOptionHandling: true,
+		Flags: []cli.Flag{
+			&cli.BoolFlag{
+				Name:    "test",
+				Aliases: []string{"t"},
+				Usage:   "test configuration and exit",
+			},
+			&cli.StringFlag{
+				Name:    "signal",
+				Aliases: []string{"s"},
+				Usage:   "send signal to a master process: stop, quit, reload",
+				Value:   "",
+			},
+			&cli.StringFlag{
+				Name:        "config",
+				Aliases:     []string{"c"},
+				Value:       "",
+				DefaultText: "config.yaml",
+				Usage:       "set configuration file",
+			},
+		},
+		Action: func(ctx *cli.Context) error {
+			application = app.New(
+				app.WithFlagHelp(ctx.Bool("help")),
+				app.WithFlagVersion(ctx.Bool("version")),
+				app.WithFlagTest(ctx.Bool("test")),
+				app.WithFlagSignal(ctx.String("signal")),
+				app.WithFlagConfig(ctx.String("config")),
+				app.WithStartFunc(func() error {
+					appServ, appCleanup, err := initApp(application.Config())
+					if err != nil {
+						return err
+					}
+					defer appCleanup()
+					if err := appServ.Start(); err != nil {
+						return err
+					}
+					return nil
+				}),
+			)
+			return application.Run()
+		},
 	}
-
-	// 日志初始化
-	{
-		l, err := log.NewLogger(configure.App.GetLogger())
-		if err != nil {
-			logger.Error("logger init failed", zap.Error(err))
-			return
-		}
-		logger = l
-		klog.SetLogger(logger)
-	}
-
-	command.Setup(cmd, func() (*command.Command, func(), error) {
-		return initCommand(logger, configure)
-	})
-
-	if err := cmd.Execute(); err != nil {
-		logger.Error("execute app error", zap.Error(err))
+	if err := cmd.RunContext(ctx, os.Args); err != nil {
+		fmt.Println(err)
 	}
 }

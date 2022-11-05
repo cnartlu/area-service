@@ -6,7 +6,7 @@ import (
 	"time"
 
 	job "github.com/cnartlu/area-service/internal/server/cron/job"
-	"github.com/cnartlu/area-service/pkg/log"
+	"github.com/cnartlu/area-service/component/log"
 	v3cron "github.com/robfig/cron/v3"
 	"go.uber.org/zap"
 )
@@ -72,11 +72,6 @@ func (c *Server) Start(ctx context.Context) error {
 		c.logger.Warn("add cron job failed", zap.Error(err))
 	}
 	c.OnceEntryID("daily", id)
-	// 增加任务
-	if id, err = c.c.AddJob("*/1 * * * * *", c.daily); err != nil {
-		c.logger.Warn("add cron job failed", zap.Error(err))
-	}
-	c.OnceEntryID("daily1", id)
 
 	c.c.Start()
 	return nil

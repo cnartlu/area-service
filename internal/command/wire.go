@@ -6,17 +6,17 @@
 package command
 
 import (
+	pkgcompant "github.com/cnartlu/area-service/component"
 	"github.com/cnartlu/area-service/internal/command/handler"
 	"github.com/cnartlu/area-service/internal/command/script"
 	"github.com/cnartlu/area-service/internal/component"
 	"github.com/cnartlu/area-service/internal/config"
-	pCompant "github.com/cnartlu/area-service/pkg/component"
 	"github.com/google/wire"
 )
 
 var ProviderSet = wire.NewSet(
 	config.ProviderSet,
-	pCompant.ProviderSet,
+	pkgcompant.ProviderSet,
 	component.ProviderSet,
 	script.ProviderSet,
 	handler.ProviderSet,

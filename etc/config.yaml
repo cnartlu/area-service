@@ -3,7 +3,7 @@ env: development
 name: kk
 proxy: http://127.0.0.1:7890
 http:
-  addr: 0.0.0.0:8000
+  addr: :8000
   timeout: 1s
 grpc:
   addr: 0.0.0.0:9000
@@ -17,6 +17,13 @@ redis:
   read_timeout: 0.2s
   write_timeout: 0.2s
 logger:
+  level: warn
+  stdout: true
   targets:
     file:
       type: file
+      filename: logs/odsasassasassa.log
+    file1:
+      type: file
+      filename: logs/2006-12-15.log
+      level: 1

@@ -1,7 +1,7 @@
 package job
 
 import (
-	"github.com/cnartlu/area-service/pkg/log"
+	"github.com/cnartlu/area-service/component/log"
 )
 
 type Daily struct {
@@ -9,8 +9,6 @@ type Daily struct {
 }
 
 func (d *Daily) Run() {
-	d.l.Debug("daily is run")
-	d.l.Debug("daily is stop")
 }
 
 func NewDaily(logger *log.Logger) *Daily {

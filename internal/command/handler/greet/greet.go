@@ -1,7 +1,7 @@
 package greet
 
 import (
-	"github.com/cnartlu/area-service/pkg/log"
+	"github.com/cnartlu/area-service/component/log"
 	"github.com/spf13/cobra"
 )
 
