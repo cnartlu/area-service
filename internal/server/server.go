@@ -32,17 +32,15 @@ func NewServer(
 	cn *cron.Server,
 ) *Server {
 	var servers []transport.Server
-
-	if hs != nil {
-		servers = append(servers, hs)
+	if cn != nil {
+		servers = append(servers, cn)
 	}
 	if gs != nil {
 		servers = append(servers, gs)
 	}
-	if cn != nil {
-		servers = append(servers, cn)
+	if hs != nil {
+		servers = append(servers, hs)
 	}
-
 	options := []kratos.Option{
 		kratos.ID(config.GetName()),
 		kratos.Name(config.GetName()),

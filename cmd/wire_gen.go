@@ -17,6 +17,7 @@ import (
 	"github.com/cnartlu/area-service/internal/server/cron/job"
 	"github.com/cnartlu/area-service/internal/server/grpc"
 	"github.com/cnartlu/area-service/internal/server/http"
+	"github.com/cnartlu/area-service/internal/server/http/router"
 	"github.com/cnartlu/area-service/internal/service"
 	"github.com/go-kratos/kratos/v2/config"
 )
@@ -51,7 +52,9 @@ func initApp(configConfig config.Config) (*server.Server, func(), error) {
 	areaService := service.NewAreaService(managerUsecase)
 	grpcServer := grpc.NewServer(logger, configGrpc, areaService)
 	configHttp := config3.Http
-	httpServer := http.NewServer(logger, configHttp, grpcServer)
+	routerArea := router.NewArea(areaService)
+	v := router.NewRouter(routerArea)
+	httpServer := http.NewServer(logger, configHttp, v)
 	daily := job.NewDaily(logger)
 	cronServer := cron.NewServer(logger, daily)
 	serverServer := server.NewServer(logger, config3, grpcServer, httpServer, cronServer)

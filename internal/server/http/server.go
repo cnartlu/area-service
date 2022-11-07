@@ -11,9 +11,9 @@ import (
 
 	"github.com/cnartlu/area-service/component/log"
 	"github.com/cnartlu/area-service/internal/config"
+	"github.com/cnartlu/area-service/internal/server/http/router"
 	"github.com/cnartlu/area-service/pkg/env"
 	"github.com/gin-gonic/gin"
-	grpctransport "github.com/go-kratos/kratos/v2/transport/grpc"
 )
 
 type Server struct {
@@ -24,11 +24,6 @@ type Server struct {
 	config *config.Http
 	// router 引擎
 	router *gin.Engine
-}
-
-// ServeHTTP should write reply headers and data to the ResponseWriter and then return.
-func (s *Server) ServeHTTP(res http.ResponseWriter, req *http.Request) {
-	s.Handler.ServeHTTP(res, req)
 }
 
 // Start start the HTTP server.
@@ -46,10 +41,8 @@ func (s *Server) Start(ctx context.Context) error {
 	// 1、当为子进程时，需要继承父进程的socket监听
 	lis := env.ParentHttpListener()
 	if lis != nil {
-		// 检查地址是否一致
 		lisAddr := lis.Addr()
 		if lisAddr.Network() != tcpAddr.Network() || lisAddr.String() != tcpAddr.String() {
-			// 关闭父级的连接失败，则设置启动失败
 			if err := lis.Close(); err != nil {
 				return err
 			}
@@ -69,8 +62,8 @@ func (s *Server) Start(ctx context.Context) error {
 			return err
 		}
 		defer lis.Close()
-		ln := lis.(*net.TCPListener)
-		_, err = ln.File()
+		// ln := lis.(*net.TCPListener)
+		// _, err = ln.File()
 		// if err != nil && syscall.geterror() != err {
 		// 	return err
 		// }
@@ -96,8 +89,8 @@ func (s *Server) Stop(ctx context.Context) error {
 func NewServer(
 	logger *log.Logger,
 	httpConfig *config.Http,
-	g *grpctransport.Server,
 	// 其他数据
+	routers []router.Router,
 ) *Server {
 	switch strings.ToLower(os.Getenv(env.NameEnv)) {
 	case "dev", "development":
@@ -109,8 +102,15 @@ func NewServer(
 	default:
 		gin.SetMode(gin.ReleaseMode)
 	}
+	e := gin.New()
+	g1 := e.Group("/")
+	{
+		for _, r := range routers {
+			r.Register(g1)
+		}
+	}
 	h := http.Server{
-		Handler: gin.New(),
+		Handler: e,
 	}
 	srv := Server{
 		Server: &h,

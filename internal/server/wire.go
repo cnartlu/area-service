@@ -15,5 +15,5 @@ import (
 var ProviderSet = wire.NewSet(
 	cron.ProviderSet,
 	grpc.NewServer,
-	http.NewServer,
+	http.ProviderSet,
 )
