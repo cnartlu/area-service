@@ -48,7 +48,6 @@ func NewServer(
 		kratos.Logger(log.NewKratosLogger(logger)),
 		kratos.Server(servers...),
 	}
-
 	server := kratos.New(options...)
 	return &Server{
 		logger: logger,

@@ -4,10 +4,9 @@ package internal.config;
 option go_package = "area-service/internal/config;config";
 
 import "google/protobuf/duration.proto";
-// import "google/protobuf/any.proto";
 import "component/log/config.proto";
 import "component/redis/redis.proto";
-import "internal/component/db/db.proto";
+import "component/db/db.proto";
 
 message Config {
   bool debug = 1;
@@ -19,8 +18,8 @@ message Config {
   Grpc grpc = 11;
   Cron cron = 12;
   .component.log.Config logger = 13;
-  pkg.component.redis.Config redis = 14;
-  component.db.Config db = 15;
+  .component.redis.Config redis = 14;
+  .component.db.Config db = 15;
 }
 
 message Http {

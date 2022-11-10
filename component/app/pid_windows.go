@@ -5,7 +5,6 @@ package app
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 	"strconv"
 )
 
@@ -34,8 +33,6 @@ func (p *Pid) WriteFile() error {
 		return fmt.Errorf("write pid file error: %w", err)
 	}
 	p.f = f
-	fi, _ := filepath.Abs(p.filename)
-	fmt.Println("pid", str, "filename", fi)
 	_, err = f.WriteString(str)
 	if err1 := f.Close(); err1 != nil && err == nil {
 		err = err1

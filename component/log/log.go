@@ -46,22 +46,18 @@ func (l *Logger) Setup() (err error) {
 			cores             []zapcore.Core
 			zapOptions        []zap.Option
 			coverLogLevelFunc = func(s string) zapcore.Level {
-				var defaultLevel zapcore.Level
+				var defaultLevel zapcore.Level = zap.DebugLevel
 				s = strings.TrimSpace(s)
 				if s == "" {
 					return defaultLevel
 				}
 				switch strings.ToLower(s) {
-				case "info":
-					defaultLevel = zap.DebugLevel
-				case "warn", "warning":
-					defaultLevel = zap.DebugLevel
-				case "error":
-					defaultLevel = zap.DebugLevel
-				case "debug":
-					fallthrough
-				default:
-					defaultLevel = zap.DebugLevel
+				case "info", "0":
+					defaultLevel = zap.InfoLevel
+				case "warn", "warning", "1":
+					defaultLevel = zap.WarnLevel
+				case "error", "2", "3", "4", "5":
+					defaultLevel = zap.ErrorLevel
 				}
 				return defaultLevel
 			}

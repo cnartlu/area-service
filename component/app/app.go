@@ -67,6 +67,12 @@ func (a *App) WithOptions(options ...Option) {
 
 // Run the application
 func (a *App) Run() (err error) {
+	defer func() {
+		if err := recover(); err != nil {
+			_ = a.pid.Remove()
+			fmt.Println("app painc, please reload", err)
+		}
+	}()
 	if a.flag.Test || a.flag.Help || a.flag.Version {
 		return
 	}

@@ -1,14 +1,13 @@
 syntax = "proto3";
 
-package pkg.component.db;
+package component.db;
 
 import "google/protobuf/duration.proto";
-// import "google/protobuf/wrappers.proto";
-import "google/protobuf/any.proto";
+import "component/redis/redis.proto";
 
 option go_package = "github.com/cnartlu/area-service/component/db;db";
 option java_multiple_files = true;
-option java_package = "pkg.component.db";
+option java_package = "component.db";
 
 // Config 数据库配置
 message Config {
@@ -34,4 +33,9 @@ message Config {
   string prefix = 10;
   // timeout 超时时间
   google.protobuf.Duration timeout = 11;
+  // cache 缓存
+  oneof cache {
+    string cache_app_component_name = 13;
+    redis.Config cache_redis = 14;
+  }
 }

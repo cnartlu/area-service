@@ -1,12 +1,12 @@
 syntax = "proto3";
 
-package pkg.component.redis;
+package component.redis;
 
 import "google/protobuf/duration.proto";
 
 option go_package = "github.com/cnartlu/area-service/component/redis;redis";
 option java_multiple_files = true;
-option java_package = "pkg.component.redis";
+option java_package = "component.redis";
 
 message Config {
   string host = 1;

@@ -18,11 +18,6 @@ var (
 )
 
 func main() {
-	defer func() {
-		if err := recover(); err != nil {
-			fmt.Println("recover", err)
-		}
-	}()
 	var ctx = context.Background()
 	var application *app.App
 	var cmd = cli.App{
