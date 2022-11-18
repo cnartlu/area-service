@@ -4,6 +4,7 @@ package internal.config;
 option go_package = "area-service/internal/config;config";
 
 import "google/protobuf/duration.proto";
+import "component/app/app.proto";
 import "component/log/config.proto";
 import "component/redis/redis.proto";
 import "component/db/db.proto";
@@ -13,6 +14,7 @@ message Config {
   string env = 2;
   string name = 3;
   string proxy = 4;
+  .component.app.Config app = 5;
 
   Http http = 10;
   Grpc grpc = 11;

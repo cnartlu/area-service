@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 
-	"github.com/cnartlu/area-service/component/app"
 	"github.com/urfave/cli/v2"
 )
 
@@ -19,7 +19,6 @@ var (
 
 func main() {
 	var ctx = context.Background()
-	var application *app.App
 	var cmd = cli.App{
 		Name:    Name,
 		Version: Version,
@@ -47,25 +46,25 @@ func main() {
 			},
 		},
 		Action: func(ctx *cli.Context) error {
-			application = app.New(
-				app.WithFlagHelp(ctx.Bool("help")),
-				app.WithFlagVersion(ctx.Bool("version")),
-				app.WithFlagTest(ctx.Bool("test")),
-				app.WithFlagSignal(ctx.String("signal")),
-				app.WithFlagConfig(ctx.String("config")),
-				app.WithStartFunc(func() error {
-					appServ, appCleanup, err := initApp(application.Config())
-					if err != nil {
-						return err
-					}
-					defer appCleanup()
-					if err := appServ.Start(); err != nil {
-						return err
-					}
-					return nil
-				}),
+			var (
+				help    = ctx.Bool("help")
+				test    = ctx.Bool("test")
+				version = ctx.Bool("version")
+				signal  = strings.ToLower(strings.TrimSpace(ctx.String("signal")))
+				config  = strings.TrimSpace(ctx.String("config"))
 			)
-			return application.Run()
+			if test || help || version {
+				return nil
+			}
+			s, cleanup, err := initApp(config)
+			if err != nil {
+				return err
+			}
+			defer cleanup()
+			if err := s.Run(signal); err != nil {
+				return err
+			}
+			return nil
 		},
 	}
 	if err := cmd.RunContext(ctx, os.Args); err != nil {

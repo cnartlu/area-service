@@ -9,12 +9,11 @@ import (
 	"github.com/cnartlu/area-service/internal"
 	// "github.com/cnartlu/area-service/internal/command"
 	"github.com/cnartlu/area-service/internal/server"
-	kconfig "github.com/go-kratos/kratos/v2/config"
 	"github.com/google/wire"
 )
 
 // initApp 初始化应用
-func initApp(kconfig.Config) (*server.Server, func(), error) {
+func initApp(string) (*server.Server, func(), error) {
 	panic(
 		wire.Build(
 			internal.ProviderSet,

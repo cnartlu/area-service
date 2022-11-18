@@ -33,18 +33,6 @@ func (s Source) Dialect() string {
 	return s.dialect
 }
 
-// func (s Source) Database(db *sql.DB) {
-// 	db.SetMaxOpenConns(100)
-// 	db.SetMaxIdleConns(10)
-// 	// 连接的最大生命周期
-// 	db.SetConnMaxLifetime(0)
-// 	db.SetConnMaxIdleTime(time.Second * 60 * 60)
-// }
-
-// func (s Source) Config() *Config {
-// 	return s.config
-// }
-
 func NewSource(c *Config) Dsn {
 	source := Source{
 		dialect: MySQL,

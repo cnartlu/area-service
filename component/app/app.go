@@ -1,193 +1,157 @@
 package app
 
 import (
-	"errors"
-	"fmt"
 	"os"
-	"os/exec"
-	"os/signal"
 	"path/filepath"
+	"runtime"
 	"strings"
-	"sync"
-	"syscall"
-
-	pkgpath "github.com/cnartlu/area-service/pkg/path"
-	kconfig "github.com/go-kratos/kratos/v2/config"
-	kconfigFile "github.com/go-kratos/kratos/v2/config/file"
-	klog "github.com/go-kratos/kratos/v2/log"
 )
 
+var (
+	rootPath string
+	pwdPath  string
+)
+
+func init() {
+	pwd, err := os.Getwd()
+	if err != nil {
+		panic(err)
+	}
+	pwdPath = pwd
+	var binDir string
+	exePath, err := os.Executable()
+	if err != nil {
+		panic(err)
+	}
+	binDir = filepath.Dir(exePath)
+	tmpDir := os.TempDir()
+	if strings.Contains(exePath, tmpDir) {
+		_, filename, _, ok := runtime.Caller(0)
+		if ok {
+			binDir = filepath.Dir(filepath.Dir(filepath.Dir(filename)))
+		}
+	}
+	rootPath = binDir
+	if err := os.Chdir(rootPath); err != nil {
+		panic(err)
+	}
+}
+
 type App struct {
-	mux sync.Mutex
-	// name 应用名称
+	// Name 应用名称
 	name string
-	// version 版本号
-	version string
-	// pid 文件
-	pid *Pid
-	// pwd
-	pwd string
-	// config 配置
-	config kconfig.Config
-	// flag 解析值
-	flag Flag
-	// start 执行启动函数
-	start func() error
+	// Env 应用环境
+	env EnvName
+	// Debug 是否开启调试
+	debug bool
+	// rootPath 应用根路径
+	rootPath string
+	// pwdPath 命令行执行路径
+	pwdPath string
+	// runtimePath 缓存文件路径
+	runtimePath string
+	// process 进程
+	process *process
+	// config 原始配置
+	config *Config
 }
 
-// Name 应用名称
-func (a *App) Name() string {
-	if a.name == "" {
-		s := filepath.Base(os.Args[0])
-		if i := strings.Index(s, "."); i >= 0 {
-			a.name = s[:i]
-		} else {
-			a.name = s
-		}
+func (a *App) GetName() string {
+	if a != nil {
+		return a.name
 	}
-	return a.name
+	return ""
 }
 
-// Version returns the version
-func (a *App) Version() string {
-	return a.version
+func (a *App) GetEnv() EnvName {
+	if a != nil {
+		return a.env
+	}
+	return EnvName_prod
 }
 
-// Config returns the config
-func (a *App) Config() kconfig.Config {
-	return a.config
+func (a *App) GetDebug() bool {
+	if a != nil {
+		return a.debug
+	}
+	return false
 }
 
-// WithOptions 设置Options
-func (a *App) WithOptions(options ...Option) {
-	for _, o := range options {
-		o(a)
+func (a *App) GetRootPath() string {
+	if a != nil {
+		return a.rootPath
 	}
+	return ""
 }
 
-// Run the application
-func (a *App) Run() (err error) {
-	defer func() {
-		if err := recover(); err != nil {
-			_ = a.pid.Remove()
-			fmt.Println("app painc, please reload", err)
-		}
-	}()
-	if a.flag.Test || a.flag.Help || a.flag.Version {
-		return
+func (a *App) GetPwdPath() string {
+	if a != nil {
+		return a.pwdPath
 	}
-	if a.flag.Signal != "" {
-		switch a.flag.Signal {
-		case "quit":
-			process, err := a.pid.Process()
-			if err != nil {
-				return err
-			}
-			return process.Signal(os.Interrupt)
-		case "stop":
-			process, err := a.pid.Process()
-			if err != nil {
-				return err
-			}
-			return process.Kill()
-		case "reload":
-			process, err := a.pid.Process()
-			if err != nil {
-				return err
-			}
-			return process.Signal(syscall.SIGHUP)
-		default:
-			buf := strings.Builder{}
-			buf.WriteString("nginx")
-			buf.WriteString(": invalid option: \"-")
-			buf.WriteString("s ")
-			buf.WriteString(a.flag.Signal)
-			buf.WriteString("\"")
-			return errors.New(buf.String())
-		}
-	}
-	// 初始化配置
-	var sources []kconfig.Source
-	var filenames []string = []string{
-		a.flag.Config,
-		filepath.Join("../etc", a.flag.Config),
-		"config.yaml",
-		"config.json",
-	}
-	for _, filename := range filenames {
-		if err := isFile(filename); err == nil {
-			sources = append(sources, kconfigFile.NewSource(filename))
-		}
-	}
-	logger := klog.NewFilter(klog.DefaultLogger, klog.FilterLevel(klog.LevelError))
-	klog.SetLogger(logger)
-	a.config = kconfig.New(
-		kconfig.WithLogger(logger),
-		kconfig.WithSource(sources...),
-	)
-	if err := a.config.Load(); err != nil {
-		return fmt.Errorf("load config: %w", err)
-	}
-	// 初始化PID
-	a.pid = NewPid(a.Name(), a.Config())
-	// 设置pid文件
-	if err := a.pid.WriteFile(); err != nil {
-		return err
-	}
-	defer func() {
-		if err := a.pid.Remove(); err != nil {
-			os.Stdout.WriteString(err.Error())
-		}
-	}()
-	// 监听信号
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, syscall.SIGHUP, syscall.SIGINT, syscall.SIGKILL, syscall.SIGQUIT, syscall.SIGTERM)
-	go func() {
-		for {
-			sig := <-c
-			switch sig {
-			case syscall.SIGHUP:
-				// 1、将当前pid文件迁移到 old
-				if err := a.pid.Move(); err != nil {
-					// 命令行输出错误信息，继续监听
-					fmt.Println("Error: ", err)
-					continue
-				}
-				// 获取当前进程的socket数据
+	return ""
+}
 
-				cmd := exec.Command(os.Args[0], os.Args[1:]...)
-				cmd.Stdout = os.Stdout
-				cmd.Stderr = os.Stderr
-				cmd.Stdin = os.Stdin
-				err := cmd.Start()
-				if err != nil {
-					err1 := a.pid.Recover()
-					fmt.Println("Error:", err)
-					fmt.Println("remove pid file failed:", err1)
-					continue
-				}
-				// 等待子进程发出信号停止
-			default:
-				// ingrone ...
-				return
-			}
-		}
-	}()
-	if a.start != nil {
-		return a.start()
+func (a *App) GetRuntimePath() string {
+	if a != nil {
+		return a.runtimePath
+	}
+	return ""
+}
+
+func (a *App) GetProcess() *process {
+	if a != nil {
+		return a.process
 	}
 	return nil
 }
 
-// New returns app
-func New(options ...Option) *App {
-	wd, _ := os.Getwd()
-	v := &App{
-		pwd: wd,
+func (a *App) GetConfig() *Config {
+	if a != nil {
+		return a.config
 	}
-	os.Chdir(pkgpath.RootPath())
-	for _, fun := range options {
-		fun(v)
+	return nil
+}
+
+func New(c *Config) *App {
+	var name string
+	s := filepath.Base(os.Args[0])
+	if i := strings.Index(s, "."); i >= 0 {
+		name = s[:i]
+	} else {
+		name = s
 	}
-	return v
+	var a = App{
+		name:        name,
+		debug:       false,
+		env:         EnvName_prod,
+		config:      c,
+		rootPath:    rootPath,
+		pwdPath:     pwdPath,
+		runtimePath: "runtime",
+	}
+	if c != nil {
+		if c.GetName() != "" {
+			a.name = c.GetName()
+		}
+		a.debug = c.GetDebug()
+		a.env = c.GetEnv()
+		if c.GetRuntimePath() != "" {
+			a.runtimePath = c.GetRuntimePath()
+		}
+	}
+	if !filepath.IsAbs(a.runtimePath) {
+		a.runtimePath = filepath.Join(a.rootPath, a.runtimePath)
+	}
+	if f, err := os.Stat(a.runtimePath); err != nil {
+		if !os.IsNotExist(err) {
+			panic(err)
+		}
+		if err1 := os.MkdirAll(a.runtimePath, os.ModeDir); err1 != nil {
+			panic(err)
+		}
+	} else if !f.IsDir() {
+		panic(os.ErrInvalid)
+	}
+	a.process = newProcess(&a)
+	return &a
 }

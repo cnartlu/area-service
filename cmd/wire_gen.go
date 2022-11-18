@@ -6,6 +6,8 @@
 package main
 
 import (
+	"github.com/cnartlu/area-service/component/app"
+	"github.com/cnartlu/area-service/component/config"
 	"github.com/cnartlu/area-service/component/log"
 	"github.com/cnartlu/area-service/component/redis"
 	area2 "github.com/cnartlu/area-service/internal/biz/area"
@@ -19,31 +21,40 @@ import (
 	"github.com/cnartlu/area-service/internal/server/http"
 	"github.com/cnartlu/area-service/internal/server/http/router"
 	"github.com/cnartlu/area-service/internal/service"
-	"github.com/go-kratos/kratos/v2/config"
 )
 
 // Injectors from wire.go:
 
 // initApp 初始化应用
-func initApp(configConfig config.Config) (*server.Server, func(), error) {
+func initApp(string2 string) (*server.Server, func(), error) {
+	configConfig, cleanup, err := config.NewKratos(string2)
+	if err != nil {
+		return nil, nil, err
+	}
 	config3, err := config2.New(configConfig)
 	if err != nil {
+		cleanup()
 		return nil, nil, err
 	}
-	logConfig := config3.Logger
+	appConfig := config2.GetApp(config3)
+	appApp := app.New(appConfig)
+	logConfig := config2.GetLogger(config3)
 	logger, err := log.New(logConfig)
 	if err != nil {
+		cleanup()
 		return nil, nil, err
 	}
-	configGrpc := config3.Grpc
-	dbConfig := config3.Db
-	client, cleanup, err := db.NewEnt(dbConfig, logger)
+	configGrpc := config2.GetGrpc(config3)
+	dbConfig := config2.GetDb(config3)
+	client, cleanup2, err := db.NewEnt(dbConfig, logger)
 	if err != nil {
+		cleanup()
 		return nil, nil, err
 	}
-	redisConfig := config3.Redis
-	redisClient, cleanup2, err := redis.New(redisConfig, logger)
+	redisConfig := config2.GetRedis(config3)
+	redisClient, cleanup3, err := redis.New(redisConfig, logger)
 	if err != nil {
+		cleanup2()
 		cleanup()
 		return nil, nil, err
 	}
@@ -51,14 +62,15 @@ func initApp(configConfig config.Config) (*server.Server, func(), error) {
 	managerUsecase := area2.NewManagerUsecase(areaRepo)
 	areaService := service.NewAreaService(managerUsecase)
 	grpcServer := grpc.NewServer(logger, configGrpc, areaService)
-	configHttp := config3.Http
+	configHttp := config2.GetHttp(config3)
 	routerArea := router.NewArea(areaService)
 	v := router.NewRouter(routerArea)
 	httpServer := http.NewServer(logger, configHttp, v)
 	daily := job.NewDaily(logger)
 	cronServer := cron.NewServer(logger, daily)
-	serverServer := server.NewServer(logger, config3, grpcServer, httpServer, cronServer)
+	serverServer := server.NewServer(appApp, logger, config3, grpcServer, httpServer, cronServer)
 	return serverServer, func() {
+		cleanup3()
 		cleanup2()
 		cleanup()
 	}, nil

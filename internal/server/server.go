@@ -1,6 +1,12 @@
 package server
 
 import (
+	"errors"
+	"os"
+	"strings"
+	"syscall"
+
+	"github.com/cnartlu/area-service/component/app"
 	"github.com/cnartlu/area-service/component/log"
 	"github.com/cnartlu/area-service/internal/config"
 	"github.com/cnartlu/area-service/internal/server/cron"
@@ -11,11 +17,42 @@ import (
 )
 
 type Server struct {
+	app    *app.App
 	logger *log.Logger
 	server *kratos.App
 }
 
-func (s *Server) Start() error {
+func (s *Server) Run(signal string) error {
+	if signal != "" {
+		switch signal {
+		case "quit":
+			process, err := s.app.GetProcess().GetPidFile().GetProcess()
+			if err != nil {
+				return err
+			}
+			return process.Signal(os.Interrupt)
+		case "stop":
+			process, err := s.app.GetProcess().GetPidFile().GetProcess()
+			if err != nil {
+				return err
+			}
+			return process.Kill()
+		case "reload":
+			process, err := s.app.GetProcess().GetPidFile().GetProcess()
+			if err != nil {
+				return err
+			}
+			return process.Signal(syscall.SIGHUP)
+		default:
+			buf := strings.Builder{}
+			buf.WriteString("nginx")
+			buf.WriteString(": invalid option: \"-")
+			buf.WriteString("s ")
+			buf.WriteString(signal)
+			buf.WriteString("\"")
+			return errors.New(buf.String())
+		}
+	}
 	return s.server.Run()
 }
 
@@ -24,6 +61,7 @@ func (s *Server) Stop() error {
 }
 
 func NewServer(
+	app *app.App,
 	logger *log.Logger,
 	config *config.Config,
 	// 服务对象
@@ -50,6 +88,7 @@ func NewServer(
 	}
 	server := kratos.New(options...)
 	return &Server{
+		app:    app,
 		logger: logger,
 		server: server,
 	}
