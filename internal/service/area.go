@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 
+	"github.com/cnartlu/area-service/api"
 	pb "github.com/cnartlu/area-service/api/v1"
 
 	"github.com/cnartlu/area-service/internal/biz/area"
@@ -57,9 +58,9 @@ func (s *AreaService) View(ctx context.Context, req *pb.GetAreaRequest) (*pb.Get
 		err    error
 	)
 	if id > 0 {
-		result, err = s.area.ViewWithIDEQ(ctx, id)
+		result, err = s.area.FindOne(ctx, id)
 	} else {
-		result, err = s.area.ViewWithRegionID(ctx, req.GetRegionId(), int(req.GetLevel()))
+		result, err = s.area.FindByRegionID(ctx, req.GetRegionId(), int(req.GetLevel()))
 	}
 	if err != nil {
 		return nil, err
@@ -80,11 +81,33 @@ func (s *AreaService) View(ctx context.Context, req *pb.GetAreaRequest) (*pb.Get
 }
 
 func (s *AreaService) CascadeList(ctx context.Context, req *pb.CascadeListAreaRequest) (*pb.CascadeListAreaReply, error) {
-	results, err := s.area.CascadeList(ctx, req.GetId(), 0)
+	var parentData *area.Area
+	var err error
+	if req.GetRegionId() != "" {
+		parentData, err = s.area.FindByRegionID(ctx, req.GetRegionId(), 0)
+	} else if req.GetId() != 0 {
+		parentData, err = s.area.FindOne(ctx, req.GetId())
+	}
 	if err != nil {
 		return nil, err
 	}
+	var parentID uint64
 	xy := &pb.CascadeListAreaReply{}
+	if parentData != nil {
+		parentID = parentData.ID
+		xy.Parent = &pb.CascadeListAreaReply_Item{
+			Id:       parentData.ID,
+			RegionId: parentData.RegionID,
+			Title:    parentData.Title,
+			Ucfirst:  parentData.Ucfirst,
+			Pinyin:   parentData.Pinyin,
+			Level:    uint32(parentData.Level),
+		}
+	}
+	results, err := s.area.CascadeList(ctx, parentID, int(req.GetDeep()))
+	if err != nil {
+		return nil, err
+	}
 	var handlerFunc func([]*area.CascadeArea) []*pb.CascadeListAreaReply_Item
 	handlerFunc = func(results []*area.CascadeArea) []*pb.CascadeListAreaReply_Item {
 		items := make([]*pb.CascadeListAreaReply_Item, len(results))
@@ -94,6 +117,8 @@ func (s *AreaService) CascadeList(ctx context.Context, req *pb.CascadeListAreaRe
 				Id:       result.ID,
 				RegionId: result.RegionID,
 				Title:    result.Title,
+				Ucfirst:  result.Ucfirst,
+				Pinyin:   result.Pinyin,
 				Level:    uint32(result.Level),
 				Items:    make([]*pb.CascadeListAreaReply_Item, result.ChildrenNumber),
 			}
@@ -118,5 +143,22 @@ func (s *AreaService) Update(ctx context.Context, req *pb.UpdateAreaRequest) (*p
 }
 
 func (s *AreaService) Delete(ctx context.Context, req *pb.DeleteAreaRequest) (*pb.DeleteAreaReply, error) {
+	var ids = req.GetIds()
+	if req.GetId() > 0 {
+		ids = append(ids, req.GetId())
+	}
+	for _, id := range ids {
+		id := id
+		if id < 1 {
+			continue
+		}
+	}
+	if len(ids) < 1 {
+		return nil, api.ErrorParamMissing("identify parameter missing")
+	}
+	err := s.area.Delete(ctx, ids...)
+	if err != nil {
+		return nil, err
+	}
 	return &pb.DeleteAreaReply{}, nil
 }

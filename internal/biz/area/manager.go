@@ -38,9 +38,9 @@ type ManagerUsecase struct {
 func (m *ManagerUsecase) List(ctx context.Context, params FindListParam) ([]*Area, error) {
 	options := []Option{}
 	if params.RegionID != "" {
-		options = append(options, WithRegionID(params.RegionID))
+		options = append(options, RegionIDEQ(params.RegionID))
 		if params.Level > 0 {
-			options = append(options, WithLevel(params.Level))
+			options = append(options, LevelEQ(params.Level))
 		}
 		parent, err := m.manager.FindOne(ctx, options...)
 		if err != nil {
@@ -49,11 +49,14 @@ func (m *ManagerUsecase) List(ctx context.Context, params FindListParam) ([]*Are
 		params.ParentID = parent.ID
 		options = []Option{}
 	}
-	options = append(options, WithParentID(params.ParentID))
+	options = append(options, ParentIDEQ(params.ParentID))
 	if params.Keyword != "" {
-		options = append(options, WithKeywordContains(params.Keyword))
+		options = append(options, TitleContains(params.Keyword))
 	}
-
+	if params.Order == "" {
+		params.Order = "-id"
+	}
+	options = append(options, Order(params.Order))
 	return m.manager.FindList(ctx, options...)
 }
 
@@ -67,7 +70,7 @@ func (m *ManagerUsecase) CascadeList(ctx context.Context, parentID uint64, maxDe
 	var nolimitDeep bool = maxDeep <= 0
 	handlerFunc = func(parentID uint64, deep int) ([]*CascadeArea, error) {
 		var g = &sync.WaitGroup{}
-		results, err := m.manager.FindList(cancelCtx, WithParentID(parentID))
+		results, err := m.manager.FindList(cancelCtx, ParentIDEQ(parentID))
 		if err != nil {
 			cancelFun()
 			return nil, err
@@ -79,6 +82,8 @@ func (m *ManagerUsecase) CascadeList(ctx context.Context, parentID uint64, maxDe
 				ID:             result.ID,
 				RegionID:       result.RegionID,
 				Title:          result.Title,
+				Ucfirst:        result.Ucfirst,
+				Pinyin:         result.Pinyin,
 				Level:          result.Level,
 				ChildrenNumber: 0,
 				Items:          make([]*CascadeArea, 0),
@@ -86,7 +91,6 @@ func (m *ManagerUsecase) CascadeList(ctx context.Context, parentID uint64, maxDe
 			items[k] = item
 			// 深度达到
 			if nolimitDeep || deep < maxDeep {
-				// 并发获取
 				g.Add(1)
 				go func(r *CascadeArea) {
 					defer g.Done()
@@ -107,7 +111,7 @@ func (m *ManagerUsecase) CascadeList(ctx context.Context, parentID uint64, maxDe
 		}
 		return items, nil
 	}
-	results, err := handlerFunc(parentID, 0)
+	results, err := handlerFunc(parentID, 1)
 	if err != nil {
 		return nil, err
 	}
@@ -115,22 +119,23 @@ func (m *ManagerUsecase) CascadeList(ctx context.Context, parentID uint64, maxDe
 	return results, nil
 }
 
-// ViewWithIDEQ 查询ID值等价
-func (m *ManagerUsecase) ViewWithIDEQ(ctx context.Context, id uint64) (*Area, error) {
-	return m.manager.FindOne(ctx, WithID(id))
+// FindOne 查询ID值等价
+func (m *ManagerUsecase) FindOne(ctx context.Context, id uint64) (*Area, error) {
+	return m.manager.FindOne(ctx, IDEQ(id))
 }
 
-func (m *ManagerUsecase) ViewWithRegionID(ctx context.Context, regionID string, level int) (*Area, error) {
-	options := []Option{WithRegionID(regionID)}
+func (m *ManagerUsecase) FindByRegionID(ctx context.Context, regionID string, level int) (*Area, error) {
+	options := []Option{RegionIDEQ(regionID)}
 	if level > 0 {
-		options = append(options, WithLevel(level))
+		options = append(options, LevelEQ(level))
 	}
+	options = append(options, Order("region_id"))
 	return m.manager.FindOne(ctx, options...)
 }
 
-// DeleteWithID 删除值
-func (m *ManagerUsecase) DeleteWithID(ctx context.Context, id uint64) error {
-	return m.manager.Remove(ctx, WithID(id))
+// Delete 删除值
+func (m *ManagerUsecase) Delete(ctx context.Context, ids ...uint64) error {
+	return m.manager.Remove(ctx, IDIn(ids...))
 }
 
 func NewManagerUsecase(manager Manager) *ManagerUsecase {

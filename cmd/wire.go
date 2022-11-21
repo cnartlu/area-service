@@ -7,7 +7,7 @@ package main
 
 import (
 	"github.com/cnartlu/area-service/internal"
-	// "github.com/cnartlu/area-service/internal/command"
+	"github.com/cnartlu/area-service/internal/command"
 	"github.com/cnartlu/area-service/internal/server"
 	"github.com/google/wire"
 )
@@ -23,9 +23,9 @@ func initApp(string) (*server.Server, func(), error) {
 }
 
 // initCommand 初始化命令行
-// func initCommand(kconfig.Config) *command.Command {
-// 	panic(wire.Build(
-// 		command.ProviderSet,
-// 		command.New,
-// 	))
-// }
+func initCommand(string) (*command.Command, func(), error) {
+	panic(wire.Build(
+		command.ProviderSet,
+		command.New,
+	))
+}

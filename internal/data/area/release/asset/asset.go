@@ -3,31 +3,53 @@ package asset
 import (
 	"context"
 
+	bizAsset "github.com/cnartlu/area-service/internal/biz/area/release/asset"
 	"github.com/cnartlu/area-service/internal/data/ent"
+
 	"github.com/go-redis/redis/v8"
 )
 
-type AssetRepository interface{}
+var _ bizAsset.ManageRepo = (*AssetRepo)(nil)
 
 type AssetRepo struct {
 	ent *ent.Client
 	rds *redis.Client
 }
 
-func (r *AssetRepo) FindList(ctx context.Context, options ...option) ([]*ent.AreaReleaseAsset, error) {
+func (r *AssetRepo) FindList(ctx context.Context, options ...bizAsset.Option) ([]*bizAsset.Asset, error) {
 	query := r.ent.AreaReleaseAsset.Query()
+	o := newOption(query)
 	for _, option := range options {
-		option(query)
+		option(o)
 	}
-	return query.All(ctx)
+	models, err := query.All(ctx)
+	if err != nil {
+		return nil, err
+	}
+	items := []*bizAsset.Asset{}
+	for _, v := range models {
+		v := v
+		items = append(items, &bizAsset.Asset{
+			ID: v.ID,
+		})
+	}
+	return items, nil
 }
 
-func (r *AssetRepo) FindOne(ctx context.Context, options ...option) (*ent.AreaReleaseAsset, error) {
+func (r *AssetRepo) FindOne(ctx context.Context, options ...bizAsset.Option) (*bizAsset.Asset, error) {
 	query := r.ent.AreaReleaseAsset.Query()
+	o := newOption(query)
 	for _, option := range options {
-		option(query)
+		option(o)
 	}
-	return query.First(ctx)
+	model, err := query.First(ctx)
+	if err != nil {
+		return nil, err
+	}
+	p := bizAsset.Asset{
+		ID: model.ID,
+	}
+	return &p, nil
 }
 
 func (r *AssetRepo) Create(ctx context.Context, data *ent.AreaReleaseAsset) (*ent.AreaReleaseAsset, error) {

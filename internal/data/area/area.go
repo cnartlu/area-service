@@ -4,32 +4,33 @@ import (
 	"context"
 	"time"
 
+	"github.com/cnartlu/area-service/api"
 	bizArea "github.com/cnartlu/area-service/internal/biz/area"
 	"github.com/cnartlu/area-service/internal/data/ent"
 	"github.com/cnartlu/area-service/internal/data/ent/area"
-	"github.com/go-kratos/kratos/v2/errors"
 	"github.com/go-redis/redis/v8"
 )
+
+var _ bizArea.Manager = (*AreaRepo)(nil)
 
 type AreaRepo struct {
 	ent *ent.Client
 	rds *redis.Client
 }
 
-var _ bizArea.Manager = (*AreaRepo)(nil)
-
 func (r *AreaRepo) toAreaData(result *ent.Area) bizArea.Area {
 	return bizArea.Area{
-		ID:        result.ID,
-		RegionID:  result.RegionID,
-		Title:     result.Title,
-		Pinyin:    result.Pinyin,
-		Ucfirst:   result.Ucfirst,
-		CityCode:  result.CityCode,
-		ZipCode:   result.ZipCode,
-		Level:     int(result.Level),
-		CreateAt:  time.Unix(int64(result.CreateTime), 0),
-		UpddateAt: time.Unix(int64(result.UpdateTime), 0),
+		ID:             result.ID,
+		RegionID:       result.RegionID,
+		Title:          result.Title,
+		Pinyin:         result.Pinyin,
+		Ucfirst:        result.Ucfirst,
+		CityCode:       result.CityCode,
+		ZipCode:        result.ZipCode,
+		Level:          int(result.Level),
+		ChildrenNumber: int(result.ChildrenNumber),
+		CreateAt:       time.Unix(int64(result.CreateTime), 0),
+		UpddateAt:      time.Unix(int64(result.UpdateTime), 0),
 	}
 }
 
@@ -42,7 +43,8 @@ func (r *AreaRepo) Count(ctx context.Context, options ...bizArea.Option) int {
 			option(q)
 		}
 	}
-	return query.CountX(ctx)
+	i, _ := query.Count(ctx)
+	return i
 }
 
 // FindList 查找数据
@@ -77,7 +79,7 @@ func (r *AreaRepo) FindOne(ctx context.Context, options ...bizArea.Option) (*biz
 	result, err := query.First(ctx)
 	if err != nil {
 		if ent.IsNotFound(err) {
-			err = errors.NotFound("NOT_FOUND", err.Error()).WithCause(err)
+			err = api.ErrorDataNotFound(err.Error())
 		}
 		return nil, err
 	}
@@ -93,8 +95,13 @@ func (r *AreaRepo) Save(ctx context.Context, x *bizArea.Area) (*bizArea.Area, er
 		isUpdate bool
 	)
 	if x.ID > 0 {
+		isUpdate = true
 		model, err = r.ent.Area.Query().Where(area.IDEQ(x.ID)).First(ctx)
 		if err != nil {
+			if !ent.IsNotFound(err) {
+				return nil, err
+			}
+			isUpdate = false
 		}
 	}
 	if isUpdate {

@@ -87,6 +87,20 @@ func (p *process) GetPidFile() *pidFile {
 	return nil
 }
 
+func (p *process) WritePidFile() error {
+	if p != nil {
+		return p.pidFile.WritePid(p.pid)
+	}
+	return nil
+}
+
+func (p *process) RemovePidFile() error {
+	if p != nil {
+		return p.pidFile.Remove()
+	}
+	return nil
+}
+
 func newProcess(a *App) *process {
 	var p = process{
 		pid:  os.Getpid(),
@@ -101,7 +115,7 @@ func newProcess(a *App) *process {
 		name = s
 	}
 	pf := pidFile{
-		filename: filepath.Join(a.GetRootPath(), name+".pid"),
+		filename: filepath.Join(a.GetRuntimePath(), name+".pid"),
 	}
 	p.pidFile = &pf
 	return &p

@@ -1,23 +1,29 @@
 syntax = "proto3";
 
 // 定义包名
-package api.kratos.v1;
+package api;
 import "errors/errors.proto";
 
 // 多语言特定包名，用于源代码引用
-option go_package = "kratos/api/errors;errors";
+option go_package = "github.com/cnartlu/area-service/api;api";
 option java_multiple_files = true;
-option java_package = "api.errors";
+option java_package = "api";
 
-enum Query {
-  NotFound = 0;
-  ValueEmpty = 1;
-}
-
-enum Param {
+enum Error {
+  // option allow_alias = true;
+  // 设置缺省错误码
   option (errors.default_code) = 500;
+  SUCCESS = 0 [(errors.code) = 200];
 
-  NotFound = 0 [(errors.code) = 404];
-  NotAuthorized = 1 [(errors.code) = 403];
+  PARAM_MISSING = 40000 [(errors.code) = 400];
+  PARAM_FORMAT = 40001 [(errors.code) = 400];
+
+  TOKEN_MISSING = 40100 [(errors.code) = 401];
+  TOKEN_INVALID = 40101 [(errors.code) = 401];
+  TOKEN_EXPIRE = 40102 [(errors.code) = 401];
+  TOKEN_BIND_INVALID = 40103 [(errors.code) = 401];
+  TOKEN_UNBIND = 40104 [(errors.code) = 401];
+
+  PAGE_NOT_FOUND = 40401 [(errors.code) = 404];
+  DATA_NOT_FOUND = 40402 [(errors.code) = 404];
 }
-

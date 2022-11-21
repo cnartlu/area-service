@@ -3,12 +3,12 @@ package http
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net"
 	"net/http"
-	"os"
-	"strings"
 	"syscall"
 
+	"github.com/cnartlu/area-service/component/app"
 	"github.com/cnartlu/area-service/component/log"
 	"github.com/cnartlu/area-service/internal/config"
 	"github.com/cnartlu/area-service/internal/server/http/router"
@@ -87,21 +87,27 @@ func (s *Server) Stop(ctx context.Context) error {
 
 // NewServer new a HTTP server.
 func NewServer(
+	a *app.App,
 	logger *log.Logger,
 	httpConfig *config.Http,
 	// 其他数据
 	routers []router.Router,
 ) *Server {
-	switch strings.ToLower(os.Getenv(env.NameEnv)) {
-	case "dev", "development":
+	switch a.GetEnv() {
+	case app.EnvName_dev:
 		gin.SetMode(gin.DebugMode)
-	case "test":
+	case app.EnvName_test:
 		gin.SetMode(gin.TestMode)
-	case "prod", "production":
-		fallthrough
+	case app.EnvName_sit:
+		gin.SetMode(gin.DebugMode)
+	case app.EnvName_uat:
+		gin.SetMode(gin.ReleaseMode)
+	case app.EnvName_prod:
+		gin.SetMode(gin.ReleaseMode)
 	default:
 		gin.SetMode(gin.ReleaseMode)
 	}
+	fmt.Println(a.GetEnv())
 	e := gin.New()
 	g1 := e.Group("/")
 	{

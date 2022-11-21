@@ -3,17 +3,14 @@ package github
 import (
 	"context"
 
+	bizAreaRelease "github.com/cnartlu/area-service/internal/biz/area/release"
 	"github.com/cnartlu/area-service/internal/data/ent"
+
 	"github.com/google/go-github/v45/github"
 )
 
-type XiangyuecnRepository interface {
-	// GetLatestRelease 远端拉取最后的资源
-	GetLatestRelease(ctx context.Context) (*github.RepositoryRelease, error)
-}
-
 var (
-	_ XiangyuecnRepository = (*XiangyuecnRepo)(nil)
+	_ bizAreaRelease.XiangyuecnRepository = (*XiangyuecnRepo)(nil)
 )
 
 type XiangyuecnRepo struct {

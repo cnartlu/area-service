@@ -8,12 +8,22 @@ package main
 import (
 	"github.com/cnartlu/area-service/component/app"
 	"github.com/cnartlu/area-service/component/config"
+	"github.com/cnartlu/area-service/component/github"
 	"github.com/cnartlu/area-service/component/log"
+	"github.com/cnartlu/area-service/component/proxy"
 	"github.com/cnartlu/area-service/component/redis"
 	area2 "github.com/cnartlu/area-service/internal/biz/area"
+	release2 "github.com/cnartlu/area-service/internal/biz/area/release"
+	"github.com/cnartlu/area-service/internal/command"
+	"github.com/cnartlu/area-service/internal/command/handler"
+	github3 "github.com/cnartlu/area-service/internal/command/handler/github"
+	"github.com/cnartlu/area-service/internal/command/script"
 	"github.com/cnartlu/area-service/internal/component/db"
 	config2 "github.com/cnartlu/area-service/internal/config"
 	"github.com/cnartlu/area-service/internal/data/area"
+	"github.com/cnartlu/area-service/internal/data/area/release"
+	"github.com/cnartlu/area-service/internal/data/area/release/asset"
+	github2 "github.com/cnartlu/area-service/internal/data/github"
 	"github.com/cnartlu/area-service/internal/server"
 	"github.com/cnartlu/area-service/internal/server/cron"
 	"github.com/cnartlu/area-service/internal/server/cron/job"
@@ -65,11 +75,64 @@ func initApp(string2 string) (*server.Server, func(), error) {
 	configHttp := config2.GetHttp(config3)
 	routerArea := router.NewArea(areaService)
 	v := router.NewRouter(routerArea)
-	httpServer := http.NewServer(logger, configHttp, v)
+	httpServer := http.NewServer(appApp, logger, configHttp, v)
 	daily := job.NewDaily(logger)
 	cronServer := cron.NewServer(logger, daily)
-	serverServer := server.NewServer(appApp, logger, config3, grpcServer, httpServer, cronServer)
+	serverServer := server.NewServer(appApp, logger, grpcServer, httpServer, cronServer)
 	return serverServer, func() {
+		cleanup3()
+		cleanup2()
+		cleanup()
+	}, nil
+}
+
+// initCommand 初始化命令行
+func initCommand(string2 string) (*command.Command, func(), error) {
+	configConfig, cleanup, err := config.NewKratos(string2)
+	if err != nil {
+		return nil, nil, err
+	}
+	config3, err := config2.New(configConfig)
+	if err != nil {
+		cleanup()
+		return nil, nil, err
+	}
+	dbConfig := config2.GetDb(config3)
+	logConfig := config2.GetLogger(config3)
+	logger, err := log.New(logConfig)
+	if err != nil {
+		cleanup()
+		return nil, nil, err
+	}
+	client, cleanup2, err := db.NewEnt(dbConfig, logger)
+	if err != nil {
+		cleanup()
+		return nil, nil, err
+	}
+	appConfig := config2.GetApp(config3)
+	proxyClient, err := proxy.NewByAppConfig(appConfig)
+	if err != nil {
+		cleanup2()
+		cleanup()
+		return nil, nil, err
+	}
+	githubClient := github.New(proxyClient)
+	xiangyuecnRepo := github2.NewXiangyuecnRepo(client, githubClient)
+	redisConfig := config2.GetRedis(config3)
+	redisClient, cleanup3, err := redis.New(redisConfig, logger)
+	if err != nil {
+		cleanup2()
+		cleanup()
+		return nil, nil, err
+	}
+	releaseRepo := release.NewRepository(client, redisClient)
+	assetRepo := asset.NewAssetRepo(client, redisClient)
+	githubUsecase := release2.NewGithubUsecase(xiangyuecnRepo, releaseRepo, assetRepo)
+	githubHandler := github3.NewHandler(githubUsecase)
+	handlerHandler := handler.New(githubHandler)
+	scriptScript := script.New()
+	commandCommand := command.New(handlerHandler, scriptScript)
+	return commandCommand, func() {
 		cleanup3()
 		cleanup2()
 		cleanup()

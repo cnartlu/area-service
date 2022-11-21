@@ -4,8 +4,10 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
+	"github.com/cnartlu/area-service/internal/command"
 	"github.com/urfave/cli/v2"
 )
 
@@ -19,32 +21,21 @@ var (
 
 func main() {
 	var ctx = context.Background()
-	var cmd = cli.App{
-		Name:    Name,
-		Version: Version,
-		// Usage:                  fmt.Sprintf("%s [-hvt] [-s signal] [-c filename]", Name),
+	var name string = Name
+	if name == "" {
+		s := filepath.Base(os.Args[0])
+		if i := strings.Index(s, "."); i >= 0 {
+			name = s[:i]
+		} else {
+			name = s
+		}
+	}
+	var cmd = &cli.App{
+		Name:                   name,
+		Version:                Version,
 		HideHelpCommand:        true,
 		UseShortOptionHandling: true,
-		Flags: []cli.Flag{
-			&cli.BoolFlag{
-				Name:    "test",
-				Aliases: []string{"t"},
-				Usage:   "test configuration and exit",
-			},
-			&cli.StringFlag{
-				Name:    "signal",
-				Aliases: []string{"s"},
-				Usage:   "send signal to a master process: stop, quit, reload",
-				Value:   "",
-			},
-			&cli.StringFlag{
-				Name:        "config",
-				Aliases:     []string{"c"},
-				Value:       "",
-				DefaultText: "config.yaml",
-				Usage:       "set configuration file",
-			},
-		},
+		Flags:                  []cli.Flag{command.TestFlag, command.SignalFlag, command.ConfigFlag},
 		Action: func(ctx *cli.Context) error {
 			var (
 				help    = ctx.Bool("help")
@@ -67,6 +58,9 @@ func main() {
 			return nil
 		},
 	}
+
+	command.Setup(cmd, initCommand)
+
 	if err := cmd.RunContext(ctx, os.Args); err != nil {
 		fmt.Println(err)
 	}

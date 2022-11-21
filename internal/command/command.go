@@ -1,42 +1,73 @@
 package command
 
 import (
-	"github.com/cnartlu/area-service/internal/command/handler/greet"
+	"github.com/cnartlu/area-service/internal/command/handler"
 	"github.com/cnartlu/area-service/internal/command/script"
-	"github.com/spf13/cobra"
+	"github.com/urfave/cli/v2"
 )
 
-type Commander interface {
-	Register(cmd *cobra.Command)
-}
+type CommandFunc func(string) (*Command, func(), error)
 
-type Command struct {
-	handlers Commander
-	scripts  []script.Script
-	// 注册脚本
-	greetHandler      greet.Handler
-	s0000000000Script *script.S0000000000
-}
+var (
+	TestFlag = &cli.BoolFlag{
+		Name:    "test",
+		Aliases: []string{"t"},
+		Usage:   "test configuration and exit",
+	}
+	ConfigFlag = &cli.StringFlag{
+		Name:        "config",
+		Aliases:     []string{"c"},
+		Value:       "config.yaml",
+		DefaultText: "config.yaml",
+		Usage:       "set configuration file",
+	}
+	SignalFlag = &cli.StringFlag{
+		Name:    "signal",
+		Aliases: []string{"s"},
+		Usage:   "send signal to a master process: stop, quit, reload",
+		Value:   "",
+	}
+	HelpFlag    = cli.HelpFlag
+	VersionFlag = cli.VersionFlag
+)
 
-func (c *Command) Register(cmd *cobra.Command) {
-	// c.greetHandler.Register(cmd)
-	// 注册脚本命令
-	cmd.AddCommand(&cobra.Command{
-		Use:   "script",
-		Short: "",
-		Long:  ``,
-		Run: func(cmd *cobra.Command, args []string) {
-
+func Setup(app *cli.App, fn CommandFunc) {
+	app.Commands = append(app.Commands, &cli.Command{
+		Name:            "github",
+		HideHelp:        true,
+		HideHelpCommand: true,
+		Hidden:          true,
+		Subcommands: []*cli.Command{
+			{
+				Name:                   "load",
+				Flags:                  []cli.Flag{ConfigFlag},
+				UseShortOptionHandling: true,
+				SkipFlagParsing:        true,
+				Action: func(ctx *cli.Context) error {
+					command, cleanup, err := fn(ctx.String("config"))
+					if err != nil {
+						return err
+					}
+					defer cleanup()
+					return command.handler.Github.Load(ctx.Context)
+				},
+			},
 		},
 	})
 }
 
+type Command struct {
+	handler *handler.Handler
+	script  *script.Script
+}
+
 func New(
-	greetHandler greet.Handler,
-	s0000000000Script *script.S0000000000,
+	handler *handler.Handler,
+	script *script.Script,
 ) *Command {
-	return &Command{
-		greetHandler:      greetHandler,
-		s0000000000Script: s0000000000Script,
+	var r = &Command{
+		handler: handler,
+		script:  script,
 	}
+	return r
 }

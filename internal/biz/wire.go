@@ -13,6 +13,6 @@ import (
 
 var ProviderSet = wire.NewSet(
 	area.NewManagerUsecase,
-	release.NewgithubUsecase,
+	release.NewGithubUsecase,
 	release.NewReleaseUsecase,
 )

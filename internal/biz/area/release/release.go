@@ -4,7 +4,7 @@ import (
 	"context"
 )
 
-type Releasor interface {
+type ManageRepo interface {
 	Count(ctx context.Context, options ...Option) int
 	// FindList 查找数据列表
 	FindList(ctx context.Context, options ...Option) ([]*Release, error)
@@ -17,7 +17,7 @@ type Releasor interface {
 }
 
 type ReleaseUsecase struct {
-	repo Releasor
+	repo ManageRepo
 }
 
 func (r *ReleaseUsecase) List(ctx context.Context) ([]*Release, error) {
@@ -36,7 +36,7 @@ func (r *ReleaseUsecase) Remove(ctx context.Context) error {
 	return r.repo.Remove(ctx)
 }
 
-func NewReleaseUsecase(repo Releasor) *ReleaseUsecase {
+func NewReleaseUsecase(repo ManageRepo) *ReleaseUsecase {
 	return &ReleaseUsecase{
 		repo: repo,
 	}

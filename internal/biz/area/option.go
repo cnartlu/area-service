@@ -1,70 +1,69 @@
 package area
 
-// pager 分页查询
-type pager interface {
-	Limit(int)
-	Offset(int)
-}
-
 type OptionInterface interface {
-	pager
-	WithID(uint64)
-	WithParentID(pid uint64)
-	WithRegionID(regionID string)
-	WithLevel(int)
+	Limit(limit int)
+	Offset(offset int)
+	Order(order string)
+	IDEQ(id uint64)
+	IDIn(ids ...uint64)
+	ParentIDEQ(parentID uint64)
+	RegionIDEQ(regionID string)
+	LevelEQ(level int)
+	TitleContains(keyword string)
 }
 
-// Option 请求条件接口
 type Option func(OptionInterface)
 
-// Offset 偏移量
 func Offset(offset int) Option {
 	return func(r OptionInterface) {
 		r.Offset(offset)
 	}
 }
 
-// Limit 限制查询数量
 func Limit(limit int) Option {
 	return func(r OptionInterface) {
 		r.Limit(limit)
 	}
 }
 
-// WithID 查询具体ID
-func WithID(id uint64) Option {
+func Order(order string) Option {
 	return func(r OptionInterface) {
-		r.WithID(id)
+		r.Order(order)
 	}
 }
 
-// WithParentIDEQ 父级ID等价
-func WithParentID(pid uint64) Option {
+func IDEQ(id uint64) Option {
 	return func(r OptionInterface) {
-		r.WithParentID(pid)
+		r.IDEQ(id)
 	}
 }
 
-// WithRegionID 区域标识
-func WithRegionID(regionID string) Option {
+func IDIn(ids ...uint64) Option {
 	return func(r OptionInterface) {
-		r.WithRegionID(regionID)
+		r.IDIn(ids...)
 	}
 }
 
-// WithLevel 级别
-func WithLevel(level int) Option {
+func ParentIDEQ(parentID uint64) Option {
 	return func(r OptionInterface) {
-		r.WithLevel(level)
+		r.ParentIDEQ(parentID)
 	}
 }
 
-// WithKeywordContains 搜索关键字
-func WithKeywordContains(keyword string) Option {
+func RegionIDEQ(regionID string) Option {
 	return func(r OptionInterface) {
-		i, ok := r.(interface{ WithKeywordContains(string) })
-		if ok {
-			i.WithKeywordContains(keyword)
-		}
+		r.RegionIDEQ(regionID)
+	}
+}
+
+func LevelEQ(level int) Option {
+	return func(r OptionInterface) {
+		r.LevelEQ(level)
+	}
+}
+
+func TitleContains(keyword string) Option {
+	return func(r OptionInterface) {
+		r.TitleContains(keyword)
 	}
 }

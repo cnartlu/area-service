@@ -1,25 +1,11 @@
 package asset
 
-// pager 分页查询
-type pager interface {
-	Limit(int)
-	Offset(int)
-}
-
-// order 排序
-type order interface {
-}
-
-// 查询条件
-type querier interface {
-	IDEQ(uint64)
-	// WithReiginIDAndLevel(string, uint8)
-}
-
 type OptionInterface interface {
-	pager
-	order
-	querier
+	Limit(limit int)
+	Offset(offset int)
+	Order(order string)
+	IDEQ(id uint64)
+	IDIn(ids ...uint64)
 }
 
 type Option func(OptionInterface)
@@ -36,20 +22,20 @@ func Limit(limit int) Option {
 	}
 }
 
-func WithID(id uint64) Option {
+func Order(order string) Option {
 	return func(r OptionInterface) {
-		i, ok := r.(interface{ WithID(uint64) })
-		if ok {
-			i.WithID(id)
-		}
+		r.Order(order)
 	}
 }
 
-func WithAreaReleaseID(areaReleaseID uint64) Option {
+func IDEQ(id uint64) Option {
 	return func(r OptionInterface) {
-		i, ok := r.(interface{ WithAreaReleaseID(uint64) })
-		if ok {
-			i.WithAreaReleaseID(areaReleaseID)
-		}
+		r.IDEQ(id)
+	}
+}
+
+func IDIn(ids ...uint64) Option {
+	return func(r OptionInterface) {
+		r.IDIn(ids...)
 	}
 }

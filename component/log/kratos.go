@@ -55,6 +55,6 @@ func (l *kratosLogger) Log(level log.Level, keyvals ...interface{}) error {
 }
 
 func NewKratosLogger(l *Logger) log.Logger {
-	var klogger = kratosLogger{l: l.AddCallerSkip(1)}
+	var klogger = kratosLogger{l: l.AddCallerSkip(2)}
 	return &klogger
 }

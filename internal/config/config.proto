@@ -10,12 +10,7 @@ import "component/redis/redis.proto";
 import "component/db/db.proto";
 
 message Config {
-  bool debug = 1;
-  string env = 2;
-  string name = 3;
-  string proxy = 4;
-  .component.app.Config app = 5;
-
+  .component.app.Config app = 1;
   Http http = 10;
   Grpc grpc = 11;
   Cron cron = 12;
