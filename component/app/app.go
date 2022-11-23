@@ -98,6 +98,13 @@ func (a *App) GetRuntimePath() string {
 	return ""
 }
 
+func (a *App) GetShortRuntimePath() string {
+	if a != nil {
+		return strings.TrimSuffix(a.runtimePath, a.rootPath)
+	}
+	return ""
+}
+
 func (a *App) GetProcess() *process {
 	if a != nil {
 		return a.process

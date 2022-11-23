@@ -11,20 +11,20 @@ import (
 var _ bizrelease.OptionInterface = (*option)(nil)
 
 type option struct {
-	*ent.AreaReleaseQuery
+	query *ent.AreaReleaseQuery
 }
 
 func (o *option) Offset(offset int) {
-	o.AreaReleaseQuery.Offset(offset)
+	o.query.Offset(offset)
 }
 
 func (o *option) Limit(limit int) {
-	o.AreaReleaseQuery.Limit(limit)
+	o.query.Limit(limit)
 }
 
 func (o *option) Order(order string) {
 	if order == "" {
-		order = "-id"
+		return
 	}
 	orders := strings.Split(order, ",")
 	for _, v := range orders {
@@ -32,22 +32,26 @@ func (o *option) Order(order string) {
 		if v == "" {
 			continue
 		}
-		if strings.HasSuffix(v, "-") {
-			o.AreaReleaseQuery.Order(ent.Desc(v[1:]))
+		if strings.HasPrefix(v, "-") {
+			o.query.Order(ent.Desc(v[1:]))
 		} else {
-			o.AreaReleaseQuery.Order(ent.Asc(v))
+			o.query.Order(ent.Asc(v))
 		}
 	}
 }
 
 func (o *option) IDEQ(id uint64) {
-	o.AreaReleaseQuery.Where(arearelease.IDEQ(id))
+	o.query.Where(arearelease.IDEQ(id))
 }
 
 func (o *option) IDIn(ids ...uint64) {
-	o.AreaReleaseQuery.Where(arearelease.IDIn(ids...))
+	o.query.Where(arearelease.IDIn(ids...))
+}
+
+func (o *option) ReleaseIDEQ(releaseID uint64) {
+	o.query.Where(arearelease.ReleaseIDEQ(releaseID))
 }
 
 func newOption(query *ent.AreaReleaseQuery) *option {
-	return &option{query}
+	return &option{query: query}
 }

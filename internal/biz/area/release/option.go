@@ -6,6 +6,7 @@ type OptionInterface interface {
 	Order(order string)
 	IDEQ(id uint64)
 	IDIn(ids ...uint64)
+	ReleaseIDEQ(id uint64)
 }
 
 type Option func(OptionInterface)
@@ -37,5 +38,11 @@ func IDEQ(id uint64) Option {
 func IDIn(ids ...uint64) Option {
 	return func(r OptionInterface) {
 		r.IDIn(ids...)
+	}
+}
+
+func ReleaseIDEQ(releaseID uint64) Option {
+	return func(r OptionInterface) {
+		r.ReleaseIDEQ(releaseID)
 	}
 }

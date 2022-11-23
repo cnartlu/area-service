@@ -97,6 +97,8 @@ func initCommand(string2 string) (*command.Command, func(), error) {
 		cleanup()
 		return nil, nil, err
 	}
+	appConfig := config2.GetApp(config3)
+	appApp := app.New(appConfig)
 	dbConfig := config2.GetDb(config3)
 	logConfig := config2.GetLogger(config3)
 	logger, err := log.New(logConfig)
@@ -109,7 +111,6 @@ func initCommand(string2 string) (*command.Command, func(), error) {
 		cleanup()
 		return nil, nil, err
 	}
-	appConfig := config2.GetApp(config3)
 	proxyClient, err := proxy.NewByAppConfig(appConfig)
 	if err != nil {
 		cleanup2()
@@ -127,7 +128,7 @@ func initCommand(string2 string) (*command.Command, func(), error) {
 	}
 	releaseRepo := release.NewRepository(client, redisClient)
 	assetRepo := asset.NewAssetRepo(client, redisClient)
-	githubUsecase := release2.NewGithubUsecase(xiangyuecnRepo, releaseRepo, assetRepo)
+	githubUsecase := release2.NewGithubUsecase(appApp, xiangyuecnRepo, releaseRepo, assetRepo)
 	githubHandler := github3.NewHandler(githubUsecase)
 	handlerHandler := handler.New(githubHandler)
 	scriptScript := script.New()

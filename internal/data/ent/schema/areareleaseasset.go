@@ -35,13 +35,7 @@ func (AreaReleaseAsset) Fields() []ent.Field {
 		field.String("file_path").Comment("文件路径").Default("").Validate(validates.MaxRuneCount(255)),
 		field.Uint("file_size").Comment("文件大小").Default(0),
 		field.String("download_url").Comment("下载地址").Default("").Validate(validates.MaxRuneCount(255)),
-		field.Enum("status").
-			NamedValues(
-				"WaitLoaded", "0",
-				"FinishedLoaded", "1",
-			).
-			Default("0").
-			Comment("状态"),
+		field.Uint8("status").Default(0).Comment("状态"),
 	}
 }
 

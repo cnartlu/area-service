@@ -1,4 +1,4 @@
-package file
+package log
 
 import (
 	"io"
@@ -7,6 +7,10 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"gopkg.in/natefinch/lumberjack.v2"
 )
+
+func init() {
+	RegisterTarget(fileRegister(0))
+}
 
 type fileRegister int8
 
@@ -34,9 +38,4 @@ func (fileRegister) Register(data map[string]interface{}) (io.Writer, error) {
 		f.Filename = filepath.Join("logs", "app.log")
 	}
 	return &f, nil
-}
-
-func New() *fileRegister {
-	var b fileRegister = 0
-	return &b
 }

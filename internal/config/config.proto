@@ -7,10 +7,12 @@ import "google/protobuf/duration.proto";
 import "component/app/app.proto";
 import "component/log/config.proto";
 import "component/redis/redis.proto";
+import "component/filesystem/filesystem.proto";
 import "component/db/db.proto";
 
 message Config {
   .component.app.Config app = 1;
+  .component.filesystem.Config filesystem = 2;
   Http http = 10;
   Grpc grpc = 11;
   Cron cron = 12;

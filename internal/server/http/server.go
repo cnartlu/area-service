@@ -12,7 +12,6 @@ import (
 	"github.com/cnartlu/area-service/component/log"
 	"github.com/cnartlu/area-service/internal/config"
 	"github.com/cnartlu/area-service/internal/server/http/router"
-	"github.com/cnartlu/area-service/pkg/env"
 	"github.com/gin-gonic/gin"
 )
 
@@ -39,7 +38,7 @@ func (s *Server) Start(ctx context.Context) error {
 	s.logger.Info("[HTTP] server listening on: [::]" + tcpAddr.String())
 	// 判断是否为子进程
 	// 1、当为子进程时，需要继承父进程的socket监听
-	lis := env.ParentHttpListener()
+	var lis net.Listener
 	if lis != nil {
 		lisAddr := lis.Addr()
 		if lisAddr.Network() != tcpAddr.Network() || lisAddr.String() != tcpAddr.String() {

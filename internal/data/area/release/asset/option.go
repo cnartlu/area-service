@@ -3,28 +3,28 @@ package asset
 import (
 	"strings"
 
-	bizAsset "github.com/cnartlu/area-service/internal/biz/area/release/asset"
+	bizasset "github.com/cnartlu/area-service/internal/biz/area/release/asset"
 	"github.com/cnartlu/area-service/internal/data/ent"
 	"github.com/cnartlu/area-service/internal/data/ent/areareleaseasset"
 )
 
-var _ bizAsset.OptionInterface = (*option)(nil)
+var _ bizasset.OptionInterface = (*option)(nil)
 
 type option struct {
-	*ent.AreaReleaseAssetQuery
+	query *ent.AreaReleaseAssetQuery
 }
 
 func (o *option) Offset(offset int) {
-	o.AreaReleaseAssetQuery.Offset(offset)
+	o.query.Offset(offset)
 }
 
 func (o *option) Limit(limit int) {
-	o.AreaReleaseAssetQuery.Limit(limit)
+	o.query.Limit(limit)
 }
 
 func (o *option) Order(order string) {
 	if order == "" {
-		order = "-id"
+		return
 	}
 	orders := strings.Split(order, ",")
 	for _, v := range orders {
@@ -32,22 +32,30 @@ func (o *option) Order(order string) {
 		if v == "" {
 			continue
 		}
-		if strings.HasSuffix(v, "-") {
-			o.AreaReleaseAssetQuery.Order(ent.Desc(v[1:]))
+		if strings.HasPrefix(v, "-") {
+			o.query.Order(ent.Desc(v[1:]))
 		} else {
-			o.AreaReleaseAssetQuery.Order(ent.Asc(v))
+			o.query.Order(ent.Asc(v))
 		}
 	}
 }
 
 func (o *option) IDEQ(id uint64) {
-	o.AreaReleaseAssetQuery.Where(areareleaseasset.IDEQ(id))
+	o.query.Where(areareleaseasset.IDEQ(id))
 }
 
 func (o *option) IDIn(ids ...uint64) {
-	o.AreaReleaseAssetQuery.Where(areareleaseasset.IDIn(ids...))
+	o.query.Where(areareleaseasset.IDIn(ids...))
+}
+
+func (o *option) AreaReleaseIDEQ(id uint64) {
+	o.query.Where(areareleaseasset.AreaReleaseIDEQ(id))
+}
+
+func (o *option) StatusEQ(status bizasset.Status) {
+	o.query.Where(areareleaseasset.StatusEQ(uint8(status)))
 }
 
 func newOption(query *ent.AreaReleaseAssetQuery) *option {
-	return &option{query}
+	return &option{query: query}
 }

@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package component.filesystem;
+
+option go_package = "github.com/cnartlu/area-service/component/filesystem;filesystem";
+option java_multiple_files = true;
+option java_package = "component.filesystem";
+
+import "google/protobuf/struct.proto";
+
+message Config {
+    string default = 1;
+    map<string, google.protobuf.Struct> disks = 2;
+}

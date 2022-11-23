@@ -3,23 +3,15 @@ package release
 import (
 	"context"
 
+	"github.com/cnartlu/area-service/api"
 	bizrelease "github.com/cnartlu/area-service/internal/biz/area/release"
 
 	"github.com/cnartlu/area-service/internal/data/ent"
+	"github.com/cnartlu/area-service/internal/data/ent/arearelease"
 	"github.com/go-redis/redis/v8"
 )
 
 var _ bizrelease.ManageRepo = (*ReleaseRepo)(nil)
-
-type FindListParam struct {
-	Owner      string
-	Repository string
-	Keyword    string
-	Status     string
-	Pagination bool
-	Offset     int
-	Limit      int
-}
 
 type ReleaseRepo struct {
 	ent *ent.Client
@@ -37,7 +29,6 @@ func (r *ReleaseRepo) Count(ctx context.Context, options ...bizrelease.Option) i
 	return i
 }
 
-// FindList 查找数据列表
 func (r *ReleaseRepo) FindList(ctx context.Context, options ...bizrelease.Option) ([]*bizrelease.Release, error) {
 	query := r.ent.AreaRelease.Query()
 	o := newOption(query)
@@ -45,11 +36,28 @@ func (r *ReleaseRepo) FindList(ctx context.Context, options ...bizrelease.Option
 		option := option
 		option(o)
 	}
-	_, err := query.All(ctx)
+	models, err := query.All(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return nil, nil
+	items := make([]*bizrelease.Release, len(models))
+	for i, model := range models {
+		model := model
+		items[i] = &bizrelease.Release{
+			ID:                 model.ID,
+			Owner:              model.Owner,
+			Repo:               model.Repo,
+			ReleaseID:          model.ReleaseID,
+			ReleaseName:        model.ReleaseName,
+			ReleaseNodeID:      model.ReleaseNodeID,
+			ReleasePublishedAt: model.ReleasePublishedAt,
+			ReleaseContent:     model.ReleaseContent,
+			Status:             bizrelease.Status(model.Status),
+			CreateTime:         model.CreateTime,
+			UpdateTime:         model.UpdateTime,
+		}
+	}
+	return items, nil
 }
 
 func (r *ReleaseRepo) FindOne(ctx context.Context, options ...bizrelease.Option) (*bizrelease.Release, error) {
@@ -59,42 +67,85 @@ func (r *ReleaseRepo) FindOne(ctx context.Context, options ...bizrelease.Option)
 		option := option
 		option(o)
 	}
-	_, err := query.First(ctx)
+	model, err := query.First(ctx)
+	if err != nil {
+		if ent.IsNotFound(err) {
+			return nil, api.ErrorDataNotFound(err.Error())
+		}
+		return nil, err
+	}
+	var result = bizrelease.Release{
+		ID:                 model.ID,
+		Owner:              model.Owner,
+		Repo:               model.Repo,
+		ReleaseID:          model.ReleaseID,
+		ReleaseName:        model.ReleaseName,
+		ReleaseNodeID:      model.ReleaseNodeID,
+		ReleasePublishedAt: model.ReleasePublishedAt,
+		ReleaseContent:     model.ReleaseContent,
+		Status:             bizrelease.Status(model.Status),
+		CreateTime:         model.CreateTime,
+		UpdateTime:         model.UpdateTime,
+	}
+	return &result, nil
+}
+
+func (r *ReleaseRepo) Save(ctx context.Context, data *bizrelease.Release) (*bizrelease.Release, error) {
+	var (
+		model    *ent.AreaRelease
+		err      error
+		isUpdate bool
+	)
+	if data.ID > 0 {
+		isUpdate = true
+		model, err = r.ent.AreaRelease.Query().
+			Where(arearelease.IDEQ(data.ID)).
+			First(ctx)
+		if err != nil {
+			if !ent.IsNotFound(err) {
+				return nil, err
+			}
+			isUpdate = false
+		}
+	}
+	if isUpdate {
+		model, err = model.Update().
+			SetOwner(data.Owner).
+			SetRepo(data.Repo).
+			SetReleaseID(data.ReleaseID).
+			SetReleaseName(data.ReleaseName).
+			SetReleaseNodeID(data.ReleaseNodeID).
+			SetReleasePublishedAt(data.ReleasePublishedAt).
+			SetReleaseContent(data.ReleaseContent).
+			SetStatus(uint8(data.Status)).
+			Save(ctx)
+	} else {
+		model, err = r.ent.AreaRelease.Create().
+			SetRepo(data.Repo).
+			SetReleaseID(data.ReleaseID).
+			SetReleaseName(data.ReleaseName).
+			SetReleaseNodeID(data.ReleaseNodeID).
+			SetReleasePublishedAt(data.ReleasePublishedAt).
+			SetReleaseContent(data.ReleaseContent).
+			SetStatus(uint8(data.Status)).
+			Save(ctx)
+	}
 	if err != nil {
 		return nil, err
 	}
-	return nil, nil
-}
-
-// Save 保存数据
-func (r *ReleaseRepo) Save(ctx context.Context, data *bizrelease.Release) (model *bizrelease.Release, err error) {
-	// if data.ID == 0 {
-	// 	model, err = r.ent.AreaRelease.Create().
-	// 		SetOwner(data.Owner).
-	// 		// SetRepo(data.Repository).
-	// 		SetReleaseID(data.ReleaseID).
-	// 		SetReleaseName(data.ReleaseName).
-	// 		SetReleaseNodeID(data.ReleaseNodeID).
-	// 		SetReleasePublishedAt(data.ReleasePublishedAt).
-	// 		SetReleaseContent(data.ReleaseContent).
-	// 		SetStatus(data.Status).
-	// 		Save(ctx)
-	// } else {
-	// 	model, err = r.ent.AreaRelease.UpdateOne(data).
-	// 		SetOwner(data.Owner).
-	// 		// SetRepo(data.Repository).
-	// 		SetReleaseID(data.ReleaseID).
-	// 		SetReleaseName(data.ReleaseName).
-	// 		SetReleaseNodeID(data.ReleaseNodeID).
-	// 		SetReleasePublishedAt(data.ReleasePublishedAt).
-	// 		SetReleaseContent(data.ReleaseContent).
-	// 		SetStatus(data.Status).
-	// 		Save(ctx)
-	// }
-	// if err != nil {
-	// 	return nil, err
-	// }
-	return
+	return &bizrelease.Release{
+		ID:                 model.ID,
+		Owner:              model.Owner,
+		Repo:               model.Repo,
+		ReleaseID:          model.ReleaseID,
+		ReleaseName:        model.ReleaseName,
+		ReleaseNodeID:      model.ReleaseNodeID,
+		ReleasePublishedAt: model.ReleasePublishedAt,
+		ReleaseContent:     model.ReleaseContent,
+		Status:             bizrelease.Status(model.Status),
+		CreateTime:         model.CreateTime,
+		UpdateTime:         model.UpdateTime,
+	}, nil
 }
 
 func (r *ReleaseRepo) Remove(ctx context.Context, options ...bizrelease.Option) error {

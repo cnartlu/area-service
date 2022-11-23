@@ -5,26 +5,29 @@ import (
 )
 
 type ManageRepo interface {
+	Count(ctx context.Context, options ...Option) int
 	FindList(ctx context.Context, options ...Option) ([]*Asset, error)
 	FindOne(ctx context.Context, options ...Option) (*Asset, error)
+	Save(ctx context.Context, data *Asset) (*Asset, error)
+	Remove(ctx context.Context, options ...Option) error
 }
 
-type Manager struct {
+type ManageUsecase struct {
 	repo ManageRepo
 }
 
-func (m *Manager) List(ctx context.Context) ([]*Asset, error) {
+func (m *ManageUsecase) List(ctx context.Context) ([]*Asset, error) {
 	return m.repo.FindList(ctx)
 }
 
-func (m *Manager) FindOne(ctx context.Context) (*Asset, error) {
+func (m *ManageUsecase) FindOne(ctx context.Context) (*Asset, error) {
 	return m.repo.FindOne(ctx)
 }
 
-func NewManager(
+func NewManageUsecase(
 	repo ManageRepo,
-) *Manager {
-	return &Manager{
+) *ManageUsecase {
+	return &ManageUsecase{
 		repo: repo,
 	}
 }

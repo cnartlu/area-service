@@ -1,13 +1,24 @@
-package log
+package filesystem
 
 import (
-	"io"
 	"strings"
 )
 
+type Result interface {
+	Name() string
+	Raw() any
+}
+
+type Disk interface {
+	Exists(key string, options ...HandleFunc) bool
+	Upload(filename, key string, options ...HandleFunc) (Result, error)
+	Url(key string, options ...HandleFunc) string
+	Delete(key string, options ...HandleFunc) error
+}
+
 type Target interface {
 	Name() string
-	Register(map[string]interface{}) (io.Writer, error)
+	Register(map[string]interface{}) (Disk, error)
 }
 
 var registeredTargets = make(map[string]Target)

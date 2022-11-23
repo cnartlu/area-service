@@ -45,12 +45,7 @@ func (AreaRelease) Fields() []ent.Field {
 			Charset:   "utf8mb4",
 			Collation: "utf8mb4_general_ci",
 		}),
-		field.Enum("status").
-			NamedValues(
-				"WaitLoaded", "0",
-				"FinishLoaded", "1",
-			).Default("0").
-			Comment("状态"),
+		field.Uint8("status").Default(0).Comment("状态"),
 	}
 }
 
