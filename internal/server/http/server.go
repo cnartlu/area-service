@@ -3,7 +3,6 @@ package http
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net"
 	"net/http"
 	"syscall"
@@ -106,7 +105,6 @@ func NewServer(
 	default:
 		gin.SetMode(gin.ReleaseMode)
 	}
-	fmt.Println(a.GetEnv())
 	e := gin.New()
 	g1 := e.Group("/")
 	{

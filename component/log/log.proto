@@ -8,11 +8,21 @@ option java_package = "component.log";
 
 import "google/protobuf/struct.proto";
 
+message TargetConfig {
+	string type = 1;
+	// level 最小日志等级
+	Level level = 2;
+	// levels 仅限设置的日志等级
+	repeated Level levels = 3;
+}
+
 enum Level {
-	debug = 0;
-	info = 1;
-	warning = 2;
-	error = 3;
+	inherit = 0;
+	debug = 1;
+	info = 2;
+	warning = 3;
+	error = 4;
+	all = -1;
 }
 
 message Config {
@@ -22,8 +32,10 @@ message Config {
 	optional bool stdout = 2;
 	// TraceLevel 记录堆栈行号
 	int32 trace_level = 3;
-	// log_level 日志等级
-	string log_level = 4;
+	// level 最小日志等级
+	Level level = 4;
+	// levels 仅限设置的日志等级
+	repeated Level levels = 5;
 	// Messages 记录固定的消息
-	map<string, google.protobuf.Value> messages = 5;
+	map<string, google.protobuf.Value> messages = 6;
 }

@@ -110,7 +110,6 @@ func (s *Server) Stop() error {
 func NewServer(
 	app *app.App,
 	logger *log.Logger,
-	// 服务对象
 	gs *grpc.Server,
 	hs *http.Server,
 	cn *cron.Server,
@@ -129,7 +128,7 @@ func NewServer(
 		kratos.ID(app.GetName()),
 		kratos.Name(app.GetName()),
 		kratos.Metadata(map[string]string{}),
-		kratos.Logger(log.NewKratosLogger(logger)),
+		// kratos.Logger(log.NewKratosLogger(logger)),
 		kratos.Server(servers...),
 	}
 

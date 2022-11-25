@@ -3,17 +3,18 @@ package log
 import (
 	"fmt"
 
-	"github.com/go-kratos/kratos/v2/log"
+	"github.com/cnartlu/area-service/component/log"
+	klog "github.com/go-kratos/kratos/v2/log"
 	"go.uber.org/zap"
 )
 
 type kratosLogger struct {
-	l *Logger
+	l *log.Logger
 }
 
 // Log logs a message at the specified level. The message includes any fields
 // passed at the log site, as well as any fields accumulated on the logger.
-func (l *kratosLogger) Log(level log.Level, keyvals ...interface{}) error {
+func (l *kratosLogger) Log(level klog.Level, keyvals ...interface{}) error {
 	msg := ""
 	data := []zap.Field{}
 	switch len(keyvals) {
@@ -31,7 +32,7 @@ func (l *kratosLogger) Log(level log.Level, keyvals ...interface{}) error {
 			for i := 0; i < len(keyvals); i += 2 {
 				key := fmt.Sprint(keyvals[i])
 				switch key {
-				case log.DefaultMessageKey:
+				case klog.DefaultMessageKey:
 					msg = fmt.Sprint(keyvals[i+1])
 				default:
 					data = append(data, zap.Any(key, keyvals[i+1]))
@@ -40,21 +41,21 @@ func (l *kratosLogger) Log(level log.Level, keyvals ...interface{}) error {
 		}
 	}
 	switch level {
-	case log.LevelDebug:
+	case klog.LevelDebug:
 		l.l.Debug(msg, data...)
-	case log.LevelInfo:
+	case klog.LevelInfo:
 		l.l.Info(msg, data...)
-	case log.LevelWarn:
+	case klog.LevelWarn:
 		l.l.Warn(msg, data...)
-	case log.LevelError:
+	case klog.LevelError:
 		l.l.Error(msg, data...)
-	case log.LevelFatal:
+	case klog.LevelFatal:
 		l.l.Fatal(msg, data...)
 	}
 	return nil
 }
 
-func NewKratosLogger(l *Logger) log.Logger {
+func NewKratosLogger(l *log.Logger) klog.Logger {
 	var klogger = kratosLogger{l: l.AddCallerSkip(2)}
 	return &klogger
 }

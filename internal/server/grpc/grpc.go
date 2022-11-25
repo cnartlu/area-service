@@ -41,7 +41,7 @@ func NewServer(
 		grpc.Network(network),
 		grpc.Address(addr),
 		grpc.Listener(lis),
-		grpc.Logger(log.NewKratosLogger(logger.AddCallerSkip(1))),
+		// grpc.Logger(log.NewKratosLogger(logger.AddCallerSkip(1))),
 		grpc.Middleware(recovery.Recovery()),
 	}
 	if c.GetTimeout() != nil {

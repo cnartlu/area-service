@@ -5,13 +5,70 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/go-kratos/kratos/v2/log"
-	klog "github.com/go-kratos/kratos/v2/log"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+	"google.golang.org/protobuf/encoding/protojson"
 )
 
 var packagepath = "github.com/cnartlu/area-service/"
+
+type levelEnable struct {
+	level  zapcore.Level
+	levels []zapcore.Level
+}
+
+func (l levelEnable) Enabled(lvl zapcore.Level) bool {
+	if len(l.levels) > 0 {
+		for _, level := range l.levels {
+			if level == lvl {
+				return lvl >= l.level
+			}
+		}
+		return false
+	}
+	return lvl >= l.level
+}
+
+func newLevelEnable(oldLevelEnable levelEnable, level Level, levels []Level) levelEnable {
+	var newLevelEnable = levelEnable{
+		level:  oldLevelEnable.level,
+		levels: oldLevelEnable.levels,
+	}
+	switch level {
+	case Level_debug:
+		newLevelEnable.level = zap.DebugLevel
+	case Level_info:
+		newLevelEnable.level = zap.InfoLevel
+	case Level_warning:
+		newLevelEnable.level = zap.WarnLevel
+	case Level_error:
+		newLevelEnable.level = zap.ErrorLevel
+	}
+	if len(levels) > 0 {
+		var levels_bak = make([]zapcore.Level, len(levels))
+		for k, level := range levels {
+			var breakFor = false
+			switch level {
+			case Level_debug:
+				levels_bak[k] = zap.DebugLevel
+			case Level_info:
+				levels_bak[k] = zap.InfoLevel
+			case Level_warning:
+				levels_bak[k] = zap.WarnLevel
+			case Level_error:
+				levels_bak[k] = zap.ErrorLevel
+			case Level_all:
+				levels_bak = make([]zapcore.Level, len(levels))
+				breakFor = true
+			}
+			if breakFor {
+				break
+			}
+		}
+		newLevelEnable.levels = levels_bak
+	}
+	return newLevelEnable
+}
 
 type Logger struct {
 	// 是否初始化
@@ -41,30 +98,13 @@ func (l *Logger) clone() *Logger {
 func (l *Logger) Setup() (err error) {
 	l.once.Do(func() {
 		var (
-			encoderConfig     zapcore.EncoderConfig
-			encoder           zapcore.Encoder
-			cores             []zapcore.Core
-			zapOptions        []zap.Option
-			coverLogLevelFunc = func(s string) zapcore.Level {
-				var defaultLevel zapcore.Level = zap.DebugLevel
-				s = strings.TrimSpace(s)
-				if s == "" {
-					return defaultLevel
-				}
-				switch strings.ToLower(s) {
-				case "info", "0":
-					defaultLevel = zap.InfoLevel
-				case "warn", "warning", "1":
-					defaultLevel = zap.WarnLevel
-				case "error", "2", "3", "4", "5":
-					defaultLevel = zap.ErrorLevel
-				}
-				return defaultLevel
-			}
+			encoderConfig zapcore.EncoderConfig
+			encoder       zapcore.Encoder
+			cores         []zapcore.Core
+			zapOptions    []zap.Option
 		)
-		// 解析配置
 		encoderConfig = zap.NewProductionEncoderConfig()
-		encoderConfig.MessageKey = klog.DefaultMessageKey
+		// encoderConfig.MessageKey = klog.DefaultMessageKey
 		encoderConfig.EncodeLevel = zapcore.LowercaseLevelEncoder
 		encoderConfig.EncodeTime = zapcore.RFC3339TimeEncoder
 		if packagepath != "" {
@@ -75,59 +115,41 @@ func (l *Logger) Setup() (err error) {
 			}
 		}
 		encoder = zapcore.NewJSONEncoder(encoderConfig)
-		// zap选项
 		zapOptions = append(zapOptions, zap.AddCaller(), zap.AddCallerSkip(1+int(l.c.GetTraceLevel())))
-		// 默认日志级别
-		defaultLevel := coverLogLevelFunc(l.c.GetLogLevel())
-		// 输出到控制台
+		defaultLevel := levelEnable{}
+		defaultLevel = newLevelEnable(defaultLevel, l.c.GetLevel(), l.c.GetLevels())
 		if l.c == nil || l.c.Stdout == nil || *l.c.Stdout {
 			cores = append(cores, zapcore.NewCore(encoder, os.Stdout, defaultLevel))
 		}
-		// 使用其他的输出项输出
-		{
-			configTargets := l.c.GetTargets()
-			for field, value := range configTargets {
-				value := value
-				r := value.GetFields()
-				targetType := field
-				if t, ok := r["type"]; ok {
-					targetType = t.GetStringValue()
-				}
-				// 检查类型是否被注册
-				target := GetTarget(targetType)
-				if target == nil {
-					buf := strings.Builder{}
-					buf.WriteString("logger target name [")
-					buf.WriteString(field)
-					buf.WriteString("] not registered, type is [")
-					buf.WriteString(targetType)
-					buf.WriteString("]")
-					log.Log(klog.LevelDebug, buf.String())
-					err = nil
-					continue
-				}
-				writer, err := target.Register(value.AsMap())
-				if err != nil {
-					buf := strings.Builder{}
-					buf.WriteString("logger target name [")
-					buf.WriteString(field)
-					buf.WriteString("] not registered, type is [")
-					buf.WriteString(targetType)
-					buf.WriteString("]")
-					log.Log(klog.LevelDebug, buf.String())
-					err = nil
-					continue
-				}
-				// 该target适用的日志级别
-				level := defaultLevel.String()
-				if t, ok := r["level"]; ok {
-					level = t.GetStringValue()
-				}
-				targetLevel := coverLogLevelFunc(level)
-				// 核心
-				cores = append(cores, zapcore.NewCore(encoder, zapcore.AddSync(writer), targetLevel))
+		configTargets := l.c.GetTargets()
+		protoUnmarshalOption := protojson.UnmarshalOptions{
+			// RecursionLimit: 1,
+			DiscardUnknown: true,
+		}
+		for field, targetStruct := range configTargets {
+			targetStruct := targetStruct
+			var targetConfig TargetConfig
+			targetStructBytes, _ := targetStruct.MarshalJSON()
+			if err1 := protoUnmarshalOption.Unmarshal(targetStructBytes, &targetConfig); err1 != nil {
+				err = err1
+				return
 			}
-
+			targetType := targetConfig.GetType()
+			if targetType == "" {
+				targetType = field
+			}
+			targetType = strings.ToLower(targetType)
+			target := GetTarget(targetType)
+			if target == nil {
+				target = GetTarget("file")
+			}
+			writer, err1 := target.Register(targetStructBytes)
+			if err1 != nil {
+				err = err1
+				break
+			}
+			var targetLevel = newLevelEnable(defaultLevel, targetConfig.GetLevel(), targetConfig.GetLevels())
+			cores = append(cores, zapcore.NewCore(encoder, zapcore.AddSync(writer), targetLevel))
 		}
 		core := zapcore.NewTee(cores...)
 		l.zap = zap.New(core, zapOptions...)
@@ -135,7 +157,10 @@ func (l *Logger) Setup() (err error) {
 	return
 }
 
-// AddCallerSkip 增加过滤长度
+// AddCallerSkip increases the number of callers skipped by caller annotation
+// (as enabled by the AddCaller option). When building wrappers around the
+// Logger and SugaredLogger, supplying this Option prevents zap from always
+// reporting the wrapper code as the caller.
 func (l *Logger) AddCallerSkip(skip int) *Logger {
 	c := l.clone()
 	c.zap = l.core().WithOptions(zap.AddCallerSkip(skip))

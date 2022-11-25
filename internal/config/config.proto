@@ -5,7 +5,7 @@ option go_package = "area-service/internal/config;config";
 
 import "google/protobuf/duration.proto";
 import "component/app/app.proto";
-import "component/log/config.proto";
+import "component/log/log.proto";
 import "component/redis/redis.proto";
 import "component/filesystem/filesystem.proto";
 import "component/db/db.proto";

@@ -34,8 +34,6 @@ message Config {
   // timeout 超时时间
   google.protobuf.Duration timeout = 11;
   // cache 缓存
-  oneof cache {
-    string cache_app_component_name = 13;
-    redis.Config cache_redis = 14;
-  }
+  string cache = 13;
+  redis.Config redis = 14;
 }
