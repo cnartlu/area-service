@@ -21,7 +21,7 @@ func (l levelEnable) Enabled(lvl zapcore.Level) bool {
 	if len(l.levels) > 0 {
 		for _, level := range l.levels {
 			if level == lvl {
-				return lvl >= l.level
+				return true
 			}
 		}
 		return false
@@ -116,14 +116,12 @@ func (l *Logger) Setup() (err error) {
 		}
 		encoder = zapcore.NewJSONEncoder(encoderConfig)
 		zapOptions = append(zapOptions, zap.AddCaller(), zap.AddCallerSkip(1+int(l.c.GetTraceLevel())))
-		defaultLevel := levelEnable{}
-		defaultLevel = newLevelEnable(defaultLevel, l.c.GetLevel(), l.c.GetLevels())
+		defaultLevelEnabler := newLevelEnable(levelEnable{}, l.c.GetLevel(), l.c.GetLevels())
 		if l.c == nil || l.c.Stdout == nil || *l.c.Stdout {
-			cores = append(cores, zapcore.NewCore(encoder, os.Stdout, defaultLevel))
+			cores = append(cores, zapcore.NewCore(encoder, os.Stdout, defaultLevelEnabler))
 		}
 		configTargets := l.c.GetTargets()
 		protoUnmarshalOption := protojson.UnmarshalOptions{
-			// RecursionLimit: 1,
 			DiscardUnknown: true,
 		}
 		for field, targetStruct := range configTargets {
@@ -148,8 +146,8 @@ func (l *Logger) Setup() (err error) {
 				err = err1
 				break
 			}
-			var targetLevel = newLevelEnable(defaultLevel, targetConfig.GetLevel(), targetConfig.GetLevels())
-			cores = append(cores, zapcore.NewCore(encoder, zapcore.AddSync(writer), targetLevel))
+			levelEnabler := newLevelEnable(defaultLevelEnabler, targetConfig.GetLevel(), targetConfig.GetLevels())
+			cores = append(cores, zapcore.NewCore(encoder, zapcore.AddSync(writer), levelEnabler))
 		}
 		core := zapcore.NewTee(cores...)
 		l.zap = zap.New(core, zapOptions...)
