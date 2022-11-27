@@ -5,21 +5,20 @@ import (
 
 	"github.com/cnartlu/area-service/api"
 	bizrelease "github.com/cnartlu/area-service/internal/biz/area/release"
-
+	"github.com/cnartlu/area-service/internal/data/data"
 	"github.com/cnartlu/area-service/internal/data/ent"
 	"github.com/cnartlu/area-service/internal/data/ent/arearelease"
-	"github.com/go-redis/redis/v8"
 )
 
 var _ bizrelease.ManageRepo = (*ReleaseRepo)(nil)
 
 type ReleaseRepo struct {
-	ent *ent.Client
-	rdb *redis.Client
+	data *data.Data
 }
 
 func (r *ReleaseRepo) Count(ctx context.Context, options ...bizrelease.Option) int {
-	query := r.ent.AreaRelease.Query()
+	client := r.data.GetClient(ctx)
+	query := client.AreaRelease.Query()
 	o := newOption(query)
 	for _, option := range options {
 		option := option
@@ -30,7 +29,8 @@ func (r *ReleaseRepo) Count(ctx context.Context, options ...bizrelease.Option) i
 }
 
 func (r *ReleaseRepo) FindList(ctx context.Context, options ...bizrelease.Option) ([]*bizrelease.Release, error) {
-	query := r.ent.AreaRelease.Query()
+	client := r.data.GetClient(ctx)
+	query := client.AreaRelease.Query()
 	o := newOption(query)
 	for _, option := range options {
 		option := option
@@ -61,7 +61,8 @@ func (r *ReleaseRepo) FindList(ctx context.Context, options ...bizrelease.Option
 }
 
 func (r *ReleaseRepo) FindOne(ctx context.Context, options ...bizrelease.Option) (*bizrelease.Release, error) {
-	query := r.ent.AreaRelease.Query()
+	client := r.data.GetClient(ctx)
+	query := client.AreaRelease.Query()
 	o := newOption(query)
 	for _, option := range options {
 		option := option
@@ -91,6 +92,7 @@ func (r *ReleaseRepo) FindOne(ctx context.Context, options ...bizrelease.Option)
 }
 
 func (r *ReleaseRepo) Save(ctx context.Context, data *bizrelease.Release) (*bizrelease.Release, error) {
+	client := r.data.GetClient(ctx)
 	var (
 		model    *ent.AreaRelease
 		err      error
@@ -98,7 +100,7 @@ func (r *ReleaseRepo) Save(ctx context.Context, data *bizrelease.Release) (*bizr
 	)
 	if data.ID > 0 {
 		isUpdate = true
-		model, err = r.ent.AreaRelease.Query().
+		model, err = client.AreaRelease.Query().
 			Where(arearelease.IDEQ(data.ID)).
 			First(ctx)
 		if err != nil {
@@ -120,7 +122,8 @@ func (r *ReleaseRepo) Save(ctx context.Context, data *bizrelease.Release) (*bizr
 			SetStatus(uint8(data.Status)).
 			Save(ctx)
 	} else {
-		model, err = r.ent.AreaRelease.Create().
+		model, err = client.AreaRelease.Create().
+			SetOwner(data.Owner).
 			SetRepo(data.Repo).
 			SetReleaseID(data.ReleaseID).
 			SetReleaseName(data.ReleaseName).
@@ -149,7 +152,8 @@ func (r *ReleaseRepo) Save(ctx context.Context, data *bizrelease.Release) (*bizr
 }
 
 func (r *ReleaseRepo) Remove(ctx context.Context, options ...bizrelease.Option) error {
-	query := r.ent.AreaRelease.Query()
+	client := r.data.GetClient(ctx)
+	query := client.AreaRelease.Query()
 	if len(options) > 0 {
 		q := newOption(query)
 		for _, option := range options {
@@ -161,11 +165,14 @@ func (r *ReleaseRepo) Remove(ctx context.Context, options ...bizrelease.Option) 
 		return err
 	}
 	for _, result := range results {
-		r.ent.AreaRelease.DeleteOne(result).Exec(ctx)
+		if err1 := client.AreaRelease.DeleteOne(result).Exec(ctx); err1 != nil {
+			err = err1
+			break
+		}
 	}
 	return err
 }
 
-func NewRepository(ent *ent.Client, rdb *redis.Client) *ReleaseRepo {
-	return &ReleaseRepo{ent, rdb}
+func NewRepository(d *data.Data) *ReleaseRepo {
+	return &ReleaseRepo{data: d}
 }

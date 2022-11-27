@@ -3,7 +3,7 @@ package github
 import (
 	"context"
 
-	bizarearealease "github.com/cnartlu/area-service/internal/biz/area/release"
+	bizgithub "github.com/cnartlu/area-service/internal/biz/github"
 )
 
 type Handler interface {
@@ -11,15 +11,24 @@ type Handler interface {
 }
 
 type handler struct {
-	github *bizarearealease.GithubUsecase
+	github *bizgithub.GithubUsecase
 }
 
 func (h *handler) Load(ctx context.Context) error {
-	return h.github.Load(ctx)
+	r, err := h.github.GetLatestRelease(ctx)
+	if err != nil {
+		return err
+	}
+	err = h.github.Download(ctx, r)
+	if err != nil {
+		return err
+	}
+	// 打开下载得文件并拉取数据
+	return nil
 }
 
 func NewHandler(
-	github *bizarearealease.GithubUsecase,
+	github *bizgithub.GithubUsecase,
 ) Handler {
 	return &handler{
 		github: github,

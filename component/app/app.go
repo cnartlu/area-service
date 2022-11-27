@@ -100,7 +100,7 @@ func (a *App) GetRuntimePath() string {
 
 func (a *App) GetShortRuntimePath() string {
 	if a != nil {
-		return strings.TrimSuffix(a.runtimePath, a.rootPath)
+		return strings.TrimPrefix(a.runtimePath, a.rootPath)
 	}
 	return ""
 }

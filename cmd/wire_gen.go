@@ -13,16 +13,17 @@ import (
 	"github.com/cnartlu/area-service/component/proxy"
 	"github.com/cnartlu/area-service/component/redis"
 	area2 "github.com/cnartlu/area-service/internal/biz/area"
-	release2 "github.com/cnartlu/area-service/internal/biz/area/release"
+	github3 "github.com/cnartlu/area-service/internal/biz/github"
 	"github.com/cnartlu/area-service/internal/command"
 	"github.com/cnartlu/area-service/internal/command/handler"
-	github3 "github.com/cnartlu/area-service/internal/command/handler/github"
+	github4 "github.com/cnartlu/area-service/internal/command/handler/github"
 	"github.com/cnartlu/area-service/internal/command/script"
 	"github.com/cnartlu/area-service/internal/component/db"
 	config2 "github.com/cnartlu/area-service/internal/config"
 	"github.com/cnartlu/area-service/internal/data/area"
 	"github.com/cnartlu/area-service/internal/data/area/release"
 	"github.com/cnartlu/area-service/internal/data/area/release/asset"
+	"github.com/cnartlu/area-service/internal/data/data"
 	github2 "github.com/cnartlu/area-service/internal/data/github"
 	"github.com/cnartlu/area-service/internal/server"
 	"github.com/cnartlu/area-service/internal/server/cron"
@@ -68,7 +69,8 @@ func initApp(string2 string) (*server.Server, func(), error) {
 		cleanup()
 		return nil, nil, err
 	}
-	areaRepo := area.NewAreaRepo(client, redisClient)
+	dataData := data.NewData(client, redisClient)
+	areaRepo := area.NewAreaRepo(dataData)
 	managerUsecase := area2.NewManagerUsecase(areaRepo)
 	areaService := service.NewAreaService(managerUsecase)
 	grpcServer := grpc.NewServer(logger, configGrpc, areaService)
@@ -111,14 +113,6 @@ func initCommand(string2 string) (*command.Command, func(), error) {
 		cleanup()
 		return nil, nil, err
 	}
-	proxyClient, err := proxy.NewByAppConfig(appConfig)
-	if err != nil {
-		cleanup2()
-		cleanup()
-		return nil, nil, err
-	}
-	githubClient := github.New(proxyClient)
-	xiangyuecnRepo := github2.NewXiangyuecnRepo(client, githubClient)
 	redisConfig := config2.GetRedis(config3)
 	redisClient, cleanup3, err := redis.New(redisConfig, logger)
 	if err != nil {
@@ -126,10 +120,20 @@ func initCommand(string2 string) (*command.Command, func(), error) {
 		cleanup()
 		return nil, nil, err
 	}
-	releaseRepo := release.NewRepository(client, redisClient)
-	assetRepo := asset.NewAssetRepo(client, redisClient)
-	githubUsecase := release2.NewGithubUsecase(appApp, xiangyuecnRepo, releaseRepo, assetRepo)
-	githubHandler := github3.NewHandler(githubUsecase)
+	dataData := data.NewData(client, redisClient)
+	proxyClient, err := proxy.NewByAppConfig(appConfig)
+	if err != nil {
+		cleanup3()
+		cleanup2()
+		cleanup()
+		return nil, nil, err
+	}
+	githubClient := github.New(proxyClient)
+	xiangyuecnRepo := github2.NewXiangyuecnRepo(githubClient)
+	releaseRepo := release.NewRepository(dataData)
+	assetRepo := asset.NewAssetRepo(dataData)
+	githubUsecase := github3.NewGithubUsecase(appApp, dataData, xiangyuecnRepo, releaseRepo, assetRepo)
+	githubHandler := github4.NewHandler(githubUsecase)
 	handlerHandler := handler.New(githubHandler)
 	scriptScript := script.New()
 	commandCommand := command.New(handlerHandler, scriptScript)

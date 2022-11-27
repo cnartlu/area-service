@@ -9,17 +9,21 @@ import (
 	bizarea "github.com/cnartlu/area-service/internal/biz/area"
 	bizarearealease "github.com/cnartlu/area-service/internal/biz/area/release"
 	bizarearealeaseasset "github.com/cnartlu/area-service/internal/biz/area/release/asset"
+	bizgithub "github.com/cnartlu/area-service/internal/biz/github"
+	biztransaction "github.com/cnartlu/area-service/internal/biz/transaction"
 	"github.com/cnartlu/area-service/internal/data/area"
 	"github.com/cnartlu/area-service/internal/data/area/release"
 	"github.com/cnartlu/area-service/internal/data/area/release/asset"
+	"github.com/cnartlu/area-service/internal/data/data"
 	"github.com/cnartlu/area-service/internal/data/github"
 	"github.com/google/wire"
 )
 
 var ProviderSet = wire.NewSet(
-	// 这里应该加入 db 存储系统
+	data.NewData,
+	wire.Bind(new(biztransaction.Transaction), new(*data.Data)),
 	github.NewXiangyuecnRepo,
-	wire.Bind(new(bizarearealease.XiangyuecnRepository), new(*github.XiangyuecnRepo)),
+	wire.Bind(new(bizgithub.XiangyuecnRepository), new(*github.XiangyuecnRepo)),
 	area.NewAreaRepo,
 	wire.Bind(new(bizarea.Manager), new(*area.AreaRepo)),
 	release.NewRepository,

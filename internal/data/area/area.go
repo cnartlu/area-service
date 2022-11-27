@@ -6,16 +6,15 @@ import (
 
 	"github.com/cnartlu/area-service/api"
 	bizArea "github.com/cnartlu/area-service/internal/biz/area"
+	"github.com/cnartlu/area-service/internal/data/data"
 	"github.com/cnartlu/area-service/internal/data/ent"
 	"github.com/cnartlu/area-service/internal/data/ent/area"
-	"github.com/go-redis/redis/v8"
 )
 
 var _ bizArea.Manager = (*AreaRepo)(nil)
 
 type AreaRepo struct {
-	ent *ent.Client
-	rds *redis.Client
+	data *data.Data
 }
 
 func (r *AreaRepo) toAreaData(result *ent.Area) bizArea.Area {
@@ -36,7 +35,8 @@ func (r *AreaRepo) toAreaData(result *ent.Area) bizArea.Area {
 
 // Count 数量
 func (r *AreaRepo) Count(ctx context.Context, options ...bizArea.Option) int {
-	query := r.ent.Area.Query()
+	client := r.data.GetClient(ctx)
+	query := client.Area.Query()
 	if len(options) > 0 {
 		q := newOption(query)
 		for _, option := range options {
@@ -49,7 +49,8 @@ func (r *AreaRepo) Count(ctx context.Context, options ...bizArea.Option) int {
 
 // FindList 查找数据
 func (r *AreaRepo) FindList(ctx context.Context, options ...bizArea.Option) (list []*bizArea.Area, err error) {
-	query := r.ent.Area.Query()
+	client := r.data.GetClient(ctx)
+	query := client.Area.Query()
 	if len(options) > 0 {
 		q := newOption(query)
 		for _, option := range options {
@@ -69,7 +70,8 @@ func (r *AreaRepo) FindList(ctx context.Context, options ...bizArea.Option) (lis
 
 // FindList 查找数据
 func (r *AreaRepo) FindOne(ctx context.Context, options ...bizArea.Option) (*bizArea.Area, error) {
-	query := r.ent.Area.Query()
+	client := r.data.GetClient(ctx)
+	query := client.Area.Query()
 	if len(options) > 0 {
 		q := newOption(query)
 		for _, option := range options {
@@ -89,6 +91,7 @@ func (r *AreaRepo) FindOne(ctx context.Context, options ...bizArea.Option) (*biz
 
 // FindList 查找数据
 func (r *AreaRepo) Save(ctx context.Context, x *bizArea.Area) (*bizArea.Area, error) {
+	client := r.data.GetClient(ctx)
 	var (
 		model    *ent.Area
 		err      error
@@ -96,7 +99,7 @@ func (r *AreaRepo) Save(ctx context.Context, x *bizArea.Area) (*bizArea.Area, er
 	)
 	if x.ID > 0 {
 		isUpdate = true
-		model, err = r.ent.Area.Query().Where(area.IDEQ(x.ID)).First(ctx)
+		model, err = client.Area.Query().Where(area.IDEQ(x.ID)).First(ctx)
 		if err != nil {
 			if !ent.IsNotFound(err) {
 				return nil, err
@@ -107,7 +110,7 @@ func (r *AreaRepo) Save(ctx context.Context, x *bizArea.Area) (*bizArea.Area, er
 	if isUpdate {
 		model, err = model.Update().Save(ctx)
 	} else {
-		model, err = r.ent.Area.Create().Save(ctx)
+		model, err = client.Area.Create().Save(ctx)
 	}
 	if err != nil {
 		return nil, err
@@ -118,7 +121,8 @@ func (r *AreaRepo) Save(ctx context.Context, x *bizArea.Area) (*bizArea.Area, er
 
 // Remove 移除数据
 func (r *AreaRepo) Remove(ctx context.Context, options ...bizArea.Option) error {
-	query := r.ent.Area.Query()
+	client := r.data.GetClient(ctx)
+	query := client.Area.Query()
 	if len(options) > 0 {
 		q := newOption(query)
 		for _, option := range options {
@@ -129,17 +133,18 @@ func (r *AreaRepo) Remove(ctx context.Context, options ...bizArea.Option) error 
 	if err != nil {
 		return err
 	}
-
 	for _, result := range results {
-		r.ent.Area.DeleteOne(result).Exec(ctx)
+		if err1 := client.Area.DeleteOne(result).Exec(ctx); err1 != nil {
+			err = err1
+			break
+		}
 	}
 
 	return err
 }
 
-func NewAreaRepo(ent *ent.Client, rds *redis.Client) *AreaRepo {
+func NewAreaRepo(d *data.Data) *AreaRepo {
 	return &AreaRepo{
-		ent: ent,
-		rds: rds,
+		data: d,
 	}
 }

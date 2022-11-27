@@ -1,19 +1,23 @@
 package country
 
-type CountryRepo interface{}
+import (
+	"context"
+
+	"github.com/cnartlu/area-service/internal/data/data"
+)
 
 type Country struct {
-	repo CountryRepo
+	data *data.Data
 }
 
-func (r *Country) FindList() {
+func (r *Country) FindList(ctx context.Context) {
 
 }
 
 func NewCountry(
-	repo CountryRepo,
+	d *data.Data,
 ) *Country {
 	return &Country{
-		repo: repo,
+		data: d,
 	}
 }

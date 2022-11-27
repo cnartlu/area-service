@@ -2,18 +2,18 @@ package country
 
 type CountryRepo interface{}
 
-type Country struct {
+type ManageUsecase struct {
 	repo CountryRepo
 }
 
-func (r *Country) FindList() {
+func (r *ManageUsecase) FindList() {
 
 }
 
-func NewCountry(
+func NewCountryUsecase(
 	repo CountryRepo,
-) *Country {
-	return &Country{
+) *ManageUsecase {
+	return &ManageUsecase{
 		repo: repo,
 	}
 }
