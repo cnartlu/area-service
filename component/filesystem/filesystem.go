@@ -1,13 +1,17 @@
 package filesystem
 
 import (
+	"net/http"
 	sync "sync"
+
+	"github.com/cnartlu/area-service/component/proxy"
 )
 
 type FileSystem struct {
-	once   sync.Once
-	disk   multiDisks
-	config *Config
+	once       sync.Once
+	disk       multiDisks
+	config     *Config
+	httpClient *http.Client
 }
 
 func (f *FileSystem) Setup() (err error) {
@@ -68,9 +72,13 @@ func (f *FileSystem) Delete(key string, options ...HandleFunc) error {
 	return nil
 }
 
-func New(config *Config) *FileSystem {
+func New(config *Config, p *proxy.Client) *FileSystem {
 	var result = &FileSystem{
-		config: config,
+		config:     config,
+		httpClient: http.DefaultClient,
+	}
+	if p != nil {
+		result.httpClient = p.Client
 	}
 	return result
 }

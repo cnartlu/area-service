@@ -15,15 +15,19 @@ type handler struct {
 }
 
 func (h *handler) Load(ctx context.Context) error {
-	r, err := h.github.GetLatestRelease(ctx)
+	latestRelease, err := h.github.GetLatestRelease(ctx)
 	if err != nil {
 		return err
 	}
-	err = h.github.Download(ctx, r)
+	err = h.github.Download(ctx, latestRelease)
 	if err != nil {
 		return err
 	}
 	// 打开下载得文件并拉取数据
+	err = h.github.Loaded(ctx, latestRelease)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 

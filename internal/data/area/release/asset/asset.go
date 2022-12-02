@@ -4,19 +4,19 @@ import (
 	"context"
 
 	"github.com/cnartlu/area-service/api"
-	bizAsset "github.com/cnartlu/area-service/internal/biz/area/release/asset"
+	bizasset "github.com/cnartlu/area-service/internal/biz/area/release/asset"
 	"github.com/cnartlu/area-service/internal/data/data"
 	"github.com/cnartlu/area-service/internal/data/ent"
 	"github.com/cnartlu/area-service/internal/data/ent/areareleaseasset"
 )
 
-var _ bizAsset.ManageRepo = (*AssetRepo)(nil)
+var _ bizasset.ManageRepo = (*AssetRepo)(nil)
 
 type AssetRepo struct {
 	data *data.Data
 }
 
-func (r *AssetRepo) Count(ctx context.Context, options ...bizAsset.Option) int {
+func (r *AssetRepo) Count(ctx context.Context, options ...bizasset.Option) int {
 	client := r.data.GetClient(ctx)
 	query := client.AreaReleaseAsset.Query()
 	o := newOption(query)
@@ -28,7 +28,7 @@ func (r *AssetRepo) Count(ctx context.Context, options ...bizAsset.Option) int {
 	return i
 }
 
-func (r *AssetRepo) FindList(ctx context.Context, options ...bizAsset.Option) ([]*bizAsset.Asset, error) {
+func (r *AssetRepo) FindList(ctx context.Context, options ...bizasset.Option) ([]*bizasset.Asset, error) {
 	client := r.data.GetClient(ctx)
 	query := client.AreaReleaseAsset.Query()
 	o := newOption(query)
@@ -39,10 +39,10 @@ func (r *AssetRepo) FindList(ctx context.Context, options ...bizAsset.Option) ([
 	if err != nil {
 		return nil, err
 	}
-	items := []*bizAsset.Asset{}
+	items := []*bizasset.Asset{}
 	for _, model := range models {
 		model := model
-		items = append(items, &bizAsset.Asset{
+		items = append(items, &bizasset.Asset{
 			ID:            model.ID,
 			CreateTime:    model.CreateTime,
 			UpdateTime:    model.UpdateTime,
@@ -54,13 +54,13 @@ func (r *AssetRepo) FindList(ctx context.Context, options ...bizAsset.Option) ([
 			FilePath:      model.FilePath,
 			FileSize:      model.FileSize,
 			DownloadURL:   model.DownloadURL,
-			// Status: model.Status,
+			Status:        bizasset.Status(model.Status),
 		})
 	}
 	return items, nil
 }
 
-func (r *AssetRepo) FindOne(ctx context.Context, options ...bizAsset.Option) (*bizAsset.Asset, error) {
+func (r *AssetRepo) FindOne(ctx context.Context, options ...bizasset.Option) (*bizasset.Asset, error) {
 	client := r.data.GetClient(ctx)
 	query := client.AreaReleaseAsset.Query()
 	o := newOption(query)
@@ -74,7 +74,7 @@ func (r *AssetRepo) FindOne(ctx context.Context, options ...bizAsset.Option) (*b
 		}
 		return nil, err
 	}
-	p := &bizAsset.Asset{
+	p := &bizasset.Asset{
 		ID:            model.ID,
 		CreateTime:    model.CreateTime,
 		UpdateTime:    model.UpdateTime,
@@ -86,12 +86,12 @@ func (r *AssetRepo) FindOne(ctx context.Context, options ...bizAsset.Option) (*b
 		FilePath:      model.FilePath,
 		FileSize:      model.FileSize,
 		DownloadURL:   model.DownloadURL,
-		// Status: model.Status,
+		Status:        bizasset.Status(model.Status),
 	}
 	return p, nil
 }
 
-func (r *AssetRepo) Save(ctx context.Context, data *bizAsset.Asset) (*bizAsset.Asset, error) {
+func (r *AssetRepo) Save(ctx context.Context, data *bizasset.Asset) (*bizasset.Asset, error) {
 	client := r.data.GetClient(ctx)
 	var (
 		model    *ent.AreaReleaseAsset
@@ -118,7 +118,7 @@ func (r *AssetRepo) Save(ctx context.Context, data *bizAsset.Asset) (*bizAsset.A
 			SetFilePath(data.FilePath).
 			SetFileSize(data.FileSize).
 			SetDownloadURL(data.DownloadURL).
-			// SetStatus(data.Status).
+			SetStatus(uint8(data.Status)).
 			Save(ctx)
 	} else {
 		model, err = client.AreaReleaseAsset.Create().
@@ -130,14 +130,14 @@ func (r *AssetRepo) Save(ctx context.Context, data *bizAsset.Asset) (*bizAsset.A
 			SetFilePath(data.FilePath).
 			SetFileSize(data.FileSize).
 			SetDownloadURL(data.DownloadURL).
-			// SetStatus(data.Status).
+			SetStatus(uint8(data.Status)).
 			Save(ctx)
 	}
 	if err != nil {
 		return nil, err
 	}
 
-	return &bizAsset.Asset{
+	return &bizasset.Asset{
 		ID:            model.ID,
 		CreateTime:    model.CreateTime,
 		UpdateTime:    model.UpdateTime,
@@ -149,11 +149,11 @@ func (r *AssetRepo) Save(ctx context.Context, data *bizAsset.Asset) (*bizAsset.A
 		FilePath:      model.FilePath,
 		FileSize:      model.FileSize,
 		DownloadURL:   model.DownloadURL,
-		// Status: model.Status,
+		Status:        bizasset.Status(model.Status),
 	}, nil
 }
 
-func (r *AssetRepo) Remove(ctx context.Context, options ...bizAsset.Option) error {
+func (r *AssetRepo) Remove(ctx context.Context, options ...bizasset.Option) error {
 	client := r.data.GetClient(ctx)
 	query := client.AreaReleaseAsset.Query()
 	if len(options) > 0 {

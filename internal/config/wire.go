@@ -20,5 +20,6 @@ var ProviderSet = wire.NewSet(
 		GetLogger,
 		GetRedis,
 		GetDb,
+		GetFileSystem,
 	),
 )

@@ -15,10 +15,16 @@ enum EnvName {
 }
 
 message Config {
+    // debug 开启调试模式
     bool debug = 1;
+    // name 应用名称
     string name = 2;
+    // env 应用环境
     EnvName env = 3;
-    repeated string runtime_path = 4;
+    // runtime_path 缓存文件目录
+    string runtime_path = 4;
+    // proxy 网络代理访问
     string proxy = 5;
+    // pid 进程PID
     string pid = 6;
 }

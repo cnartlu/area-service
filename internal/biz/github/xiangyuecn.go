@@ -3,14 +3,19 @@ package github
 import (
 	"context"
 	"net/url"
+	"os"
 	"path/filepath"
 	"sync"
 
 	"github.com/cnartlu/area-service/api"
 	"github.com/cnartlu/area-service/component/app"
+	"github.com/cnartlu/area-service/component/compress/zip7"
+	"github.com/cnartlu/area-service/component/filesystem"
+	"github.com/cnartlu/area-service/component/log"
 	"github.com/cnartlu/area-service/internal/biz/area/release"
 	"github.com/cnartlu/area-service/internal/biz/area/release/asset"
 	"github.com/cnartlu/area-service/internal/biz/transaction"
+	"go.uber.org/zap"
 )
 
 type XiangyuecnRepository interface {
@@ -19,6 +24,8 @@ type XiangyuecnRepository interface {
 
 type GithubUsecase struct {
 	app         *app.App
+	logger      *log.Logger
+	filesystem  *filesystem.FileSystem
 	transaction transaction.Transaction
 	xiangyuecn  XiangyuecnRepository
 	release     release.ManageRepo
@@ -62,6 +69,7 @@ func (g *GithubUsecase) GetLatestRelease(ctx context.Context) (*release.Release,
 						return err
 					}
 					var filepath string = filepath.Join(g.app.GetShortRuntimePath(), result.Owner, result.ReleaseName, filepath.Base(uri.Path))
+					filepath = filepath[1:]
 					_, err = g.asset.Save(ctx, &asset.Asset{
 						AreaReleaseID: result.ID,
 						AssetName:     repAsset.GetName(),
@@ -87,8 +95,8 @@ func (g *GithubUsecase) GetLatestRelease(ctx context.Context) (*release.Release,
 	return result, nil
 }
 
-func (g *GithubUsecase) Download(ctx context.Context, release *release.Release) error {
-	assets, err := g.asset.FindList(ctx, asset.AreaReleaseIDEQ(release.ID), asset.StatusEQ(asset.StatusWaitSync))
+func (g *GithubUsecase) Download(ctx context.Context, data *release.Release) error {
+	assets, err := g.asset.FindList(ctx, asset.AreaReleaseIDEQ(data.ID), asset.StatusEQ(asset.StatusWaitSync), asset.Limit(10), asset.Order("-id"))
 	if err != nil {
 		return err
 	}
@@ -98,22 +106,77 @@ func (g *GithubUsecase) Download(ctx context.Context, release *release.Release) 
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			_ = result
+			if err := g.filesystem.Download(ctx, result.DownloadURL, result.FilePath); err != nil {
+				g.logger.Error("download asset file failed", zap.Error(err), zap.String("filename", result.FilePath), zap.Uint64("areaReleaseAreaID", result.ID))
+				return
+			}
+			result.Status = asset.StatusWaitLoaded
+			if _, err1 := g.asset.Save(ctx, result); err1 != nil {
+				g.logger.Error("save asset download status failed", zap.Error(err1), zap.Uint64("areaReleaseAreaID", result.ID))
+				return
+			}
 		}()
 	}
 	wg.Wait()
 	return nil
 }
 
+func (g *GithubUsecase) Loaded(ctx context.Context, data *release.Release) error {
+	assets, err := g.asset.FindList(ctx, asset.StatusEQ(asset.StatusWaitLoaded), asset.Limit(10), asset.Order("-id"))
+	if err != nil {
+		return err
+	}
+	for _, result := range assets {
+		result := result
+		f, err := os.Open(result.FilePath)
+		if err != nil {
+			return err
+		}
+		head := make([]byte, 4)
+		f.Read(head)
+		headHex := 0
+		for _, b := range head {
+			headHex = headHex << 8
+			headHex = headHex | int(b)
+		}
+		if err := f.Close(); err != nil {
+			return err
+		}
+		switch headHex {
+		case 930790575:
+			// 解压文件
+			absPath, _ := filepath.Abs(result.FilePath)
+			if err := zip7.Extract(absPath, "-o"+filepath.Base(absPath)); err != nil {
+				return err
+			}
+		case 4022058857:
+			// 转到导入
+			if err := g.LoadedFile(ctx, result.FilePath); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func (g *GithubUsecase) LoadedFile(ctx context.Context, filename string) error {
+	return nil
+}
+
 func NewGithubUsecase(
 	app *app.App,
+	logger *log.Logger,
 	transaction transaction.Transaction,
+	filesystem *filesystem.FileSystem,
 	xiangyuecn XiangyuecnRepository,
 	release release.ManageRepo,
 	asset asset.ManageRepo,
 ) *GithubUsecase {
 	return &GithubUsecase{
 		app:         app,
+		logger:      logger,
+		filesystem:  filesystem,
 		xiangyuecn:  xiangyuecn,
 		release:     release,
 		asset:       asset,

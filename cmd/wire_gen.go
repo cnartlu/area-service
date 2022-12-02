@@ -8,6 +8,7 @@ package main
 import (
 	"github.com/cnartlu/area-service/component/app"
 	"github.com/cnartlu/area-service/component/config"
+	"github.com/cnartlu/area-service/component/filesystem"
 	"github.com/cnartlu/area-service/component/github"
 	"github.com/cnartlu/area-service/component/log"
 	"github.com/cnartlu/area-service/component/proxy"
@@ -101,13 +102,13 @@ func initCommand(string2 string) (*command.Command, func(), error) {
 	}
 	appConfig := config2.GetApp(config3)
 	appApp := app.New(appConfig)
-	dbConfig := config2.GetDb(config3)
 	logConfig := config2.GetLogger(config3)
 	logger, err := log.New(logConfig)
 	if err != nil {
 		cleanup()
 		return nil, nil, err
 	}
+	dbConfig := config2.GetDb(config3)
 	client, cleanup2, err := db.NewEnt(dbConfig, logger)
 	if err != nil {
 		cleanup()
@@ -121,6 +122,7 @@ func initCommand(string2 string) (*command.Command, func(), error) {
 		return nil, nil, err
 	}
 	dataData := data.NewData(client, redisClient)
+	filesystemConfig := config2.GetFileSystem(config3)
 	proxyClient, err := proxy.NewByAppConfig(appConfig)
 	if err != nil {
 		cleanup3()
@@ -128,11 +130,12 @@ func initCommand(string2 string) (*command.Command, func(), error) {
 		cleanup()
 		return nil, nil, err
 	}
+	fileSystem := filesystem.New(filesystemConfig, proxyClient)
 	githubClient := github.New(proxyClient)
 	xiangyuecnRepo := github2.NewXiangyuecnRepo(githubClient)
 	releaseRepo := release.NewRepository(dataData)
 	assetRepo := asset.NewAssetRepo(dataData)
-	githubUsecase := github3.NewGithubUsecase(appApp, dataData, xiangyuecnRepo, releaseRepo, assetRepo)
+	githubUsecase := github3.NewGithubUsecase(appApp, logger, dataData, fileSystem, xiangyuecnRepo, releaseRepo, assetRepo)
 	githubHandler := github4.NewHandler(githubUsecase)
 	handlerHandler := handler.New(githubHandler)
 	scriptScript := script.New()

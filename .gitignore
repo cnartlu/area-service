@@ -28,7 +28,7 @@ Thumbs.db
 *.cert
 *.key
 *.log
-bin/
+/bin/
 
 # Develop tools
 .vscode/

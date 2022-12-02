@@ -3,6 +3,7 @@ package config
 import (
 	app "github.com/cnartlu/area-service/component/app"
 	db "github.com/cnartlu/area-service/component/db"
+	filesystem "github.com/cnartlu/area-service/component/filesystem"
 	log "github.com/cnartlu/area-service/component/log"
 	redis "github.com/cnartlu/area-service/component/redis"
 	kconfig "github.com/go-kratos/kratos/v2/config"
@@ -34,6 +35,10 @@ func GetRedis(c *Config) *redis.Config {
 
 func GetDb(c *Config) *db.Config {
 	return c.GetDb()
+}
+
+func GetFileSystem(c *Config) *filesystem.Config {
+	return c.GetFilesystem()
 }
 
 func New(c kconfig.Config) (*Config, error) {

@@ -80,12 +80,18 @@ type Config struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Debug       bool    `protobuf:"varint,1,opt,name=debug,proto3" json:"debug,omitempty"`
-	Name        string  `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	Env         EnvName `protobuf:"varint,3,opt,name=env,proto3,enum=component.app.EnvName" json:"env,omitempty"`
-	RuntimePath string  `protobuf:"bytes,4,opt,name=runtime_path,json=runtimePath,proto3" json:"runtime_path,omitempty"`
-	Proxy       string  `protobuf:"bytes,5,opt,name=proxy,proto3" json:"proxy,omitempty"`
-	Pid         string  `protobuf:"bytes,6,opt,name=pid,proto3" json:"pid,omitempty"`
+	// debug 开启调试模式
+	Debug bool `protobuf:"varint,1,opt,name=debug,proto3" json:"debug,omitempty"`
+	// name 应用名称
+	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	// env 应用环境
+	Env EnvName `protobuf:"varint,3,opt,name=env,proto3,enum=component.app.EnvName" json:"env,omitempty"`
+	// runtime_path 缓存文件目录
+	RuntimePath string `protobuf:"bytes,4,opt,name=runtime_path,json=runtimePath,proto3" json:"runtime_path,omitempty"`
+	// proxy 网络代理访问
+	Proxy string `protobuf:"bytes,5,opt,name=proxy,proto3" json:"proxy,omitempty"`
+	// pid 进程PID
+	Pid string `protobuf:"bytes,6,opt,name=pid,proto3" json:"pid,omitempty"`
 }
 
 func (x *Config) Reset() {
