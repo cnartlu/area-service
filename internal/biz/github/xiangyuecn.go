@@ -9,9 +9,9 @@ import (
 
 	"github.com/cnartlu/area-service/api"
 	"github.com/cnartlu/area-service/component/app"
-	"github.com/cnartlu/area-service/component/compress/zip7"
 	"github.com/cnartlu/area-service/component/filesystem"
 	"github.com/cnartlu/area-service/component/log"
+	"github.com/cnartlu/area-service/component/7zip"
 	"github.com/cnartlu/area-service/internal/biz/area/release"
 	"github.com/cnartlu/area-service/internal/biz/area/release/asset"
 	"github.com/cnartlu/area-service/internal/biz/transaction"
@@ -146,9 +146,11 @@ func (g *GithubUsecase) Loaded(ctx context.Context, data *release.Release) error
 		case 930790575:
 			// 解压文件
 			absPath, _ := filepath.Abs(result.FilePath)
-			if err := zip7.Extract(absPath, "-o"+filepath.Base(absPath)); err != nil {
+			basedir := filepath.Base(result.FilePath)
+			if err := zip7.Extract(absPath, basedir); err != nil {
 				return err
 			}
+			os.ReadDir(basedir)
 		case 4022058857:
 			// 转到导入
 			if err := g.LoadedFile(ctx, result.FilePath); err != nil {
