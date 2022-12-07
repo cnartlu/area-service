@@ -10,16 +10,16 @@ import (
 	"github.com/cnartlu/area-service/internal/data/ent/arearelease"
 )
 
-var _ bizrelease.ManageRepo = (*ReleaseRepo)(nil)
+var _ bizrelease.ReleaseRepo = (*ReleaseRepo)(nil)
 
 type ReleaseRepo struct {
 	data *data.Data
 }
 
-func (r *ReleaseRepo) Count(ctx context.Context, options ...bizrelease.Option) int {
+func (r *ReleaseRepo) Count(ctx context.Context, options ...bizrelease.Query) int {
 	client := r.data.GetClient(ctx)
 	query := client.AreaRelease.Query()
-	o := newOption(query)
+	o := NewQuery(query)
 	for _, option := range options {
 		option := option
 		option(o)
@@ -28,10 +28,10 @@ func (r *ReleaseRepo) Count(ctx context.Context, options ...bizrelease.Option) i
 	return i
 }
 
-func (r *ReleaseRepo) FindList(ctx context.Context, options ...bizrelease.Option) ([]*bizrelease.Release, error) {
+func (r *ReleaseRepo) FindList(ctx context.Context, options ...bizrelease.Query) ([]*bizrelease.Release, error) {
 	client := r.data.GetClient(ctx)
 	query := client.AreaRelease.Query()
-	o := newOption(query)
+	o := NewQuery(query)
 	for _, option := range options {
 		option := option
 		option(o)
@@ -60,10 +60,10 @@ func (r *ReleaseRepo) FindList(ctx context.Context, options ...bizrelease.Option
 	return items, nil
 }
 
-func (r *ReleaseRepo) FindOne(ctx context.Context, options ...bizrelease.Option) (*bizrelease.Release, error) {
+func (r *ReleaseRepo) FindOne(ctx context.Context, options ...bizrelease.Query) (*bizrelease.Release, error) {
 	client := r.data.GetClient(ctx)
 	query := client.AreaRelease.Query()
-	o := newOption(query)
+	o := NewQuery(query)
 	for _, option := range options {
 		option := option
 		option(o)
@@ -151,11 +151,11 @@ func (r *ReleaseRepo) Save(ctx context.Context, data *bizrelease.Release) (*bizr
 	}, nil
 }
 
-func (r *ReleaseRepo) Remove(ctx context.Context, options ...bizrelease.Option) error {
+func (r *ReleaseRepo) Remove(ctx context.Context, options ...bizrelease.Query) error {
 	client := r.data.GetClient(ctx)
 	query := client.AreaRelease.Query()
 	if len(options) > 0 {
-		q := newOption(query)
+		q := NewQuery(query)
 		for _, option := range options {
 			option(q)
 		}

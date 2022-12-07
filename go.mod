@@ -49,6 +49,7 @@ require (
 	github.com/google/btree v1.1.2 // indirect
 	github.com/google/go-cmp v0.5.8 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
+	github.com/h2non/filetype v1.1.3 // indirect
 	github.com/hashicorp/hcl/v2 v2.10.0 // indirect
 	github.com/joho/godotenv v1.4.0 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect

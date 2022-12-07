@@ -8,21 +8,21 @@ import (
 	"github.com/cnartlu/area-service/internal/data/ent/areareleaseasset"
 )
 
-var _ bizasset.OptionInterface = (*option)(nil)
+var _ bizasset.Inquirer = (*queryOption)(nil)
 
-type option struct {
+type queryOption struct {
 	query *ent.AreaReleaseAssetQuery
 }
 
-func (o *option) Offset(offset int) {
+func (o *queryOption) Offset(offset int) {
 	o.query.Offset(offset)
 }
 
-func (o *option) Limit(limit int) {
+func (o *queryOption) Limit(limit int) {
 	o.query.Limit(limit)
 }
 
-func (o *option) Order(order string) {
+func (o *queryOption) Order(order string) {
 	if order == "" {
 		return
 	}
@@ -40,22 +40,22 @@ func (o *option) Order(order string) {
 	}
 }
 
-func (o *option) IDEQ(id uint64) {
+func (o *queryOption) IDEQ(id uint64) {
 	o.query.Where(areareleaseasset.IDEQ(id))
 }
 
-func (o *option) IDIn(ids ...uint64) {
+func (o *queryOption) IDIn(ids ...uint64) {
 	o.query.Where(areareleaseasset.IDIn(ids...))
 }
 
-func (o *option) AreaReleaseIDEQ(id uint64) {
+func (o *queryOption) AreaReleaseIDEQ(id uint64) {
 	o.query.Where(areareleaseasset.AreaReleaseIDEQ(id))
 }
 
-func (o *option) StatusEQ(status bizasset.Status) {
+func (o *queryOption) StatusEQ(status bizasset.Status) {
 	o.query.Where(areareleaseasset.StatusEQ(uint8(status)))
 }
 
-func newOption(query *ent.AreaReleaseAssetQuery) *option {
-	return &option{query: query}
+func NewQuery(query *ent.AreaReleaseAssetQuery) queryOption {
+	return queryOption{query: query}
 }

@@ -62,7 +62,8 @@ func (z *Zip7) Extract(filename, path string) error {
 			fullpath = p
 		}
 	}
-	cmd := exec.CommandContext(z.ctx, z.binFullName(), "x", filename, "-y", "-o"+fullpath)
+	// fmt.Println(z.binFullName(), "x", filename, "-y", "-o"+fullpath)
+	cmd := exec.CommandContext(z.Context(), z.binFullName(), "x", filename, "-y", "-o"+fullpath)
 	return cmd.Run()
 }
 

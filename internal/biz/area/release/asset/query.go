@@ -1,13 +1,14 @@
-package release
+package asset
 
-// Inquirer 查询人
+// Inquirer 查询记录
 type Inquirer interface {
 	Limit(limit int)
 	Offset(offset int)
 	Order(order string)
 	IDEQ(id uint64)
 	IDIn(ids ...uint64)
-	ReleaseIDEQ(id uint64)
+	AreaReleaseIDEQ(id uint64)
+	StatusEQ(status Status)
 }
 
 type Query func(Inquirer)
@@ -42,8 +43,14 @@ func IDIn(ids ...uint64) Query {
 	}
 }
 
-func ReleaseIDEQ(releaseID uint64) Query {
+func AreaReleaseIDEQ(id uint64) Query {
 	return func(r Inquirer) {
-		r.ReleaseIDEQ(releaseID)
+		r.AreaReleaseIDEQ(id)
+	}
+}
+
+func StatusEQ(status Status) Query {
+	return func(r Inquirer) {
+		r.StatusEQ(status)
 	}
 }

@@ -24,7 +24,7 @@ func (h *handler) Load(ctx context.Context) error {
 		return err
 	}
 	// 打开下载得文件并拉取数据
-	err = h.github.Loaded(ctx, latestRelease)
+	err = h.github.LoadReleaseAssets(ctx, latestRelease)
 	if err != nil {
 		return err
 	}

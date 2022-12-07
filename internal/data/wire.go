@@ -25,9 +25,9 @@ var ProviderSet = wire.NewSet(
 	github.NewXiangyuecnRepo,
 	wire.Bind(new(bizgithub.XiangyuecnRepository), new(*github.XiangyuecnRepo)),
 	area.NewAreaRepo,
-	wire.Bind(new(bizarea.Manager), new(*area.AreaRepo)),
+	wire.Bind(new(bizarea.AreaRepo), new(*area.AreaRepo)),
 	release.NewRepository,
-	wire.Bind(new(bizarearealease.ManageRepo), new(*release.ReleaseRepo)),
+	wire.Bind(new(bizarearealease.ReleaseRepo), new(*release.ReleaseRepo)),
 	asset.NewAssetRepo,
-	wire.Bind(new(bizarearealeaseasset.ManageRepo), new(*asset.AssetRepo)),
+	wire.Bind(new(bizarearealeaseasset.AssetRepo), new(*asset.AssetRepo)),
 )

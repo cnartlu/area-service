@@ -5,20 +5,20 @@ import (
 	"time"
 
 	"github.com/cnartlu/area-service/api"
-	bizArea "github.com/cnartlu/area-service/internal/biz/area"
+	bizarea "github.com/cnartlu/area-service/internal/biz/area"
 	"github.com/cnartlu/area-service/internal/data/data"
 	"github.com/cnartlu/area-service/internal/data/ent"
 	"github.com/cnartlu/area-service/internal/data/ent/area"
 )
 
-var _ bizArea.Manager = (*AreaRepo)(nil)
+var _ bizarea.AreaRepo = (*AreaRepo)(nil)
 
 type AreaRepo struct {
 	data *data.Data
 }
 
-func (r *AreaRepo) toAreaData(result *ent.Area) bizArea.Area {
-	return bizArea.Area{
+func (r *AreaRepo) toAreaData(result *ent.Area) bizarea.Area {
+	return bizarea.Area{
 		ID:             result.ID,
 		RegionID:       result.RegionID,
 		Title:          result.Title,
@@ -34,11 +34,11 @@ func (r *AreaRepo) toAreaData(result *ent.Area) bizArea.Area {
 }
 
 // Count 数量
-func (r *AreaRepo) Count(ctx context.Context, options ...bizArea.Option) int {
+func (r *AreaRepo) Count(ctx context.Context, options ...bizarea.Query) int {
 	client := r.data.GetClient(ctx)
 	query := client.Area.Query()
 	if len(options) > 0 {
-		q := newOption(query)
+		q := NewQuery(query)
 		for _, option := range options {
 			option(q)
 		}
@@ -48,11 +48,11 @@ func (r *AreaRepo) Count(ctx context.Context, options ...bizArea.Option) int {
 }
 
 // FindList 查找数据
-func (r *AreaRepo) FindList(ctx context.Context, options ...bizArea.Option) (list []*bizArea.Area, err error) {
+func (r *AreaRepo) FindList(ctx context.Context, options ...bizarea.Query) (list []*bizarea.Area, err error) {
 	client := r.data.GetClient(ctx)
 	query := client.Area.Query()
 	if len(options) > 0 {
-		q := newOption(query)
+		q := NewQuery(query)
 		for _, option := range options {
 			option(q)
 		}
@@ -69,11 +69,11 @@ func (r *AreaRepo) FindList(ctx context.Context, options ...bizArea.Option) (lis
 }
 
 // FindList 查找数据
-func (r *AreaRepo) FindOne(ctx context.Context, options ...bizArea.Option) (*bizArea.Area, error) {
+func (r *AreaRepo) FindOne(ctx context.Context, options ...bizarea.Query) (*bizarea.Area, error) {
 	client := r.data.GetClient(ctx)
 	query := client.Area.Query()
 	if len(options) > 0 {
-		q := newOption(query)
+		q := NewQuery(query)
 		for _, option := range options {
 			option(q)
 		}
@@ -90,7 +90,7 @@ func (r *AreaRepo) FindOne(ctx context.Context, options ...bizArea.Option) (*biz
 }
 
 // FindList 查找数据
-func (r *AreaRepo) Save(ctx context.Context, x *bizArea.Area) (*bizArea.Area, error) {
+func (r *AreaRepo) Save(ctx context.Context, x *bizarea.Area) (*bizarea.Area, error) {
 	client := r.data.GetClient(ctx)
 	var (
 		model    *ent.Area
@@ -120,11 +120,11 @@ func (r *AreaRepo) Save(ctx context.Context, x *bizArea.Area) (*bizArea.Area, er
 }
 
 // Remove 移除数据
-func (r *AreaRepo) Remove(ctx context.Context, options ...bizArea.Option) error {
+func (r *AreaRepo) Remove(ctx context.Context, options ...bizarea.Query) error {
 	client := r.data.GetClient(ctx)
 	query := client.Area.Query()
 	if len(options) > 0 {
-		q := newOption(query)
+		q := NewQuery(query)
 		for _, option := range options {
 			option(q)
 		}

@@ -8,21 +8,21 @@ import (
 	"github.com/cnartlu/area-service/internal/data/ent/area"
 )
 
-var _ bizArea.OptionInterface = (*option)(nil)
+var _ bizArea.Inquirer = (*queryOption)(nil)
 
-type option struct {
+type queryOption struct {
 	query *ent.AreaQuery
 }
 
-func (o *option) Offset(offset int) {
+func (o *queryOption) Offset(offset int) {
 	o.query.Offset(offset)
 }
 
-func (o *option) Limit(limit int) {
+func (o *queryOption) Limit(limit int) {
 	o.query.Limit(limit)
 }
 
-func (o *option) Order(order string) {
+func (o *queryOption) Order(order string) {
 	if order == "" {
 		return
 	}
@@ -40,30 +40,30 @@ func (o *option) Order(order string) {
 	}
 }
 
-func (o *option) IDEQ(id uint64) {
+func (o *queryOption) IDEQ(id uint64) {
 	o.query.Where(area.IDEQ(id))
 }
 
-func (o *option) IDIn(ids ...uint64) {
+func (o *queryOption) IDIn(ids ...uint64) {
 	o.query.Where(area.IDIn(ids...))
 }
 
-func (o *option) ParentIDEQ(pid uint64) {
+func (o *queryOption) ParentIDEQ(pid uint64) {
 	o.query.Where(area.ParentIDEQ(pid))
 }
 
-func (o *option) RegionIDEQ(regionID string) {
+func (o *queryOption) RegionIDEQ(regionID string) {
 	o.query.Where(area.RegionIDEQ(regionID))
 }
 
-func (o *option) LevelEQ(level int) {
+func (o *queryOption) LevelEQ(level int) {
 	o.query.Where(area.LevelEQ(uint8(level)))
 }
 
-func (o *option) TitleContains(keyword string) {
+func (o *queryOption) TitleContains(keyword string) {
 	o.query.Where(area.TitleContains(keyword))
 }
 
-func newOption(query *ent.AreaQuery) *option {
-	return &option{query: query}
+func NewQuery(query *ent.AreaQuery) queryOption {
+	return queryOption{query: query}
 }

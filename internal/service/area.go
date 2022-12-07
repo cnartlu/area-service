@@ -13,10 +13,10 @@ type AreaService struct {
 	pb.UnimplementedAreaServer
 
 	// 业务逻辑
-	area *area.ManagerUsecase
+	area *area.AreaUsecase
 }
 
-func NewAreaService(area *area.ManagerUsecase) *AreaService {
+func NewAreaService(area *area.AreaUsecase) *AreaService {
 	return &AreaService{
 		area: area,
 	}

@@ -10,16 +10,16 @@ import (
 	"github.com/cnartlu/area-service/internal/data/ent/areareleaseasset"
 )
 
-var _ bizasset.ManageRepo = (*AssetRepo)(nil)
+var _ bizasset.AssetRepo = (*AssetRepo)(nil)
 
 type AssetRepo struct {
 	data *data.Data
 }
 
-func (r *AssetRepo) Count(ctx context.Context, options ...bizasset.Option) int {
+func (r *AssetRepo) Count(ctx context.Context, options ...bizasset.Query) int {
 	client := r.data.GetClient(ctx)
 	query := client.AreaReleaseAsset.Query()
-	o := newOption(query)
+	o := NewQuery(query)
 	for _, option := range options {
 		option := option
 		option(o)
@@ -28,10 +28,10 @@ func (r *AssetRepo) Count(ctx context.Context, options ...bizasset.Option) int {
 	return i
 }
 
-func (r *AssetRepo) FindList(ctx context.Context, options ...bizasset.Option) ([]*bizasset.Asset, error) {
+func (r *AssetRepo) FindList(ctx context.Context, options ...bizasset.Query) ([]*bizasset.Asset, error) {
 	client := r.data.GetClient(ctx)
 	query := client.AreaReleaseAsset.Query()
-	o := newOption(query)
+	o := NewQuery(query)
 	for _, option := range options {
 		option(o)
 	}
@@ -60,10 +60,10 @@ func (r *AssetRepo) FindList(ctx context.Context, options ...bizasset.Option) ([
 	return items, nil
 }
 
-func (r *AssetRepo) FindOne(ctx context.Context, options ...bizasset.Option) (*bizasset.Asset, error) {
+func (r *AssetRepo) FindOne(ctx context.Context, options ...bizasset.Query) (*bizasset.Asset, error) {
 	client := r.data.GetClient(ctx)
 	query := client.AreaReleaseAsset.Query()
-	o := newOption(query)
+	o := NewQuery(query)
 	for _, option := range options {
 		option(o)
 	}
@@ -153,11 +153,11 @@ func (r *AssetRepo) Save(ctx context.Context, data *bizasset.Asset) (*bizasset.A
 	}, nil
 }
 
-func (r *AssetRepo) Remove(ctx context.Context, options ...bizasset.Option) error {
+func (r *AssetRepo) Remove(ctx context.Context, options ...bizasset.Query) error {
 	client := r.data.GetClient(ctx)
 	query := client.AreaReleaseAsset.Query()
 	if len(options) > 0 {
-		q := newOption(query)
+		q := NewQuery(query)
 		for _, option := range options {
 			option(q)
 		}
