@@ -2,7 +2,6 @@ package component
 
 import (
 	"github.com/cnartlu/area-service/component/app"
-	"github.com/cnartlu/area-service/component/config"
 	"github.com/cnartlu/area-service/component/discovery"
 	"github.com/cnartlu/area-service/component/filesystem"
 	"github.com/cnartlu/area-service/component/github"
@@ -15,7 +14,6 @@ import (
 )
 
 var ProviderSet = wire.NewSet(
-	wire.NewSet(config.NewKratos),
 	wire.NewSet(app.New),
 	wire.NewSet(proxy.NewByAppConfig),
 	wire.NewSet(filesystem.New),

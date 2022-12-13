@@ -1,7 +1,10 @@
-debug: true
-env: development
-name: kk
-proxy: http://127.0.0.1:7890
+app:
+  debug: true
+  env: dev
+  name: kk
+  proxy: http://127.0.0.1:7890
+filesystem:
+  
 http:
   addr: :8000
   timeout: 1s
@@ -17,13 +20,19 @@ redis:
   read_timeout: 0.2s
   write_timeout: 0.2s
 logger:
-  level: warn
-  stdout: true
+  stdout: false
+  level: debug
   targets:
-    file:
+    debug:
       type: file
-      filename: logs/odsasassasassa.log
-    file1:
+      filename: logs/debug.log
+      levels: [debug]
+    info:
       type: file
-      filename: logs/2006-12-15.log
-      level: 1
+      filename: logs/info.log
+      levels: [info]
+    warning:
+      type: file
+      filename: logs/warning.log
+      level: warning
+

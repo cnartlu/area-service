@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package component.database;
+
+option go_package = "github.com/cnartlu/area-service/component/database";
+option java_multiple_files = true;
+option java_package = "component.database";
+
+// Config 数据库配置
+message Config {
+  // driver 连接驱动
+  string driver = 1;
+  // net 连接方式
+  string net = 2;
+  // address 访问地址
+  string address = 3;
+  // username 数据库用户名
+  string username = 4;
+  // password 数据库密码
+  string password = 5;
+  // database 数据库名
+  string database = 6;
+  // params 数据库连接参数
+  map<string, string> params = 7;
+  // cache 缓存
+  string cache = 8;
+  string cache_suffix = 9;
+}

@@ -6,8 +6,8 @@
 package main
 
 import (
+	"context"
 	"github.com/cnartlu/area-service/component/app"
-	"github.com/cnartlu/area-service/component/config"
 	"github.com/cnartlu/area-service/component/filesystem"
 	"github.com/cnartlu/area-service/component/github"
 	"github.com/cnartlu/area-service/component/log"
@@ -19,8 +19,7 @@ import (
 	"github.com/cnartlu/area-service/internal/command/handler"
 	github4 "github.com/cnartlu/area-service/internal/command/handler/github"
 	"github.com/cnartlu/area-service/internal/command/script"
-	"github.com/cnartlu/area-service/internal/component/db"
-	config2 "github.com/cnartlu/area-service/internal/config"
+	"github.com/cnartlu/area-service/internal/config"
 	"github.com/cnartlu/area-service/internal/data/area"
 	"github.com/cnartlu/area-service/internal/data/area/release"
 	"github.com/cnartlu/area-service/internal/data/area/release/asset"
@@ -38,52 +37,42 @@ import (
 // Injectors from wire.go:
 
 // initApp 初始化应用
-func initApp(string2 string) (*server.Server, func(), error) {
-	configConfig, cleanup, err := config.NewKratos(string2)
+func initApp(contextContext context.Context, string2 string) (*server.Server, func(), error) {
+	configConfig, err := config.NewByString(string2)
 	if err != nil {
 		return nil, nil, err
 	}
-	config3, err := config2.New(configConfig)
-	if err != nil {
-		cleanup()
-		return nil, nil, err
-	}
-	appConfig := config2.GetApp(config3)
+	appConfig := config.GetApp(configConfig)
 	appApp := app.New(appConfig)
-	logConfig := config2.GetLogger(config3)
+	logConfig := config.GetLogger(configConfig)
 	logger, err := log.New(logConfig)
 	if err != nil {
-		cleanup()
 		return nil, nil, err
 	}
-	configGrpc := config2.GetGrpc(config3)
-	dbConfig := config2.GetDb(config3)
-	client, cleanup2, err := db.NewEnt(dbConfig, logger)
+	configGrpc := config.GetGrpc(configConfig)
+	redisConfig := config.GetRedis(configConfig)
+	client, cleanup, err := redis.New(redisConfig, logger)
+	if err != nil {
+		return nil, nil, err
+	}
+	databaseConfig := config.GetDb(configConfig)
+	dataData, cleanup2, err := data.NewData(logger, client, databaseConfig)
 	if err != nil {
 		cleanup()
 		return nil, nil, err
 	}
-	redisConfig := config2.GetRedis(config3)
-	redisClient, cleanup3, err := redis.New(redisConfig, logger)
-	if err != nil {
-		cleanup2()
-		cleanup()
-		return nil, nil, err
-	}
-	dataData := data.NewData(client, redisClient)
 	areaRepo := area.NewAreaRepo(dataData)
 	areaUsecase := area2.NewAreaUsecase(areaRepo)
 	areaService := service.NewAreaService(areaUsecase)
 	grpcServer := grpc.NewServer(logger, configGrpc, areaService)
-	configHttp := config2.GetHttp(config3)
+	configHttp := config.GetHttp(configConfig)
 	routerArea := router.NewArea(areaService)
 	v := router.NewRouter(routerArea)
 	httpServer := http.NewServer(appApp, logger, configHttp, v)
 	daily := job.NewDaily(logger)
 	cronServer := cron.NewServer(logger, daily)
-	serverServer := server.NewServer(appApp, logger, grpcServer, httpServer, cronServer)
+	serverServer := server.NewServer(contextContext, appApp, logger, grpcServer, httpServer, cronServer)
 	return serverServer, func() {
-		cleanup3()
 		cleanup2()
 		cleanup()
 	}, nil
@@ -91,41 +80,31 @@ func initApp(string2 string) (*server.Server, func(), error) {
 
 // initCommand 初始化命令行
 func initCommand(string2 string) (*command.Command, func(), error) {
-	configConfig, cleanup, err := config.NewKratos(string2)
+	configConfig, err := config.NewByString(string2)
 	if err != nil {
 		return nil, nil, err
 	}
-	config3, err := config2.New(configConfig)
-	if err != nil {
-		cleanup()
-		return nil, nil, err
-	}
-	appConfig := config2.GetApp(config3)
+	appConfig := config.GetApp(configConfig)
 	appApp := app.New(appConfig)
-	logConfig := config2.GetLogger(config3)
+	logConfig := config.GetLogger(configConfig)
 	logger, err := log.New(logConfig)
 	if err != nil {
-		cleanup()
 		return nil, nil, err
 	}
-	dbConfig := config2.GetDb(config3)
-	client, cleanup2, err := db.NewEnt(dbConfig, logger)
+	redisConfig := config.GetRedis(configConfig)
+	client, cleanup, err := redis.New(redisConfig, logger)
+	if err != nil {
+		return nil, nil, err
+	}
+	databaseConfig := config.GetDb(configConfig)
+	dataData, cleanup2, err := data.NewData(logger, client, databaseConfig)
 	if err != nil {
 		cleanup()
 		return nil, nil, err
 	}
-	redisConfig := config2.GetRedis(config3)
-	redisClient, cleanup3, err := redis.New(redisConfig, logger)
-	if err != nil {
-		cleanup2()
-		cleanup()
-		return nil, nil, err
-	}
-	dataData := data.NewData(client, redisClient)
-	filesystemConfig := config2.GetFileSystem(config3)
+	filesystemConfig := config.GetFileSystem(configConfig)
 	proxyClient, err := proxy.NewByAppConfig(appConfig)
 	if err != nil {
-		cleanup3()
 		cleanup2()
 		cleanup()
 		return nil, nil, err
@@ -142,7 +121,6 @@ func initCommand(string2 string) (*command.Command, func(), error) {
 	scriptScript := script.New()
 	commandCommand := command.New(handlerHandler, scriptScript)
 	return commandCommand, func() {
-		cleanup3()
 		cleanup2()
 		cleanup()
 	}, nil

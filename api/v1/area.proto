@@ -59,8 +59,8 @@ message GetAreaReply {
 	uint64 id = 1;
 	string region_id = 2;
 	string title = 3;
-	string lat = 4;
-	string lng = 5;
+	float lat = 4;
+	float lng = 5;
 	string ucfirst = 6;
 	string pinyin = 7;
 	string city_code = 8;
@@ -86,8 +86,8 @@ message CascadeListAreaReply {
 		uint64 id = 1;
 		string region_id = 2;
 		string title = 3;
-		string lat = 4;
-		string lng = 5;
+		float lat = 4;
+		float lng = 5;
 		string ucfirst = 6;
 		string pinyin = 7;
 		uint32 level = 8;
@@ -104,8 +104,8 @@ message CreateAreaRequest {
 	}
 	string region_id = 2;
 	string title = 3;
-	string lat = 4;
-	string lng = 5;
+	float lat = 4;
+	float lng = 5;
 	string city_code = 6;
 	string zip_code = 7;
 	uint32 children_number = 8;

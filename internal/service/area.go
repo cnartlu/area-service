@@ -5,6 +5,7 @@ import (
 
 	"github.com/cnartlu/area-service/api"
 	pb "github.com/cnartlu/area-service/api/v1"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/cnartlu/area-service/internal/biz/area"
 )
@@ -80,17 +81,22 @@ func (s *AreaService) View(ctx context.Context, req *pb.GetAreaRequest) (*pb.Get
 	}, nil
 }
 
+// CascadeList 级联列表
 func (s *AreaService) CascadeList(ctx context.Context, req *pb.CascadeListAreaRequest) (*pb.CascadeListAreaReply, error) {
 	var parentData *area.Area
-	var err error
-	if req.GetRegionId() != "" {
-		parentData, err = s.area.FindByRegionID(ctx, req.GetRegionId(), 0)
-	} else if req.GetId() != 0 {
-		parentData, err = s.area.FindOne(ctx, req.GetId())
+
+	{
+		var err error
+		if req.GetRegionId() != "" {
+			parentData, err = s.area.FindByRegionID(ctx, req.GetRegionId(), int(req.GetLevel()))
+		} else if req.GetId() != 0 {
+			parentData, err = s.area.FindOne(ctx, req.GetId())
+		}
+		if err != nil {
+			return nil, err
+		}
 	}
-	if err != nil {
-		return nil, err
-	}
+
 	var parentID uint64
 	xy := &pb.CascadeListAreaReply{}
 	if parentData != nil {
@@ -104,37 +110,65 @@ func (s *AreaService) CascadeList(ctx context.Context, req *pb.CascadeListAreaRe
 			Level:    uint32(parentData.Level),
 		}
 	}
-	results, err := s.area.CascadeList(ctx, parentID, int(req.GetDeep()))
-	if err != nil {
-		return nil, err
-	}
-	var handlerFunc func([]*area.CascadeArea) []*pb.CascadeListAreaReply_Item
-	handlerFunc = func(results []*area.CascadeArea) []*pb.CascadeListAreaReply_Item {
-		items := make([]*pb.CascadeListAreaReply_Item, len(results))
-		for k, result := range results {
-			result := result
-			item := pb.CascadeListAreaReply_Item{
-				Id:       result.ID,
-				RegionId: result.RegionID,
-				Title:    result.Title,
-				Ucfirst:  result.Ucfirst,
-				Pinyin:   result.Pinyin,
-				Level:    uint32(result.Level),
-				Items:    make([]*pb.CascadeListAreaReply_Item, result.ChildrenNumber),
-			}
-			if result.ChildrenNumber > 0 {
-				item.Items = handlerFunc(result.Items)
-			}
-			items[k] = &item
+
+	{
+		eg, cancelCtx := errgroup.WithContext(ctx)
+		var (
+			handlerFunc func(parentID uint64, deep int) ([]*pb.CascadeListAreaReply_Item, error)
+			maxDeep     = int(req.GetDeep())
+		)
+		if maxDeep < area.AREA_MIN_LEVEL {
+			maxDeep = area.AREA_MAX_LEVEL
 		}
-		return items
+		handlerFunc = func(parentID uint64, deep int) ([]*pb.CascadeListAreaReply_Item, error) {
+			results, err := s.area.List(cancelCtx, area.FindListParam{ParentID: parentID})
+			if err != nil {
+				return nil, err
+			}
+			items := make([]*pb.CascadeListAreaReply_Item, len(results))
+			for idx := 0; idx < len(results); idx++ {
+				idx := idx
+				result := results[idx]
+				item := &pb.CascadeListAreaReply_Item{
+					Id:       result.ID,
+					RegionId: result.RegionID,
+					Title:    result.Title,
+					Lat:      float32(result.Lat),
+					Lng:      float32(result.Lng),
+					Ucfirst:  result.Ucfirst,
+					Pinyin:   result.Pinyin,
+					Level:    uint32(result.Level),
+					Items:    make([]*pb.CascadeListAreaReply_Item, 0),
+				}
+				items[idx] = item
+				if deep < maxDeep && result.Level < area.AREA_MAX_LEVEL {
+					eg.Go(func() error {
+						items, err := handlerFunc(result.ID, deep+1)
+						if err != nil {
+							return err
+						}
+						item.Items = items
+						return nil
+					})
+				}
+			}
+			return items, nil
+		}
+		results, err := handlerFunc(parentID, 1)
+		if err != nil {
+			return nil, err
+		}
+		if err := eg.Wait(); err != nil {
+			return nil, err
+		}
+		xy.Items = results
 	}
 
-	xy.Items = handlerFunc(results)
 	return xy, nil
 }
 
 func (s *AreaService) Create(ctx context.Context, req *pb.CreateAreaRequest) (*pb.CreateAreaReply, error) {
+	s.area.Create(ctx, area.CreateParam{})
 	return &pb.CreateAreaReply{}, nil
 }
 

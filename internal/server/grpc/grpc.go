@@ -9,7 +9,6 @@ import (
 	"github.com/cnartlu/area-service/component/log"
 	"github.com/cnartlu/area-service/internal/config"
 	"github.com/cnartlu/area-service/internal/service"
-	"github.com/go-kratos/kratos/v2/middleware/recovery"
 	"github.com/go-kratos/kratos/v2/transport/grpc"
 )
 
@@ -41,8 +40,7 @@ func NewServer(
 		grpc.Network(network),
 		grpc.Address(addr),
 		grpc.Listener(lis),
-		// grpc.Logger(log.NewKratosLogger(logger.AddCallerSkip(1))),
-		grpc.Middleware(recovery.Recovery()),
+		// grpc.Middleware(recovery.Recovery(), logging.Server(ilog.NewKratosLogger(logger.AddCallerSkip(1)))),
 	}
 	if c.GetTimeout() != nil {
 		opts = append(opts, grpc.Timeout(c.GetTimeout().AsDuration()))

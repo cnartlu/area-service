@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"errors"
 	"os"
 	"os/exec"
@@ -108,6 +109,7 @@ func (s *Server) Stop() error {
 }
 
 func NewServer(
+	ctx context.Context,
 	app *app.App,
 	logger *log.Logger,
 	gs *grpc.Server,
@@ -130,6 +132,7 @@ func NewServer(
 		kratos.Metadata(map[string]string{}),
 		// kratos.Logger(log.NewKratosLogger(logger)),
 		kratos.Server(servers...),
+		kratos.Context(ctx),
 	}
 
 	server := kratos.New(options...)

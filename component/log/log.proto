@@ -29,7 +29,7 @@ message Config {
     // Targets 记录器
 	map<string, google.protobuf.Struct> targets = 1;
 	// Stdout 输出到控制台
-	optional bool stdout = 2;
+	bool stdout = 2;
 	// TraceLevel 记录堆栈行号
 	int32 trace_level = 3;
 	// level 最小日志等级

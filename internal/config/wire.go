@@ -11,7 +11,7 @@ import (
 
 // ProviderSet 配置项的功能
 var ProviderSet = wire.NewSet(
-	New,
+	NewByString,
 	wire.NewSet(
 		GetApp,
 		GetHttp,

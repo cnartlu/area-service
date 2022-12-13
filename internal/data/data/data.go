@@ -4,9 +4,13 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/cnartlu/area-service/component/database"
+	"github.com/cnartlu/area-service/component/log"
 	biztransaction "github.com/cnartlu/area-service/internal/biz/transaction"
 	"github.com/cnartlu/area-service/internal/data/ent"
 	"github.com/go-redis/redis/v8"
+
+	_ "github.com/go-sql-driver/mysql"
 )
 
 var _ biztransaction.Transaction = (*Data)(nil)
@@ -14,8 +18,9 @@ var _ biztransaction.Transaction = (*Data)(nil)
 type txCtxKey struct{}
 
 type Data struct {
-	ent *ent.Client
-	rds *redis.Client
+	logger *log.Logger
+	ent    *ent.Client
+	rds    *redis.Client
 }
 
 // newTxContext returns a new context with the given Tx attached.
@@ -64,11 +69,15 @@ func (d *Data) Transaction(ctx context.Context, fn func(ctx context.Context) err
 }
 
 func NewData(
-	ent *ent.Client,
+	logger *log.Logger,
 	rds *redis.Client,
-) *Data {
-	return &Data{
-		ent: ent,
-		rds: rds,
+	config *database.Config,
+) (*Data, func(), error) {
+	result := Data{
+		logger: logger,
+		rds:    rds,
 	}
+	client, cleanup, err := result.LoadEntDatabase(config)
+	result.ent = client
+	return &result, cleanup, err
 }

@@ -6,6 +6,7 @@
 package main
 
 import (
+	"context"
 	"github.com/cnartlu/area-service/internal"
 	"github.com/cnartlu/area-service/internal/command"
 	"github.com/cnartlu/area-service/internal/server"
@@ -13,7 +14,7 @@ import (
 )
 
 // initApp 初始化应用
-func initApp(string) (*server.Server, func(), error) {
+func initApp(context.Context, string) (*server.Server, func(), error) {
 	panic(
 		wire.Build(
 			internal.ProviderSet,

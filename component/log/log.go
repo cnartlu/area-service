@@ -117,7 +117,7 @@ func (l *Logger) Setup() (err error) {
 		encoder = zapcore.NewJSONEncoder(encoderConfig)
 		zapOptions = append(zapOptions, zap.AddCaller(), zap.AddCallerSkip(1+int(l.c.GetTraceLevel())))
 		defaultLevelEnabler := newLevelEnable(levelEnable{}, l.c.GetLevel(), l.c.GetLevels())
-		if l.c == nil || l.c.Stdout == nil || *l.c.Stdout {
+		if l.c.GetStdout() {
 			cores = append(cores, zapcore.NewCore(encoder, os.Stdout, defaultLevelEnabler))
 		}
 		configTargets := l.c.GetTargets()

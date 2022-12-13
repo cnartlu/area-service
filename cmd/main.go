@@ -47,7 +47,7 @@ func main() {
 			if test || help || version {
 				return nil
 			}
-			s, cleanup, err := initApp(config)
+			s, cleanup, err := initApp(context.TODO(), config)
 			if err != nil {
 				return err
 			}

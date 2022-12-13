@@ -2,21 +2,14 @@ package area
 
 import (
 	"context"
-	"sync"
-)
+	"strconv"
+	"strings"
 
-type FindListParam struct {
-	// ParentID 父级ID
-	ParentID uint64
-	// RegionID 父级区域ID
-	RegionID string
-	// Level 区域级别
-	Level int
-	// Keyword 搜索关键字
-	Keyword string
-	// Order 排序
-	Order string
-}
+	"github.com/cnartlu/area-service/api"
+	"github.com/cnartlu/area-service/internal/biz/transaction"
+	pkgsort "github.com/cnartlu/area-service/pkg/data/sort"
+	"github.com/mozillazg/go-pinyin"
+)
 
 type AreaRepo interface {
 	Count(ctx context.Context, options ...Query) int
@@ -28,95 +21,33 @@ type AreaRepo interface {
 	Save(ctx context.Context, data *Area) (*Area, error)
 	// Remove 移除数据
 	Remove(ctx context.Context, options ...Query) error
+	// ReplaceParentListPrefix 替换父级列表前缀
+	ReplaceParentListPrefix(ctx context.Context, oldPrefix, newPrefix string) (int, error)
 }
 
 type AreaUsecase struct {
-	repo AreaRepo
+	repo        AreaRepo
+	transaction transaction.Transaction
 }
 
 // List 列表更新
 func (m *AreaUsecase) List(ctx context.Context, params FindListParam) ([]*Area, error) {
 	options := []Query{}
 	if params.RegionID != "" {
-		options = append(options, RegionIDEQ(params.RegionID))
-		if params.Level > 0 {
-			options = append(options, LevelEQ(params.Level))
-		}
-		parent, err := m.repo.FindOne(ctx, options...)
+		p, err := m.FindByRegionID(ctx, params.RegionID, params.Level)
 		if err != nil {
 			return nil, err
 		}
-		params.ParentID = parent.ID
-		options = []Query{}
+		params.ParentID = p.ID
 	}
 	options = append(options, ParentIDEQ(params.ParentID))
 	if params.Keyword != "" {
 		options = append(options, TitleContains(params.Keyword))
 	}
-	if params.Order == "" {
-		params.Order = "-id"
+	if params.Order != "" {
+		options = append(options, Order(pkgsort.ParseArray(params.Order)...))
 	}
-	options = append(options, Order(params.Order))
 	return m.repo.FindList(ctx, options...)
-}
-
-// CascadeList 级联列表
-// parentID 父级ID，为0时表示顶级
-// maxDeep 最大获取深度，小于等于0标识不限制，一直往下取
-func (m *AreaUsecase) CascadeList(ctx context.Context, parentID uint64, maxDeep int) ([]*CascadeArea, error) {
-	var handlerFunc func(parentID uint64, deep int) ([]*CascadeArea, error)
-	var cancelCtx, cancelFun = context.WithCancel(ctx)
-	var cerr error
-	var nolimitDeep bool = maxDeep <= 0
-	handlerFunc = func(parentID uint64, deep int) ([]*CascadeArea, error) {
-		var g = &sync.WaitGroup{}
-		results, err := m.repo.FindList(cancelCtx, ParentIDEQ(parentID))
-		if err != nil {
-			cancelFun()
-			return nil, err
-		}
-		items := make([]*CascadeArea, len(results))
-		for k, result := range results {
-			result := result
-			item := &CascadeArea{
-				ID:             result.ID,
-				RegionID:       result.RegionID,
-				Title:          result.Title,
-				Ucfirst:        result.Ucfirst,
-				Pinyin:         result.Pinyin,
-				Level:          result.Level,
-				ChildrenNumber: 0,
-				Items:          make([]*CascadeArea, 0),
-			}
-			items[k] = item
-			// 深度达到
-			if nolimitDeep || deep < maxDeep {
-				g.Add(1)
-				go func(r *CascadeArea) {
-					defer g.Done()
-					items, _ := handlerFunc(result.ID, deep+1)
-					if err != nil {
-						cerr = err
-						cancelFun()
-						return
-					}
-					r.Items = items
-					r.ChildrenNumber = len(items)
-				}(item)
-			}
-		}
-		g.Wait()
-		if cerr != nil {
-			return nil, cerr
-		}
-		return items, nil
-	}
-	results, err := handlerFunc(parentID, 1)
-	if err != nil {
-		return nil, err
-	}
-
-	return results, nil
 }
 
 // FindOne 查询ID值等价
@@ -129,8 +60,173 @@ func (m *AreaUsecase) FindByRegionID(ctx context.Context, regionID string, level
 	if level > 0 {
 		options = append(options, LevelEQ(level))
 	}
-	options = append(options, Order("region_id"))
 	return m.repo.FindOne(ctx, options...)
+}
+
+func (m *AreaUsecase) Create(ctx context.Context, data CreateParam) (*Area, error) {
+	var (
+		level      int = 1
+		parentList     = "0"
+		areaModel  *Area
+		parentArea *Area
+	)
+
+	{
+		if data.ParentID != 0 {
+			var err error
+			parentArea, err = m.FindOne(ctx, data.ParentID)
+			if err != nil {
+				return nil, err
+			}
+			level += parentArea.Level
+			parentList = parentArea.ParentList
+		}
+
+		if _, err := m.FindByRegionID(ctx, data.RegionID, level); err == nil {
+			return nil, api.ErrorParamFormat("identify exists")
+		} else if !api.IsDataNotFound(err) {
+			return nil, err
+		}
+	}
+
+	{
+		py := pinyin.LazyConvert(data.Title, nil)
+		pyStr := strings.Join(py, " ")
+		areaModel = &Area{}
+		areaModel.ParentID = data.ParentID
+		areaModel.RegionID = data.RegionID
+		areaModel.ParentList = parentList
+		areaModel.Title = data.Title
+		areaModel.Pinyin = pyStr
+		areaModel.Ucfirst = pyStr[0:1]
+		areaModel.Lat = data.Lat
+		areaModel.Lng = data.Lng
+		areaModel.CityCode = data.CityCode
+		areaModel.ZipCode = data.ZipCode
+		areaModel.Level = level
+
+		err := m.transaction.Transaction(ctx, func(ctx context.Context) error {
+			var err error
+			areaModel, err = m.repo.Save(ctx, areaModel)
+			if err != nil {
+				return err
+			}
+			areaModel.ParentList += "," + strconv.FormatUint(areaModel.ID, 10)
+			areaModel, err = m.repo.Save(ctx, areaModel)
+			if err != nil {
+				return err
+			}
+			if areaModel.ParentID > 0 {
+				parentArea.ChildrenNumber++
+				parentArea, err = m.repo.Save(ctx, parentArea)
+				if err != nil {
+					return err
+				}
+			}
+			return nil
+		})
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return areaModel, nil
+}
+
+func (m *AreaUsecase) Update(ctx context.Context, data UpdateParam) (*Area, error) {
+	areaModel, err := m.FindOne(ctx, data.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	var (
+		level        = areaModel.Level
+		parentList   = areaModel.ParentList
+		oldAreaModel = areaModel
+	)
+
+	{
+		// 父级 发生变更
+		if areaModel.ParentID != data.ParentID {
+			if data.ParentID != 0 {
+				parentArea, err := m.FindOne(ctx, data.ParentID)
+				if err != nil {
+					return nil, err
+				}
+				level = parentArea.Level + 1
+				parentList = parentArea.ParentList + "," + strconv.FormatUint(areaModel.ID, 10)
+			}
+		}
+	}
+
+	// 区域ID 发生变更
+	if areaModel.RegionID != data.RegionID {
+		if _, err := m.FindByRegionID(ctx, data.RegionID, level); err == nil {
+			return nil, api.ErrorParamFormat("identify exists")
+		} else if !api.IsDataNotFound(err) {
+			return nil, err
+		}
+	}
+
+	{
+		// 更新数据
+		py := pinyin.LazyConvert(data.Title, nil)
+		pyStr := strings.Join(py, " ")
+		areaModel.ParentID = data.ParentID
+		areaModel.RegionID = data.RegionID
+		areaModel.ParentList = parentList
+		areaModel.Title = data.Title
+		areaModel.Pinyin = pyStr
+		areaModel.Ucfirst = pyStr[0:1]
+		areaModel.Lat = data.Lat
+		areaModel.Lng = data.Lng
+		areaModel.CityCode = data.CityCode
+		areaModel.ZipCode = data.ZipCode
+		areaModel.Level = level
+		err := m.transaction.Transaction(ctx, func(ctx context.Context) error {
+			var err error
+			areaModel, err = m.repo.Save(ctx, areaModel)
+			if err != nil {
+				return err
+			}
+			// 父级ID变更，则需要同步更新其子集的parentList字段
+			if oldAreaModel.ParentID != areaModel.ParentID {
+				if oldAreaModel.ParentID > 0 {
+					oldParentModel, err := m.FindOne(ctx, oldAreaModel.ParentID)
+					if err != nil {
+						return err
+					}
+					oldParentModel.ChildrenNumber -= 1
+					if _, err := m.repo.Save(ctx, oldParentModel); err != nil {
+						return err
+					}
+				}
+
+				if areaModel.ParentID > 0 {
+					parentArea, err := m.FindOne(ctx, areaModel.ParentID)
+					if err != nil {
+						return err
+					}
+					parentArea.ChildrenNumber += 1
+					if _, err := m.repo.Save(ctx, parentArea); err != nil {
+						return err
+					}
+				}
+
+				if areaModel.ChildrenNumber > 0 {
+					if _, err := m.repo.ReplaceParentListPrefix(ctx, oldAreaModel.ParentList, areaModel.ParentList); err != nil {
+						return err
+					}
+				}
+			}
+			return nil
+		})
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return areaModel, nil
 }
 
 // Delete 删除值

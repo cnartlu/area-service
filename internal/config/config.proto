@@ -8,7 +8,7 @@ import "component/app/app.proto";
 import "component/log/log.proto";
 import "component/redis/redis.proto";
 import "component/filesystem/filesystem.proto";
-import "component/db/db.proto";
+import "component/database/database.proto";
 
 message Config {
   .component.app.Config app = 1;
@@ -18,7 +18,7 @@ message Config {
   Cron cron = 12;
   .component.log.Config logger = 13;
   .component.redis.Config redis = 14;
-  .component.db.Config db = 15;
+  .component.database.Config db = 15;
 }
 
 message Http {

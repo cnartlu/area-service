@@ -8,21 +8,21 @@ import (
 	"github.com/cnartlu/area-service/internal/data/ent/arearelease"
 )
 
-var _ bizrelease.Inquirer = (*queryOption)(nil)
+var _ bizrelease.Inquirer = new(queryOption)
 
 type queryOption struct {
 	query *ent.AreaReleaseQuery
 }
 
-func (o *queryOption) Offset(offset int) {
+func (o queryOption) Offset(offset int) {
 	o.query.Offset(offset)
 }
 
-func (o *queryOption) Limit(limit int) {
+func (o queryOption) Limit(limit int) {
 	o.query.Limit(limit)
 }
 
-func (o *queryOption) Order(order string) {
+func (o queryOption) Order(order string) {
 	if order == "" {
 		return
 	}
@@ -40,15 +40,15 @@ func (o *queryOption) Order(order string) {
 	}
 }
 
-func (o *queryOption) IDEQ(id uint64) {
+func (o queryOption) IDEQ(id uint64) {
 	o.query.Where(arearelease.IDEQ(id))
 }
 
-func (o *queryOption) IDIn(ids ...uint64) {
+func (o queryOption) IDIn(ids ...uint64) {
 	o.query.Where(arearelease.IDIn(ids...))
 }
 
-func (o *queryOption) ReleaseIDEQ(releaseID uint64) {
+func (o queryOption) ReleaseIDEQ(releaseID uint64) {
 	o.query.Where(arearelease.ReleaseIDEQ(releaseID))
 }
 
