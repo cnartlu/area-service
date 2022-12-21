@@ -23,13 +23,12 @@ service Area {
 	};
 	rpc DeleteArea (DeleteAreaRequest) returns (DeleteAreaReply) {
 		option (google.api.http) = {
-            delete: "/area/delete",
-			body: ""
+            delete: "/area/{id}",
         };
 	};
 	rpc GetArea (GetAreaRequest) returns (GetAreaReply) {
 		option (google.api.http) = {
-            get: "/area/view",
+            get: "/area/{id}",
         };
 	};
 	rpc ListArea (ListAreaRequest) returns (ListAreaReply) {
@@ -39,7 +38,7 @@ service Area {
 	};
 	rpc CascadeListArea(CascadeListAreaRequest) returns (CascadeListAreaReply) {
 		option (google.api.http) = {
-            get: "/area/list/cascade/:id"
+            get: "/area/list/cascade"
         };
 	};
 }

@@ -30,37 +30,6 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Status'
-    /area/delete:
-        delete:
-            tags:
-                - Area
-            operationId: Area_DeleteArea
-            parameters:
-                - name: id
-                  in: query
-                  schema:
-                    type: integer
-                    format: uint64
-                - name: ids
-                  in: query
-                  schema:
-                    type: array
-                    items:
-                        type: integer
-                        format: uint64
-            responses:
-                "200":
-                    description: OK
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/DeleteAreaReply'
-                default:
-                    description: Default error response
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/Status'
     /area/list:
         get:
             tags:
@@ -102,7 +71,7 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Status'
-    /area/list/cascade/:id:
+    /area/list/cascade:
         get:
             tags:
                 - Area
@@ -144,14 +113,15 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Status'
-    /area/view:
+    /area/{id}:
         get:
             tags:
                 - Area
             operationId: Area_GetArea
             parameters:
                 - name: id
-                  in: query
+                  in: path
+                  required: true
                   schema:
                     type: integer
                     format: uint64
@@ -177,7 +147,6 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Status'
-    /area/{id}:
         put:
             tags:
                 - Area
@@ -202,6 +171,37 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/UpdateAreaReply'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+        delete:
+            tags:
+                - Area
+            operationId: Area_DeleteArea
+            parameters:
+                - name: id
+                  in: path
+                  required: true
+                  schema:
+                    type: integer
+                    format: uint64
+                - name: ids
+                  in: query
+                  schema:
+                    type: array
+                    items:
+                        type: integer
+                        format: uint64
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/DeleteAreaReply'
                 default:
                     description: Default error response
                     content:

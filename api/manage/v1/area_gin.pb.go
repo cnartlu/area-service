@@ -40,10 +40,10 @@ type AreaGinServer interface {
 func RegisterAreaGinServer(s *gin.RouterGroup, srv AreaGinServer) {
 	s.POST("/area", _Area_CreateArea0_Gin_Handler(srv))
 	s.PUT("/area/:id", _Area_UpdateArea0_Gin_Handler(srv))
-	s.DELETE("/area/delete", _Area_DeleteArea0_Gin_Handler(srv))
-	s.GET("/area/view", _Area_GetArea0_Gin_Handler(srv))
+	s.DELETE("/area/:id", _Area_DeleteArea0_Gin_Handler(srv))
+	s.GET("/area/:id", _Area_GetArea0_Gin_Handler(srv))
 	s.GET("/area/list", _Area_ListArea0_Gin_Handler(srv))
-	s.GET("/area/list/cascade/:id", _Area_CascadeListArea0_Gin_Handler(srv))
+	s.GET("/area/list/cascade", _Area_CascadeListArea0_Gin_Handler(srv))
 }
 
 func _Area_CreateArea0_Gin_Handler(srv AreaGinServer) gin.HandlerFunc {
@@ -149,6 +149,10 @@ func _Area_UpdateArea0_Gin_Handler(srv AreaGinServer) gin.HandlerFunc {
 func _Area_DeleteArea0_Gin_Handler(srv AreaGinServer) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var in DeleteAreaRequest
+		if err := c.BindUri(&in); err != nil {
+			c.Error(err)
+			return
+		}
 		values := c.Request.URL.Query()
 		if err := binding.MapFormWithTag(&in, values, "json"); err != nil {
 			c.Error(err)
@@ -166,6 +170,10 @@ func _Area_DeleteArea0_Gin_Handler(srv AreaGinServer) gin.HandlerFunc {
 func _Area_GetArea0_Gin_Handler(srv AreaGinServer) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var in GetAreaRequest
+		if err := c.BindUri(&in); err != nil {
+			c.Error(err)
+			return
+		}
 		values := c.Request.URL.Query()
 		if err := binding.MapFormWithTag(&in, values, "json"); err != nil {
 			c.Error(err)
