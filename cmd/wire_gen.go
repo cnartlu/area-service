@@ -30,7 +30,6 @@ import (
 	"github.com/cnartlu/area-service/internal/server/cron/job"
 	"github.com/cnartlu/area-service/internal/server/grpc"
 	"github.com/cnartlu/area-service/internal/server/http"
-	"github.com/cnartlu/area-service/internal/server/http/router"
 	"github.com/cnartlu/area-service/internal/service"
 )
 
@@ -66,9 +65,7 @@ func initApp(contextContext context.Context, string2 string) (*server.Server, fu
 	areaService := service.NewAreaService(areaUsecase)
 	grpcServer := grpc.NewServer(logger, configGrpc, areaService)
 	configHttp := config.GetHttp(configConfig)
-	routerArea := router.NewArea(areaService)
-	v := router.NewRouter(routerArea)
-	httpServer := http.NewServer(appApp, logger, configHttp, v)
+	httpServer := http.NewServer(appApp, logger, configHttp, areaService)
 	daily := job.NewDaily(logger)
 	cronServer := cron.NewServer(logger, daily)
 	serverServer := server.NewServer(contextContext, appApp, logger, grpcServer, httpServer, cronServer)

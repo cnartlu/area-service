@@ -1,0 +1,141 @@
+syntax = "proto3";
+
+package api.manage.v1;
+
+import "google/api/annotations.proto";
+
+option go_package = "github.com/cnartlu/area-service/api/manage/v1;v1";
+option java_multiple_files = true;
+option java_package = "api.manage.v1";
+
+service Area {
+	rpc CreateArea (CreateAreaRequest) returns (CreateAreaReply) {
+		option (google.api.http) = {
+            post: "/area",
+			body: "*"
+        };
+	};
+	rpc UpdateArea (UpdateAreaRequest) returns (UpdateAreaReply) {
+		option (google.api.http) = {
+            put: "/area/{id}",
+			body: "*"
+        };
+	};
+	rpc DeleteArea (DeleteAreaRequest) returns (DeleteAreaReply) {
+		option (google.api.http) = {
+            delete: "/area/delete",
+			body: ""
+        };
+	};
+	rpc GetArea (GetAreaRequest) returns (GetAreaReply) {
+		option (google.api.http) = {
+            get: "/area/view",
+        };
+	};
+	rpc ListArea (ListAreaRequest) returns (ListAreaReply) {
+		option (google.api.http) = {
+            get: "/area/list",
+        };
+	};
+	rpc CascadeListArea(CascadeListAreaRequest) returns (CascadeListAreaReply) {
+		option (google.api.http) = {
+            get: "/area/list/cascade/:id"
+        };
+	};
+}
+
+message CreateAreaRequest {
+	uint64 parent_id = 1;
+	string region_id = 2;
+	string title = 3;
+	float lat = 4;
+	float lng = 5;
+	string city_code = 6;
+	string zip_code = 7;
+}
+message CreateAreaReply {}
+
+message UpdateAreaRequest {
+	uint64 id = 1;
+	uint64 parent_id = 2;
+	string region_id = 3;
+	string title = 4;
+	float lat = 5;
+	float lng = 6;
+	string city_code = 7;
+	string zip_code = 8;
+}
+message UpdateAreaReply {}
+
+message DeleteAreaRequest {
+	uint64 id = 1;
+	repeated uint64 ids = 2;
+}
+message DeleteAreaReply {}
+
+message GetAreaRequest {
+	uint64 id = 1;
+	string region_id = 2;
+	uint32 level = 3;
+}
+message GetAreaReply {
+	uint64 id = 1;
+	string region_id = 2;
+	string title = 3;
+	float lat = 4;
+	float lng = 5;
+	string ucfirst = 6;
+	string pinyin = 7;
+	string city_code = 8;
+	string zip_code = 9;
+	uint32 level = 10;
+	uint64 create_time = 11;
+	uint64 update_time = 12;
+	GetAreaReply parent = 13;
+}
+
+message ListAreaRequest {
+	uint64 parent_id = 1;
+	string region_id = 2;
+	int32 level = 3;
+	string kw = 4;
+	string order = 9;
+}
+message ListAreaReply {
+	message Item {
+		uint64 id = 1;
+		string region_id = 2;
+		string title = 3;
+		string ucfirst = 5;
+		string pinyin = 6;
+		string city_code = 7;
+		string zip_code = 8;
+		uint32 level = 9;
+		uint64 update_time = 10;
+	}
+	repeated Item items = 1;
+}
+
+message CascadeListAreaRequest {
+	uint64 id = 1;
+	string region_id = 2;
+	int32 level = 3;
+	int32 deep = 4;
+	string kw = 5;
+}
+
+message CascadeListAreaReply {
+	message Item {
+		uint64 id = 1;
+		string region_id = 2;
+		string title = 3;
+		float lat = 4;
+		float lng = 5;
+		string ucfirst = 6;
+		string pinyin = 7;
+		uint32 level = 8;
+		repeated Item items = 9;
+	}
+	repeated Item items = 1;
+	Item parent = 2;
+}

@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/cnartlu/area-service/api"
+	"github.com/cnartlu/area-service/errors"
 	"github.com/cnartlu/area-service/internal/biz/transaction"
 	pkgsort "github.com/cnartlu/area-service/pkg/data/sort"
 	"github.com/mozillazg/go-pinyin"
@@ -64,6 +64,10 @@ func (m *AreaUsecase) FindByRegionID(ctx context.Context, regionID string, level
 }
 
 func (m *AreaUsecase) Create(ctx context.Context, data CreateParam) (*Area, error) {
+	if data.Title == "" {
+		return nil, errors.ErrorParamMissing("the title can not be blank")
+	}
+
 	var (
 		level      int = 1
 		parentList     = "0"
@@ -83,14 +87,22 @@ func (m *AreaUsecase) Create(ctx context.Context, data CreateParam) (*Area, erro
 		}
 
 		if _, err := m.FindByRegionID(ctx, data.RegionID, level); err == nil {
-			return nil, api.ErrorParamFormat("identify exists")
-		} else if !api.IsDataNotFound(err) {
+			return nil, errors.ErrorParamFormat("identify exists")
+		} else if !errors.IsDataNotFound(err) {
 			return nil, err
 		}
 	}
 
 	{
-		py := pinyin.LazyConvert(data.Title, nil)
+		py := pinyin.LazyConvert(data.Title, &pinyin.Args{
+			Style: pinyin.NORMAL,
+			Fallback: func(r rune, a pinyin.Args) []string {
+				if r == 0 {
+					return []string{}
+				}
+				return []string{string(r)}
+			},
+		})
 		pyStr := strings.Join(py, " ")
 		areaModel = &Area{}
 		areaModel.ParentID = data.ParentID
@@ -134,6 +146,14 @@ func (m *AreaUsecase) Create(ctx context.Context, data CreateParam) (*Area, erro
 }
 
 func (m *AreaUsecase) Update(ctx context.Context, data UpdateParam) (*Area, error) {
+	if data.ID == 0 {
+		return nil, errors.ErrorParamMissing("unique identifier for missing data")
+	}
+
+	if data.Title == "" {
+		return nil, errors.ErrorParamMissing("the title can not be blank")
+	}
+
 	areaModel, err := m.FindOne(ctx, data.ID)
 	if err != nil {
 		return nil, err
@@ -162,8 +182,8 @@ func (m *AreaUsecase) Update(ctx context.Context, data UpdateParam) (*Area, erro
 	// 区域ID 发生变更
 	if areaModel.RegionID != data.RegionID {
 		if _, err := m.FindByRegionID(ctx, data.RegionID, level); err == nil {
-			return nil, api.ErrorParamFormat("identify exists")
-		} else if !api.IsDataNotFound(err) {
+			return nil, errors.ErrorParamFormat("identify exists")
+		} else if !errors.IsDataNotFound(err) {
 			return nil, err
 		}
 	}

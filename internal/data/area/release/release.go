@@ -3,7 +3,7 @@ package release
 import (
 	"context"
 
-	"github.com/cnartlu/area-service/api"
+	"github.com/cnartlu/area-service/errors"
 	bizrelease "github.com/cnartlu/area-service/internal/biz/area/release"
 	"github.com/cnartlu/area-service/internal/data/data"
 	"github.com/cnartlu/area-service/internal/data/ent"
@@ -71,7 +71,7 @@ func (r *ReleaseRepo) FindOne(ctx context.Context, options ...bizrelease.Query) 
 	model, err := query.First(ctx)
 	if err != nil {
 		if ent.IsNotFound(err) {
-			return nil, api.ErrorDataNotFound(err.Error())
+			return nil, errors.ErrorDataNotFound(err.Error())
 		}
 		return nil, err
 	}

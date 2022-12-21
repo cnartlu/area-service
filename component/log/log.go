@@ -97,6 +97,11 @@ func (l *Logger) clone() *Logger {
 
 func (l *Logger) Setup() (err error) {
 	l.once.Do(func() {
+		if l.c == nil {
+			l.c = &Config{
+				Stdout: true,
+			}
+		}
 		var (
 			encoderConfig zapcore.EncoderConfig
 			encoder       zapcore.Encoder

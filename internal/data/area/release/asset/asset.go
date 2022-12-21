@@ -3,7 +3,7 @@ package asset
 import (
 	"context"
 
-	"github.com/cnartlu/area-service/api"
+	"github.com/cnartlu/area-service/errors"
 	bizasset "github.com/cnartlu/area-service/internal/biz/area/release/asset"
 	"github.com/cnartlu/area-service/internal/data/data"
 	"github.com/cnartlu/area-service/internal/data/ent"
@@ -70,7 +70,7 @@ func (r *AssetRepo) FindOne(ctx context.Context, options ...bizasset.Query) (*bi
 	model, err := query.First(ctx)
 	if err != nil {
 		if ent.IsNotFound(err) {
-			return nil, api.ErrorDataNotFound(err.Error())
+			return nil, errors.ErrorDataNotFound(err.Error())
 		}
 		return nil, err
 	}

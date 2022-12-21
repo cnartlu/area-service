@@ -1,4 +1,4 @@
-package logging
+package middleware
 
 import (
 	"time"
@@ -10,7 +10,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func ServerByGin(logger *log.Logger) gin.HandlerFunc {
+func Logger(logger *log.Logger) gin.HandlerFunc {
 	l := logger.AddCallerSkip(1)
 	return func(c *gin.Context) {
 		var (

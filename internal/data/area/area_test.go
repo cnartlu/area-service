@@ -1,13 +1,36 @@
 package area
 
-import "testing"
+import (
+	"context"
+	"testing"
 
-var repo *AreaRepo
+	"github.com/cnartlu/area-service/component/database"
+	"github.com/cnartlu/area-service/component/log"
+	"github.com/go-redis/redis/v8"
 
-func init() {
+	"github.com/cnartlu/area-service/internal/data/data"
+)
 
-}
-
-func TestA(t *testing.T) {
-	// repo.ReplaceParentListPrefix(content.TODO(), "1", "2")
+func TestReplaceParentListPrefix(t *testing.T) {
+	logger, _ := log.New(nil)
+	dataData, cleanup2, err := data.NewData(
+		logger,
+		redis.NewClient(&redis.Options{}),
+		&database.Config{
+			Address:  "localhost:3306",
+			Username: "root",
+			Password: "xingyun",
+			Database: "ad_area_service",
+		},
+	)
+	if err != nil {
+		t.Error(err)
+	}
+	t.Cleanup(cleanup2)
+	repo := NewAreaRepo(dataData)
+	_, err = repo.ReplaceParentListPrefix(context.TODO(), "1", "2")
+	if err != nil {
+		t.Error(err)
+		return
+	}
 }

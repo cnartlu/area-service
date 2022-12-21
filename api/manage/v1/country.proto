@@ -1,10 +1,10 @@
 syntax = "proto3";
 
-package api.v1;
+package api.manage.v1;
 
-option go_package = "github.com/cnartlu/area-service/api/v1;v1";
+option go_package = "github.com/cnartlu/area-service/api/manage/v1;v1";
 option java_multiple_files = true;
-option java_package = "api.v1";
+option java_package = "api.manage.v1";
 
 service Country {
 	rpc CreateCountry (CreateCountryRequest) returns (CreateCountryReply);

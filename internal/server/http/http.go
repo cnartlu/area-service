@@ -7,11 +7,12 @@ import (
 	"net/http"
 	"syscall"
 
+	v1 "github.com/cnartlu/area-service/api/manage/v1"
 	"github.com/cnartlu/area-service/component/app"
 	"github.com/cnartlu/area-service/component/log"
 	"github.com/cnartlu/area-service/internal/config"
-	"github.com/cnartlu/area-service/internal/server/http/middleware/logging"
-	"github.com/cnartlu/area-service/internal/server/http/router"
+	"github.com/cnartlu/area-service/internal/server/http/gin/middleware"
+	"github.com/cnartlu/area-service/internal/service"
 	"github.com/gin-gonic/gin"
 )
 
@@ -90,7 +91,7 @@ func NewServer(
 	logger *log.Logger,
 	httpConfig *config.Http,
 	// 其他数据
-	routers []router.Router,
+	areaService *service.AreaService,
 ) *Server {
 	switch a.GetEnv() {
 	case app.EnvName_dev:
@@ -109,10 +110,8 @@ func NewServer(
 	e := gin.New()
 	g1 := e.Group("/")
 	{
-		g1.Use(logging.ServerByGin(logger))
-		for _, r := range routers {
-			r.Register(g1)
-		}
+		g1.Use(middleware.Recover(logger), middleware.Logger(logger))
+		v1.RegisterAreaGinServer(g1, areaService)
 	}
 	h := http.Server{
 		Handler: e,

@@ -11,6 +11,7 @@ import (
 	"github.com/go-redis/redis/v8"
 
 	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/jackc/pgx/v4/stdlib"
 )
 
 var _ biztransaction.Transaction = (*Data)(nil)

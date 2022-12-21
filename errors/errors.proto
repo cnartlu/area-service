@@ -1,13 +1,13 @@
 syntax = "proto3";
 
 // 定义包名
-package api;
-import "errors/errors.proto";
+package errors;
+import "third_party/errors/errors.proto";
 
 // 多语言特定包名，用于源代码引用
-option go_package = "github.com/cnartlu/area-service/api;api";
+option go_package = "github.com/cnartlu/area-service/errors;errors";
 option java_multiple_files = true;
-option java_package = "api";
+option java_package = "errors";
 
 enum Error {
   // option allow_alias = true;
@@ -26,4 +26,6 @@ enum Error {
 
   PAGE_NOT_FOUND = 40401 [(errors.code) = 404];
   DATA_NOT_FOUND = 40402 [(errors.code) = 404];
+
+  SERVER_ERROR = 50000 [(errors.code) = 500];
 }

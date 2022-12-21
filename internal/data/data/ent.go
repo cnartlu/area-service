@@ -84,7 +84,11 @@ func (d *multiDriver) Dialect() string {
 }
 
 func (d *Data) LoadEntDatabase(c *database.Config) (*ent.Client, func(), error) {
-	driver, err := sql.Open(c.GetDriver(), database.ParseDSN(c))
+	driverName := c.GetDriver()
+	if driverName == "" {
+		driverName = "mysql"
+	}
+	driver, err := sql.Open(driverName, database.ParseDSN(c))
 	if err != nil {
 		return nil, nil, err
 	}

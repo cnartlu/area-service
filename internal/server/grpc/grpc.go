@@ -5,7 +5,7 @@ import (
 	"net"
 	"syscall"
 
-	v1 "github.com/cnartlu/area-service/api/v1"
+	v1 "github.com/cnartlu/area-service/api/manage/v1"
 	"github.com/cnartlu/area-service/component/log"
 	"github.com/cnartlu/area-service/internal/config"
 	"github.com/cnartlu/area-service/internal/service"

@@ -3,8 +3,8 @@ package service
 import (
 	"context"
 
-	"github.com/cnartlu/area-service/api"
-	pb "github.com/cnartlu/area-service/api/v1"
+	pb "github.com/cnartlu/area-service/api/manage/v1"
+	"github.com/cnartlu/area-service/errors"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/cnartlu/area-service/internal/biz/area"
@@ -168,11 +168,37 @@ func (s *AreaService) CascadeList(ctx context.Context, req *pb.CascadeListAreaRe
 }
 
 func (s *AreaService) Create(ctx context.Context, req *pb.CreateAreaRequest) (*pb.CreateAreaReply, error) {
-	s.area.Create(ctx, area.CreateParam{})
+	_, err := s.area.Create(ctx, area.CreateParam{
+		ParentID: req.GetParentId(),
+		RegionID: req.GetRegionId(),
+		Title:    req.GetTitle(),
+		Lat:      float64(req.GetLat()),
+		Lng:      float64(req.GetLng()),
+		CityCode: req.GetCityCode(),
+		ZipCode:  req.GetZipCode(),
+	})
+	if err != nil {
+		return nil, err
+	}
 	return &pb.CreateAreaReply{}, nil
 }
 
 func (s *AreaService) Update(ctx context.Context, req *pb.UpdateAreaRequest) (*pb.UpdateAreaReply, error) {
+	_, err := s.area.Update(ctx, area.UpdateParam{
+		ID: uint64(req.GetId()),
+		CreateParam: area.CreateParam{
+			ParentID: req.GetParentId(),
+			RegionID: req.GetRegionId(),
+			Title:    req.GetTitle(),
+			Lat:      float64(req.GetLat()),
+			Lng:      float64(req.GetLng()),
+			CityCode: req.GetCityCode(),
+			ZipCode:  req.GetZipCode(),
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
 	return &pb.UpdateAreaReply{}, nil
 }
 
@@ -188,7 +214,7 @@ func (s *AreaService) Delete(ctx context.Context, req *pb.DeleteAreaRequest) (*p
 		}
 	}
 	if len(ids) < 1 {
-		return nil, api.ErrorParamMissing("identify parameter missing")
+		return nil, errors.ErrorParamMissing("identify parameter missing")
 	}
 	err := s.area.Delete(ctx, ids...)
 	if err != nil {

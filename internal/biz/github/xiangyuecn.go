@@ -14,7 +14,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/cnartlu/area-service/api"
+	"github.com/cnartlu/area-service/errors"
 	zip7 "github.com/cnartlu/area-service/component/7zip"
 	"github.com/cnartlu/area-service/component/app"
 
@@ -50,12 +50,12 @@ func (g *GithubUsecase) GetLatestRelease(ctx context.Context) (*release.Release,
 	rep := githubReponseRelease.RepositoryRelease
 	result, err := g.releaseRepo.FindOne(ctx, release.ReleaseIDEQ(uint64(rep.GetID())))
 	if err != nil {
-		if !api.IsDataNotFound(err) {
+		if !errors.IsDataNotFound(err) {
 			return nil, err
 		}
 		err = g.transaction.Transaction(ctx, func(ctx context.Context) error {
 			if err != nil {
-				if !api.IsDataNotFound(err) {
+				if !errors.IsDataNotFound(err) {
 					return err
 				}
 				result, err = g.releaseRepo.Save(ctx, &release.Release{
@@ -251,7 +251,7 @@ func (g *GithubUsecase) LoadFileWithAreaData(ctx context.Context, filename strin
 		if err := g.transaction.Transaction(ctx, func(ctx context.Context) error {
 			areaData, err := g.areaRepo.FindOne(ctx, area.RegionIDEQ(id), area.LevelEQ(int(deep)+1))
 			if err != nil {
-				if !api.IsDataNotFound(err) {
+				if !errors.IsDataNotFound(err) {
 					return err
 				}
 				areaData, err = g.areaRepo.Save(ctx, &area.Area{})

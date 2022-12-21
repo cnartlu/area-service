@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package api.guest.v1;
+
+option go_package = "github.com/cnartlu/area-service/api/guest/v1;v1";
+option java_multiple_files = true;
+option java_package = "api.guest.v1";
+
+service AreaReleaseAsset {
+	rpc CreateAreaReleaseAsset (CreateAreaReleaseAssetRequest) returns (CreateAreaReleaseAssetReply);
+	rpc UpdateAreaReleaseAsset (UpdateAreaReleaseAssetRequest) returns (UpdateAreaReleaseAssetReply);
+	rpc DeleteAreaReleaseAsset (DeleteAreaReleaseAssetRequest) returns (DeleteAreaReleaseAssetReply);
+	rpc GetAreaReleaseAsset (GetAreaReleaseAssetRequest) returns (GetAreaReleaseAssetReply);
+	rpc ListAreaReleaseAsset (ListAreaReleaseAssetRequest) returns (ListAreaReleaseAssetReply);
+}
+
+message CreateAreaReleaseAssetRequest {}
+message CreateAreaReleaseAssetReply {}
+
+message UpdateAreaReleaseAssetRequest {}
+message UpdateAreaReleaseAssetReply {}
+
+message DeleteAreaReleaseAssetRequest {}
+message DeleteAreaReleaseAssetReply {}
+
+message GetAreaReleaseAssetRequest {}
+message GetAreaReleaseAssetReply {}
+
+message ListAreaReleaseAssetRequest {}
+message ListAreaReleaseAssetReply {}

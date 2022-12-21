@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"entgo.io/ent/dialect/sql"
-	"github.com/cnartlu/area-service/api"
+	"github.com/cnartlu/area-service/errors"
 	bizarea "github.com/cnartlu/area-service/internal/biz/area"
 	"github.com/cnartlu/area-service/internal/data/data"
 	"github.com/cnartlu/area-service/internal/data/ent"
@@ -89,7 +89,7 @@ func (r *AreaRepo) FindOne(ctx context.Context, options ...bizarea.Query) (*biza
 	result, err := query.First(ctx)
 	if err != nil {
 		if ent.IsNotFound(err) {
-			err = api.ErrorDataNotFound(err.Error())
+			err = errors.ErrorDataNotFound(err.Error())
 		}
 		return nil, err
 	}
@@ -177,7 +177,7 @@ func (r *AreaRepo) ReplaceParentListPrefix(ctx context.Context, oldPrefix, newPr
 	client := r.data.GetClient(ctx)
 	return client.Area.Update().
 		Modify(func(u *sql.UpdateBuilder) {
-			u.WriteString(fmt.Sprintf("REPLACE(%s, ?, ?)", area.FieldParentList)).Args(oldPrefix, newPrefix)
+			u.Set(area.FieldParentList, sql.Expr(fmt.Sprintf("REPLACE(`%s`, ?, ?)", area.FieldParentList), oldPrefix, newPrefix))
 		}).
 		Where(area.ParentListHasPrefix(oldPrefix), area.DeleteTimeGT(0)).
 		Save(ctx)

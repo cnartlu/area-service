@@ -6,11 +6,9 @@
 package http
 
 import (
-	"github.com/cnartlu/area-service/internal/server/http/router"
 	"github.com/google/wire"
 )
 
 var ProviderSet = wire.NewSet(
-	router.ProviderSet,
 	NewServer,
 )
