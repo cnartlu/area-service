@@ -7,15 +7,17 @@ package biz
 
 import (
 	"github.com/cnartlu/area-service/internal/biz/area"
-	"github.com/cnartlu/area-service/internal/biz/area/release"
-	"github.com/cnartlu/area-service/internal/biz/area/release/asset"
-	"github.com/cnartlu/area-service/internal/biz/github"
+	citygithub "github.com/cnartlu/area-service/internal/biz/city/github"
+	citysplider "github.com/cnartlu/area-service/internal/biz/city/splider"
+	cityspliderarea "github.com/cnartlu/area-service/internal/biz/city/splider/area"
+	cityspliderasset "github.com/cnartlu/area-service/internal/biz/city/splider/asset"
 	"github.com/google/wire"
 )
 
 var ProviderSet = wire.NewSet(
 	area.NewAreaUsecase,
-	release.NewReleaseUsecase,
-	asset.NewAssetUsecase,
-	github.NewGithubUsecase,
+	citygithub.NewGithubRepoUsecase,
+	citysplider.NewSpliderUsecase,
+	cityspliderarea.NewAreaUsecase,
+	cityspliderasset.NewAssetUsecase,
 )

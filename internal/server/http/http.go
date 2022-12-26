@@ -110,7 +110,7 @@ func NewServer(
 	e := gin.New()
 	g1 := e.Group("/")
 	{
-		g1.Use(middleware.Recover(logger), middleware.Logger(logger))
+		g1.Use(middleware.Recover(logger), middleware.Logger(logger), middleware.Response())
 		v1.RegisterAreaGinServer(g1, areaService)
 	}
 	h := http.Server{

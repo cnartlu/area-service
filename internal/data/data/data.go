@@ -79,6 +79,9 @@ func NewData(
 		rds:    rds,
 	}
 	client, cleanup, err := result.LoadEntDatabase(config)
+	if err != nil {
+		return nil, nil, err
+	}
 	result.ent = client
 	return &result, cleanup, err
 }

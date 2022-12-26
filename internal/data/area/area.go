@@ -115,9 +115,18 @@ func (r *AreaRepo) Save(ctx context.Context, data *bizarea.Area) (*bizarea.Area,
 			isUpdate = false
 		}
 	}
+
+	var deleteTime = uint64(0)
+	var updateTime = uint64(time.Now().Unix())
+	if !data.DeletedAt.IsZero() {
+		deleteTime = uint64(data.DeletedAt.Unix())
+	}
+	if !data.UpddateAt.IsZero() {
+		updateTime = uint64(data.UpddateAt.Unix())
+	}
 	if isUpdate {
 		model, err = model.Update().
-			SetParentID(data.ID).
+			SetParentID(data.ParentID).
 			SetRegionID(data.RegionID).
 			SetParentList(data.ParentList).
 			SetTitle(data.Title).
@@ -125,12 +134,12 @@ func (r *AreaRepo) Save(ctx context.Context, data *bizarea.Area) (*bizarea.Area,
 			SetUcfirst(data.Ucfirst).
 			SetLevel(uint8(data.Level)).
 			SetChildrenNumber(uint32(data.ChildrenNumber)).
-			SetDeleteTime(uint64(data.DeletedAt.Unix())).
-			SetUpdateTime(uint64(data.UpddateAt.Unix())).
+			SetDeleteTime(deleteTime).
+			SetUpdateTime(updateTime).
 			Save(ctx)
 	} else {
 		model, err = client.Area.Create().
-			SetParentID(data.ID).
+			SetParentID(data.ParentID).
 			SetRegionID(data.RegionID).
 			SetParentList(data.ParentList).
 			SetTitle(data.Title).
@@ -138,8 +147,8 @@ func (r *AreaRepo) Save(ctx context.Context, data *bizarea.Area) (*bizarea.Area,
 			SetUcfirst(data.Ucfirst).
 			SetLevel(uint8(data.Level)).
 			SetChildrenNumber(uint32(data.ChildrenNumber)).
-			SetDeleteTime(uint64(data.DeletedAt.Unix())).
-			SetUpdateTime(uint64(data.UpddateAt.Unix())).
+			SetDeleteTime(deleteTime).
+			SetUpdateTime(updateTime).
 			Save(ctx)
 	}
 	if err != nil {

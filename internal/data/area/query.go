@@ -30,15 +30,15 @@ func (o queryOption) Order(orders ...bizarea.Sort) {
 	}
 }
 
-func (o queryOption) IDEQ(id uint64) {
+func (o queryOption) IDEQ(id int) {
 	o.query.Where(area.IDEQ(id))
 }
 
-func (o queryOption) IDIn(ids ...uint64) {
+func (o queryOption) IDIn(ids ...int) {
 	o.query.Where(area.IDIn(ids...))
 }
 
-func (o queryOption) ParentIDEQ(pid uint64) {
+func (o queryOption) ParentIDEQ(pid int) {
 	o.query.Where(area.ParentIDEQ(pid))
 }
 

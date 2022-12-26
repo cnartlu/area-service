@@ -26,7 +26,7 @@ func (Country) Mixin() []ent.Mixin {
 // Fields of the Country.
 func (Country) Fields() []ent.Field {
 	return []ent.Field{
-		field.Uint64("id").Comment("ID"),
+		field.Int("id").Comment("ID"),
 		field.UUID("uuid", uuid.New()).Comment("UUID").Unique(),
 		field.String("title").Default("").Comment("标题"),
 		field.String("en_title").Default("").Comment("英文标题"),

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"ariga.io/entcache"
 	"entgo.io/ent/dialect"
@@ -93,8 +94,11 @@ func (d *Data) LoadEntDatabase(c *database.Config) (*ent.Client, func(), error) 
 		return nil, nil, err
 	}
 
+	driver.DB()
 	driver.DB().SetMaxOpenConns(100)
 	driver.DB().SetMaxIdleConns(10)
+	driver.DB().SetConnMaxLifetime(1 * time.Hour)
+	driver.DB().SetConnMaxIdleTime(30 * time.Minute)
 
 	if err := driver.DB().Ping(); err != nil {
 		_ = driver.Close()
@@ -124,7 +128,7 @@ func (d *Data) LoadEntDatabase(c *database.Config) (*ent.Client, func(), error) 
 	client := ent.NewClient(
 		ent.Debug(),
 		ent.Driver(entcache.NewDriver(driver, options...)),
-		ent.Log((loggerEnt{logger: d.logger.AddCallerSkip(1)}).DebugLog),
+		ent.Log((loggerEnt{logger: d.logger}).DebugLog),
 	)
 
 	var cleanup = func() {

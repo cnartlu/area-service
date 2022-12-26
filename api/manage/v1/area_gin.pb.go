@@ -54,11 +54,11 @@ func _Area_CreateArea0_Gin_Handler(srv AreaGinServer) gin.HandlerFunc {
 		switch b {
 		case binding.Form:
 			if err := c.Request.ParseForm(); err != nil {
-				c.Error(err)
+				c.AbortWithError(http.StatusBadRequest, err).SetType(gin.ErrorTypeBind)
 				return
 			}
 			if _, err := c.MultipartForm(); err != nil && !errors.Is(err, http.ErrNotMultipart) {
-				c.Error(err)
+				c.AbortWithError(http.StatusBadRequest, err).SetType(gin.ErrorTypeBind)
 				return
 			}
 			err = binding.MapFormWithTag(&in, c.Request.Form, "json")
@@ -72,7 +72,7 @@ func _Area_CreateArea0_Gin_Handler(srv AreaGinServer) gin.HandlerFunc {
 			if body == nil {
 				body, err = ioutil.ReadAll(c.Request.Body)
 				if err != nil {
-					c.Error(err)
+					c.AbortWithError(http.StatusBadRequest, err).SetType(gin.ErrorTypeBind)
 					return
 				}
 				c.Set(gin.BodyBytesKey, body)
@@ -82,7 +82,7 @@ func _Area_CreateArea0_Gin_Handler(srv AreaGinServer) gin.HandlerFunc {
 			err = c.MustBindWith(&in, b)
 		}
 		if err != nil {
-			c.Error(err)
+			c.AbortWithError(http.StatusBadRequest, err).SetType(gin.ErrorTypeBind)
 			return
 		}
 		out, err := srv.CreateArea(c.Request.Context(), &in)
@@ -98,7 +98,7 @@ func _Area_UpdateArea0_Gin_Handler(srv AreaGinServer) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var in UpdateAreaRequest
 		if err := c.BindUri(&in); err != nil {
-			c.Error(err)
+			c.AbortWithError(http.StatusBadRequest, err).SetType(gin.ErrorTypeBind)
 			return
 		}
 		var err error
@@ -106,11 +106,11 @@ func _Area_UpdateArea0_Gin_Handler(srv AreaGinServer) gin.HandlerFunc {
 		switch b {
 		case binding.Form:
 			if err := c.Request.ParseForm(); err != nil {
-				c.Error(err)
+				c.AbortWithError(http.StatusBadRequest, err).SetType(gin.ErrorTypeBind)
 				return
 			}
 			if _, err := c.MultipartForm(); err != nil && !errors.Is(err, http.ErrNotMultipart) {
-				c.Error(err)
+				c.AbortWithError(http.StatusBadRequest, err).SetType(gin.ErrorTypeBind)
 				return
 			}
 			err = binding.MapFormWithTag(&in, c.Request.Form, "json")
@@ -124,7 +124,7 @@ func _Area_UpdateArea0_Gin_Handler(srv AreaGinServer) gin.HandlerFunc {
 			if body == nil {
 				body, err = ioutil.ReadAll(c.Request.Body)
 				if err != nil {
-					c.Error(err)
+					c.AbortWithError(http.StatusBadRequest, err).SetType(gin.ErrorTypeBind)
 					return
 				}
 				c.Set(gin.BodyBytesKey, body)
@@ -134,7 +134,7 @@ func _Area_UpdateArea0_Gin_Handler(srv AreaGinServer) gin.HandlerFunc {
 			err = c.MustBindWith(&in, b)
 		}
 		if err != nil {
-			c.Error(err)
+			c.AbortWithError(http.StatusBadRequest, err).SetType(gin.ErrorTypeBind)
 			return
 		}
 		out, err := srv.UpdateArea(c.Request.Context(), &in)
@@ -150,12 +150,12 @@ func _Area_DeleteArea0_Gin_Handler(srv AreaGinServer) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var in DeleteAreaRequest
 		if err := c.BindUri(&in); err != nil {
-			c.Error(err)
+			c.AbortWithError(http.StatusBadRequest, err).SetType(gin.ErrorTypeBind)
 			return
 		}
 		values := c.Request.URL.Query()
 		if err := binding.MapFormWithTag(&in, values, "json"); err != nil {
-			c.Error(err)
+			c.AbortWithError(http.StatusBadRequest, err).SetType(gin.ErrorTypeBind)
 			return
 		}
 		out, err := srv.DeleteArea(c.Request.Context(), &in)
@@ -171,12 +171,12 @@ func _Area_GetArea0_Gin_Handler(srv AreaGinServer) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var in GetAreaRequest
 		if err := c.BindUri(&in); err != nil {
-			c.Error(err)
+			c.AbortWithError(http.StatusBadRequest, err).SetType(gin.ErrorTypeBind)
 			return
 		}
 		values := c.Request.URL.Query()
 		if err := binding.MapFormWithTag(&in, values, "json"); err != nil {
-			c.Error(err)
+			c.AbortWithError(http.StatusBadRequest, err).SetType(gin.ErrorTypeBind)
 			return
 		}
 		out, err := srv.GetArea(c.Request.Context(), &in)
@@ -193,7 +193,7 @@ func _Area_ListArea0_Gin_Handler(srv AreaGinServer) gin.HandlerFunc {
 		var in ListAreaRequest
 		values := c.Request.URL.Query()
 		if err := binding.MapFormWithTag(&in, values, "json"); err != nil {
-			c.Error(err)
+			c.AbortWithError(http.StatusBadRequest, err).SetType(gin.ErrorTypeBind)
 			return
 		}
 		out, err := srv.ListArea(c.Request.Context(), &in)
@@ -210,7 +210,7 @@ func _Area_CascadeListArea0_Gin_Handler(srv AreaGinServer) gin.HandlerFunc {
 		var in CascadeListAreaRequest
 		values := c.Request.URL.Query()
 		if err := binding.MapFormWithTag(&in, values, "json"); err != nil {
-			c.Error(err)
+			c.AbortWithError(http.StatusBadRequest, err).SetType(gin.ErrorTypeBind)
 			return
 		}
 		out, err := srv.CascadeListArea(c.Request.Context(), &in)

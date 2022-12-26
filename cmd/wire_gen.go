@@ -14,15 +14,19 @@ import (
 	"github.com/cnartlu/area-service/component/proxy"
 	"github.com/cnartlu/area-service/component/redis"
 	area2 "github.com/cnartlu/area-service/internal/biz/area"
-	github3 "github.com/cnartlu/area-service/internal/biz/github"
+	github3 "github.com/cnartlu/area-service/internal/biz/city/github"
+	"github.com/cnartlu/area-service/internal/biz/city/splider"
+	area4 "github.com/cnartlu/area-service/internal/biz/city/splider/area"
+	asset3 "github.com/cnartlu/area-service/internal/biz/city/splider/asset"
 	"github.com/cnartlu/area-service/internal/command"
 	"github.com/cnartlu/area-service/internal/command/handler"
 	github4 "github.com/cnartlu/area-service/internal/command/handler/github"
 	"github.com/cnartlu/area-service/internal/command/script"
 	"github.com/cnartlu/area-service/internal/config"
 	"github.com/cnartlu/area-service/internal/data/area"
-	"github.com/cnartlu/area-service/internal/data/area/release"
-	"github.com/cnartlu/area-service/internal/data/area/release/asset"
+	"github.com/cnartlu/area-service/internal/data/city/splider"
+	area3 "github.com/cnartlu/area-service/internal/data/city/splider/area"
+	asset2 "github.com/cnartlu/area-service/internal/data/city/splider/asset"
 	"github.com/cnartlu/area-service/internal/data/data"
 	github2 "github.com/cnartlu/area-service/internal/data/github"
 	"github.com/cnartlu/area-service/internal/server"
@@ -82,37 +86,38 @@ func initCommand(string2 string) (*command.Command, func(), error) {
 		return nil, nil, err
 	}
 	appConfig := config.GetApp(configConfig)
+	client, err := proxy.NewByAppConfig(appConfig)
+	if err != nil {
+		return nil, nil, err
+	}
+	githubClient := github.New(client)
+	githubRepo := github2.NewGithubRepo(githubClient)
 	appApp := app.New(appConfig)
+	filesystemConfig := config.GetFileSystem(configConfig)
+	fileSystem := filesystem.New(filesystemConfig, client)
 	logConfig := config.GetLogger(configConfig)
 	logger, err := log.New(logConfig)
 	if err != nil {
 		return nil, nil, err
 	}
 	redisConfig := config.GetRedis(configConfig)
-	client, cleanup, err := redis.New(redisConfig, logger)
+	redisClient, cleanup, err := redis.New(redisConfig, logger)
 	if err != nil {
 		return nil, nil, err
 	}
 	databaseConfig := config.GetDb(configConfig)
-	dataData, cleanup2, err := data.NewData(logger, client, databaseConfig)
+	dataData, cleanup2, err := data.NewData(logger, redisClient, databaseConfig)
 	if err != nil {
 		cleanup()
 		return nil, nil, err
 	}
-	filesystemConfig := config.GetFileSystem(configConfig)
-	proxyClient, err := proxy.NewByAppConfig(appConfig)
-	if err != nil {
-		cleanup2()
-		cleanup()
-		return nil, nil, err
-	}
-	fileSystem := filesystem.New(filesystemConfig, proxyClient)
-	githubClient := github.New(proxyClient)
-	xiangyuecnRepo := github2.NewXiangyuecnRepo(githubClient)
-	areaRepo := area.NewAreaRepo(dataData)
-	releaseRepo := release.NewRepository(dataData)
-	assetRepo := asset.NewAssetRepo(dataData)
-	githubUsecase := github3.NewGithubUsecase(appApp, logger, dataData, fileSystem, xiangyuecnRepo, areaRepo, releaseRepo, assetRepo)
+	spliderRepo := asset.NewSpliderRepo(dataData)
+	spliderUsecase := splider.NewSpliderUsecase(spliderRepo)
+	assetRepo := asset2.NewAssetRepo(dataData)
+	assetUsecase := asset3.NewAssetUsecase(assetRepo)
+	areaRepo := area3.NewAreaRepo(dataData)
+	areaUsecase := area4.NewAreaUsecase(areaRepo)
+	githubUsecase := github3.NewGithubRepoUsecase(githubRepo, appApp, fileSystem, dataData, spliderUsecase, assetUsecase, areaUsecase)
 	githubHandler := github4.NewHandler(githubUsecase)
 	handlerHandler := handler.New(githubHandler)
 	scriptScript := script.New()

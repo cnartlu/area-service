@@ -23,9 +23,9 @@ func NewAreaService(area *area.AreaUsecase) *AreaService {
 	}
 }
 
-func (s *AreaService) List(ctx context.Context, req *pb.ListAreaRequest) (*pb.ListAreaReply, error) {
+func (s *AreaService) ListArea(ctx context.Context, req *pb.ListAreaRequest) (*pb.ListAreaReply, error) {
 	results, err := s.area.List(ctx, area.FindListParam{
-		ParentID: uint64(req.GetParentId()),
+		ParentID: int(req.GetParentId()),
 		RegionID: req.GetRegionId(),
 		Level:    int(req.GetLevel()),
 		Keyword:  req.GetKw(),
@@ -38,7 +38,7 @@ func (s *AreaService) List(ctx context.Context, req *pb.ListAreaRequest) (*pb.Li
 	for _, result := range results {
 		result := result
 		reply.Items = append(reply.Items, &pb.ListAreaReply_Item{
-			Id:         result.ID,
+			Id:         uint64(result.ID),
 			RegionId:   result.RegionID,
 			Title:      result.Title,
 			Ucfirst:    result.Ucfirst,
@@ -52,14 +52,14 @@ func (s *AreaService) List(ctx context.Context, req *pb.ListAreaRequest) (*pb.Li
 	return reply, nil
 }
 
-func (s *AreaService) View(ctx context.Context, req *pb.GetAreaRequest) (*pb.GetAreaReply, error) {
+func (s *AreaService) GetArea(ctx context.Context, req *pb.GetAreaRequest) (*pb.GetAreaReply, error) {
 	var (
 		id     = req.GetId()
 		result *area.Area
 		err    error
 	)
 	if id > 0 {
-		result, err = s.area.FindOne(ctx, id)
+		result, err = s.area.FindOne(ctx, int(id))
 	} else {
 		result, err = s.area.FindByRegionID(ctx, req.GetRegionId(), int(req.GetLevel()))
 	}
@@ -67,7 +67,7 @@ func (s *AreaService) View(ctx context.Context, req *pb.GetAreaRequest) (*pb.Get
 		return nil, err
 	}
 	return &pb.GetAreaReply{
-		Id:         result.ID,
+		Id:         uint64(result.ID),
 		RegionId:   result.RegionID,
 		Title:      result.Title,
 		Ucfirst:    result.Ucfirst,
@@ -81,8 +81,8 @@ func (s *AreaService) View(ctx context.Context, req *pb.GetAreaRequest) (*pb.Get
 	}, nil
 }
 
-// CascadeList 级联列表
-func (s *AreaService) CascadeList(ctx context.Context, req *pb.CascadeListAreaRequest) (*pb.CascadeListAreaReply, error) {
+// CascadeListArea 级联列表
+func (s *AreaService) CascadeListArea(ctx context.Context, req *pb.CascadeListAreaRequest) (*pb.CascadeListAreaReply, error) {
 	var parentData *area.Area
 
 	{
@@ -90,19 +90,19 @@ func (s *AreaService) CascadeList(ctx context.Context, req *pb.CascadeListAreaRe
 		if req.GetRegionId() != "" {
 			parentData, err = s.area.FindByRegionID(ctx, req.GetRegionId(), int(req.GetLevel()))
 		} else if req.GetId() != 0 {
-			parentData, err = s.area.FindOne(ctx, req.GetId())
+			parentData, err = s.area.FindOne(ctx, int(req.GetId()))
 		}
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	var parentID uint64
+	var parentID int
 	xy := &pb.CascadeListAreaReply{}
 	if parentData != nil {
 		parentID = parentData.ID
 		xy.Parent = &pb.CascadeListAreaReply_Item{
-			Id:       parentData.ID,
+			Id:       uint64(parentData.ID),
 			RegionId: parentData.RegionID,
 			Title:    parentData.Title,
 			Ucfirst:  parentData.Ucfirst,
@@ -121,7 +121,7 @@ func (s *AreaService) CascadeList(ctx context.Context, req *pb.CascadeListAreaRe
 			maxDeep = area.AREA_MAX_LEVEL
 		}
 		handlerFunc = func(parentID uint64, deep int) ([]*pb.CascadeListAreaReply_Item, error) {
-			results, err := s.area.List(cancelCtx, area.FindListParam{ParentID: parentID})
+			results, err := s.area.List(cancelCtx, area.FindListParam{ParentID: int(parentID)})
 			if err != nil {
 				return nil, err
 			}
@@ -130,7 +130,7 @@ func (s *AreaService) CascadeList(ctx context.Context, req *pb.CascadeListAreaRe
 				idx := idx
 				result := results[idx]
 				item := &pb.CascadeListAreaReply_Item{
-					Id:       result.ID,
+					Id:       uint64(result.ID),
 					RegionId: result.RegionID,
 					Title:    result.Title,
 					Lat:      float32(result.Lat),
@@ -143,7 +143,7 @@ func (s *AreaService) CascadeList(ctx context.Context, req *pb.CascadeListAreaRe
 				items[idx] = item
 				if deep < maxDeep && result.Level < area.AREA_MAX_LEVEL {
 					eg.Go(func() error {
-						items, err := handlerFunc(result.ID, deep+1)
+						items, err := handlerFunc(uint64(result.ID), deep+1)
 						if err != nil {
 							return err
 						}
@@ -154,7 +154,7 @@ func (s *AreaService) CascadeList(ctx context.Context, req *pb.CascadeListAreaRe
 			}
 			return items, nil
 		}
-		results, err := handlerFunc(parentID, 1)
+		results, err := handlerFunc(uint64(parentID), 1)
 		if err != nil {
 			return nil, err
 		}
@@ -167,9 +167,9 @@ func (s *AreaService) CascadeList(ctx context.Context, req *pb.CascadeListAreaRe
 	return xy, nil
 }
 
-func (s *AreaService) Create(ctx context.Context, req *pb.CreateAreaRequest) (*pb.CreateAreaReply, error) {
+func (s *AreaService) CreateArea(ctx context.Context, req *pb.CreateAreaRequest) (*pb.CreateAreaReply, error) {
 	_, err := s.area.Create(ctx, area.CreateParam{
-		ParentID: req.GetParentId(),
+		ParentID: int(req.GetParentId()),
 		RegionID: req.GetRegionId(),
 		Title:    req.GetTitle(),
 		Lat:      float64(req.GetLat()),
@@ -183,11 +183,11 @@ func (s *AreaService) Create(ctx context.Context, req *pb.CreateAreaRequest) (*p
 	return &pb.CreateAreaReply{}, nil
 }
 
-func (s *AreaService) Update(ctx context.Context, req *pb.UpdateAreaRequest) (*pb.UpdateAreaReply, error) {
+func (s *AreaService) UpdateArea(ctx context.Context, req *pb.UpdateAreaRequest) (*pb.UpdateAreaReply, error) {
 	_, err := s.area.Update(ctx, area.UpdateParam{
-		ID: uint64(req.GetId()),
+		ID: int(req.GetId()),
 		CreateParam: area.CreateParam{
-			ParentID: req.GetParentId(),
+			ParentID: int(req.GetParentId()),
 			RegionID: req.GetRegionId(),
 			Title:    req.GetTitle(),
 			Lat:      float64(req.GetLat()),
@@ -202,21 +202,23 @@ func (s *AreaService) Update(ctx context.Context, req *pb.UpdateAreaRequest) (*p
 	return &pb.UpdateAreaReply{}, nil
 }
 
-func (s *AreaService) Delete(ctx context.Context, req *pb.DeleteAreaRequest) (*pb.DeleteAreaReply, error) {
+func (s *AreaService) DeleteArea(ctx context.Context, req *pb.DeleteAreaRequest) (*pb.DeleteAreaReply, error) {
 	var ids = req.GetIds()
 	if req.GetId() > 0 {
 		ids = append(ids, req.GetId())
 	}
-	for _, id := range ids {
+	var checkIDs = make([]int, 0, len(ids))
+	for k, id := range ids {
 		id := id
 		if id < 1 {
 			continue
 		}
+		checkIDs[k] = int(id)
 	}
-	if len(ids) < 1 {
+	if len(checkIDs) < 1 {
 		return nil, errors.ErrorParamMissing("identify parameter missing")
 	}
-	err := s.area.Delete(ctx, ids...)
+	err := s.area.Delete(ctx, checkIDs...)
 	if err != nil {
 		return nil, err
 	}

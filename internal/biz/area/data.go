@@ -15,8 +15,8 @@ const (
 
 // 区域数据实体
 type Area struct {
-	ID             uint64
-	ParentID       uint64
+	ID             int
+	ParentID       int
 	RegionID       string
 	ParentList     string
 	Title          string
@@ -53,7 +53,7 @@ type CascadeArea struct {
 // 查找参数
 type FindListParam struct {
 	// ParentID 父级ID
-	ParentID uint64
+	ParentID int
 	// RegionID 父级区域ID
 	RegionID string
 	// Level 区域级别
@@ -65,7 +65,7 @@ type FindListParam struct {
 }
 
 type CreateParam struct {
-	ParentID uint64
+	ParentID int
 	RegionID string
 	Title    string
 	Lat      float64
@@ -75,6 +75,6 @@ type CreateParam struct {
 }
 
 type UpdateParam struct {
-	ID uint64
+	ID int
 	CreateParam
 }

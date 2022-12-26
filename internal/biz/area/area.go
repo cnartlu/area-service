@@ -51,7 +51,7 @@ func (m *AreaUsecase) List(ctx context.Context, params FindListParam) ([]*Area, 
 }
 
 // FindOne 查询ID值等价
-func (m *AreaUsecase) FindOne(ctx context.Context, id uint64) (*Area, error) {
+func (m *AreaUsecase) FindOne(ctx context.Context, id int) (*Area, error) {
 	return m.repo.FindOne(ctx, IDEQ(id))
 }
 
@@ -123,7 +123,7 @@ func (m *AreaUsecase) Create(ctx context.Context, data CreateParam) (*Area, erro
 			if err != nil {
 				return err
 			}
-			areaModel.ParentList += "," + strconv.FormatUint(areaModel.ID, 10)
+			areaModel.ParentList += "," + strconv.FormatUint(uint64(areaModel.ID), 10)
 			areaModel, err = m.repo.Save(ctx, areaModel)
 			if err != nil {
 				return err
@@ -174,7 +174,7 @@ func (m *AreaUsecase) Update(ctx context.Context, data UpdateParam) (*Area, erro
 					return nil, err
 				}
 				level = parentArea.Level + 1
-				parentList = parentArea.ParentList + "," + strconv.FormatUint(areaModel.ID, 10)
+				parentList = parentArea.ParentList + "," + strconv.FormatUint(uint64(areaModel.ID), 10)
 			}
 		}
 	}
@@ -250,7 +250,7 @@ func (m *AreaUsecase) Update(ctx context.Context, data UpdateParam) (*Area, erro
 }
 
 // Delete 删除值
-func (m *AreaUsecase) Delete(ctx context.Context, ids ...uint64) error {
+func (m *AreaUsecase) Delete(ctx context.Context, ids ...int) error {
 	return m.repo.Remove(ctx, IDIn(ids...))
 }
 

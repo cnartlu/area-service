@@ -1,28 +1,21 @@
 package area
 
-import (
-	pkgsort "github.com/cnartlu/area-service/pkg/data/sort"
-)
-
-type Sort = pkgsort.Sort
-
-type SortField int
+type OrderType int
 
 const (
-	SortFieldDefault  SortField = 0
-	SortFieldRegionID SortField = 1
+	OrderTypeCustome OrderType = iota
+	OrderTypeAsc
+	OrderTypeDesc
 )
 
 type Inquirer interface {
 	Limit(limit int)
 	Offset(offset int)
-	// Order(orders ...pkgsort.Sort)
+	Order(order ...string)
 	IDEQ(id int)
 	IDIn(ids ...int)
-	ParentIDEQ(parentID int)
 	RegionIDEQ(regionID string)
 	LevelEQ(level int)
-	TitleContains(keyword string)
 }
 
 type Query func(Inquirer)
@@ -39,9 +32,9 @@ func Limit(limit int) Query {
 	}
 }
 
-func Order(orders ...pkgsort.Sort) Query {
+func Order(orders ...string) Query {
 	return func(r Inquirer) {
-		// r.Order(orders...)
+		r.Order(orders...)
 	}
 }
 
@@ -57,12 +50,6 @@ func IDIn(ids ...int) Query {
 	}
 }
 
-func ParentIDEQ(parentID int) Query {
-	return func(r Inquirer) {
-		r.ParentIDEQ(parentID)
-	}
-}
-
 func RegionIDEQ(regionID string) Query {
 	return func(r Inquirer) {
 		r.RegionIDEQ(regionID)
@@ -72,11 +59,5 @@ func RegionIDEQ(regionID string) Query {
 func LevelEQ(level int) Query {
 	return func(r Inquirer) {
 		r.LevelEQ(level)
-	}
-}
-
-func TitleContains(keyword string) Query {
-	return func(r Inquirer) {
-		r.TitleContains(keyword)
 	}
 }
