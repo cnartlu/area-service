@@ -6,13 +6,13 @@ import (
 	"os"
 	"strings"
 
-	"github.com/cnartlu/area-service/component/log"
 	"github.com/gin-gonic/gin"
 	errors "github.com/go-kratos/kratos/v2/errors"
 	"go.uber.org/zap"
 )
 
-func Recover(logger *log.Logger) gin.HandlerFunc {
+func Recover(logger *zap.Logger) gin.HandlerFunc {
+	l := logger.WithOptions(zap.AddCallerSkip(1))
 	return func(c *gin.Context) {
 		defer func() {
 			if err := recover(); err != nil {
@@ -27,7 +27,7 @@ func Recover(logger *log.Logger) gin.HandlerFunc {
 						}
 					}
 				}
-				if logger != nil && !brokenPipe {
+				if !brokenPipe {
 					httpRequest, _ := httputil.DumpRequest(c.Request, false)
 					headers := strings.Split(string(httpRequest), "\r\n")
 					for idx, header := range headers {
@@ -37,7 +37,7 @@ func Recover(logger *log.Logger) gin.HandlerFunc {
 						}
 					}
 					headersToStr := strings.Join(headers, "\r\n")
-					logger.Error("[Recovery from panic]", zap.Any("panic", err), zap.String("headers", headersToStr), zap.Stack("stack"))
+					l.Error("[Recovery from panic]", zap.Any("panic", err), zap.String("headers", headersToStr), zap.Stack("stack"))
 				}
 				if brokenPipe {
 					// If the connection is dead, we can't write a status to it.

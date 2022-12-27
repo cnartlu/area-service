@@ -7,7 +7,6 @@ import (
 
 	"github.com/cnartlu/area-service/errors"
 	"github.com/cnartlu/area-service/internal/biz/transaction"
-	pkgsort "github.com/cnartlu/area-service/pkg/data/sort"
 	"github.com/mozillazg/go-pinyin"
 )
 
@@ -32,7 +31,7 @@ type AreaUsecase struct {
 
 // List 列表更新
 func (m *AreaUsecase) List(ctx context.Context, params FindListParam) ([]*Area, error) {
-	options := []Query{}
+	queries := []Query{}
 	if params.RegionID != "" {
 		p, err := m.FindByRegionID(ctx, params.RegionID, params.Level)
 		if err != nil {
@@ -40,14 +39,14 @@ func (m *AreaUsecase) List(ctx context.Context, params FindListParam) ([]*Area, 
 		}
 		params.ParentID = p.ID
 	}
-	options = append(options, ParentIDEQ(params.ParentID))
+	queries = append(queries, ParentIDEQ(params.ParentID))
 	if params.Keyword != "" {
-		options = append(options, TitleContains(params.Keyword))
+		queries = append(queries, TitleContains(params.Keyword))
 	}
 	if params.Order != "" {
-		options = append(options, Order(pkgsort.ParseArray(params.Order)...))
+		queries = append(queries, Order(strings.Split(params.Order, ",")...))
 	}
-	return m.repo.FindList(ctx, options...)
+	return m.repo.FindList(ctx, queries...)
 }
 
 // FindOne 查询ID值等价
@@ -56,11 +55,11 @@ func (m *AreaUsecase) FindOne(ctx context.Context, id int) (*Area, error) {
 }
 
 func (m *AreaUsecase) FindByRegionID(ctx context.Context, regionID string, level int) (*Area, error) {
-	options := []Query{RegionIDEQ(regionID)}
+	queries := []Query{RegionIDEQ(regionID)}
 	if level > 0 {
-		options = append(options, LevelEQ(level))
+		queries = append(queries, LevelEQ(level))
 	}
-	return m.repo.FindOne(ctx, options...)
+	return m.repo.FindOne(ctx, queries...)
 }
 
 func (m *AreaUsecase) Create(ctx context.Context, data CreateParam) (*Area, error) {

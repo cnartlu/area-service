@@ -10,27 +10,26 @@ import (
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
 	"github.com/cnartlu/area-service/component/database"
-	"github.com/cnartlu/area-service/component/log"
 	"github.com/cnartlu/area-service/internal/data/ent"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 type loggerEnt struct {
-	logger *log.Logger
+	logger *zap.Logger
 }
 
 // DebugLog 实现ent的日志记录器方法
-func (l loggerEnt) DebugLog(keyvals ...interface{}) {
-	length := len(keyvals)
+func (l loggerEnt) Log(level zapcore.Level, keyvals ...interface{}) {
+	var data []zap.Field
+	var msg string
+	var length = len(keyvals)
 	switch length {
 	case 0:
+		return
 	case 1:
-		l.logger.Debug(fmt.Sprint(keyvals[0]))
+		msg = fmt.Sprint(keyvals[0])
 	default:
-		var (
-			msg  string
-			data []zap.Field
-		)
 		if length%2 == 0 {
 			for i := 0; i < len(keyvals); i += 2 {
 				data = append(data, zap.Any(fmt.Sprint(keyvals[i]), keyvals[i+1]))
@@ -40,7 +39,22 @@ func (l loggerEnt) DebugLog(keyvals ...interface{}) {
 				data = append(data, zap.Any(fmt.Sprint(keyvals[i]), keyvals[i+1]))
 			}
 		}
-		l.logger.Debug(msg, data...)
+	}
+	// data = append(data, zap.StackSkip("stack", 4))
+	l.logger.Log(level, msg, data...)
+}
+
+func (l loggerEnt) DebugLog(keyvals ...interface{}) {
+	l.Log(zapcore.DebugLevel, keyvals...)
+}
+
+func (l loggerEnt) ErrorLog(keyvals ...interface{}) {
+	l.Log(zapcore.ErrorLevel, keyvals...)
+}
+
+func newloggerEnt(l *zap.Logger) *loggerEnt {
+	return &loggerEnt{
+		logger: l.WithOptions(zap.AddCallerSkip(5)),
 	}
 }
 
@@ -105,30 +119,40 @@ func (d *Data) LoadEntDatabase(c *database.Config) (*ent.Client, func(), error) 
 		return nil, nil, err
 	}
 
-	options := []entcache.Option{
-		entcache.Hash(func(query string, args []any) (entcache.Key, error) {
+	options := []entcache.Option{}
+
+	switch strings.ToLower(c.GetCache()) {
+	case "redis", "rds":
+		if d.rds != nil {
+			// options = append(options, entcache.Levels(entcache.NewRedis(d.rds)))
+		}
+		options = append(options, entcache.ContextLevel())
+	case "lru":
+		options = append(options, entcache.Levels(entcache.NewLRU(300)))
+	case "context":
+		fallthrough
+	default:
+		options = append(options, entcache.ContextLevel())
+	}
+	if len(options) > 0 {
+		options = append(options, entcache.TTL(10*time.Minute))
+		options = append(options, entcache.Hash(func(query string, args []any) (entcache.Key, error) {
 			v, err := entcache.DefaultHash(query, args)
 			if err != nil {
 				return 0, err
 			}
 			return fmt.Sprintf("area.ent.%d", v.(uint64)), nil
-		}),
+		}))
 	}
-
-	switch strings.ToLower(c.GetCache()) {
-	case "redis", "rds":
-		if d.rds != nil {
-			options = append(options, entcache.Levels(entcache.NewRedis(d.rds)))
-		}
-	case "context":
-		// options = append(options, entcache.Levels(entcache.NewContext(context.TODO())))
-	default:
+	logfunc := newloggerEnt(d.logger)
+	cacheDriver := entcache.NewDriver(driver, options...)
+	cacheDriver.Log = func(v ...any) {
+		logfunc.ErrorLog(v...)
 	}
-
 	client := ent.NewClient(
 		ent.Debug(),
-		ent.Driver(entcache.NewDriver(driver, options...)),
-		ent.Log((loggerEnt{logger: d.logger}).DebugLog),
+		ent.Driver(cacheDriver),
+		ent.Log(logfunc.DebugLog),
 	)
 
 	var cleanup = func() {

@@ -118,7 +118,7 @@ func initCommand(string2 string) (*command.Command, func(), error) {
 	areaRepo := area3.NewAreaRepo(dataData)
 	areaUsecase := area4.NewAreaUsecase(areaRepo)
 	githubUsecase := github3.NewGithubRepoUsecase(githubRepo, appApp, fileSystem, dataData, spliderUsecase, assetUsecase, areaUsecase)
-	githubHandler := github4.NewHandler(githubUsecase)
+	githubHandler := github4.NewHandler(githubUsecase, logger)
 	handlerHandler := handler.New(githubHandler)
 	scriptScript := script.New()
 	commandCommand := command.New(handlerHandler, scriptScript)

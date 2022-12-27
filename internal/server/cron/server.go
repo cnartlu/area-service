@@ -6,13 +6,12 @@ import (
 	"time"
 
 	job "github.com/cnartlu/area-service/internal/server/cron/job"
-	"github.com/cnartlu/area-service/component/log"
 	v3cron "github.com/robfig/cron/v3"
 	"go.uber.org/zap"
 )
 
 type cronLogger struct {
-	l *log.Logger
+	l *zap.Logger
 }
 
 func (c *cronLogger) format(keyvals ...interface{}) []zap.Field {
@@ -35,7 +34,7 @@ func (c *cronLogger) Error(err error, msg string, keysAndValues ...interface{}) 
 
 type Server struct {
 	c      *v3cron.Cron
-	logger *log.Logger
+	logger *zap.Logger
 	// 任务的IDS
 	entryIDs map[string][]v3cron.EntryID
 	// 计划
@@ -106,10 +105,10 @@ func (c *Server) Stop(ctx context.Context) error {
 }
 
 func NewServer(
-	logger *log.Logger,
+	logger *zap.Logger,
 	daily *job.Daily,
 ) *Server {
-	l := &cronLogger{l: logger.AddCallerSkip(1)}
+	l := &cronLogger{l: logger.WithOptions(zap.AddCallerSkip(1))}
 	server := v3cron.New(v3cron.WithSeconds(), v3cron.WithLogger(l))
 	return &Server{
 		c:        server,

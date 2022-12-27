@@ -1,17 +1,15 @@
 package job
 
-import (
-	"github.com/cnartlu/area-service/component/log"
-)
+import "go.uber.org/zap"
 
 type Daily struct {
-	l *log.Logger
+	l *zap.Logger
 }
 
 func (d *Daily) Run() {
 }
 
-func NewDaily(logger *log.Logger) *Daily {
+func NewDaily(logger *zap.Logger) *Daily {
 	return &Daily{
 		l: logger,
 	}

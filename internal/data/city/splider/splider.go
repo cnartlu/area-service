@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"ariga.io/entcache"
 	"github.com/cnartlu/area-service/errors"
 	bizsplider "github.com/cnartlu/area-service/internal/biz/city/splider"
 	"github.com/cnartlu/area-service/internal/data/data"
@@ -37,23 +38,22 @@ type SpliderRepo struct {
 func (r *SpliderRepo) Count(ctx context.Context, queries ...bizsplider.Query) int {
 	client := r.data.GetClient(ctx)
 	query := client.CitySplider.Query()
-	o := NewQuery(query)
-	for _, option := range queries {
-		option := option
-		option(o)
+	search := NewQuery(query)
+	for _, fn := range queries {
+		fn(search)
 	}
-	i, _ := query.Count(ctx)
+	i, _ := query.Count(r.data.WithCacheContext(ctx, search.ttl))
 	return i
 }
 
 func (r *SpliderRepo) FindList(ctx context.Context, queries ...bizsplider.Query) ([]*bizsplider.Splider, error) {
 	client := r.data.GetClient(ctx)
 	query := client.CitySplider.Query()
-	o := NewQuery(query)
-	for _, option := range queries {
-		option(o)
+	search := NewQuery(query)
+	for _, fn := range queries {
+		fn(search)
 	}
-	models, err := query.All(ctx)
+	models, err := query.All(r.data.WithCacheContext(ctx, search.ttl))
 	if err != nil {
 		return nil, err
 	}
@@ -66,14 +66,14 @@ func (r *SpliderRepo) FindList(ctx context.Context, queries ...bizsplider.Query)
 	return items, nil
 }
 
-func (r *SpliderRepo) FindOne(ctx context.Context, options ...bizsplider.Query) (*bizsplider.Splider, error) {
+func (r *SpliderRepo) FindOne(ctx context.Context, queries ...bizsplider.Query) (*bizsplider.Splider, error) {
 	client := r.data.GetClient(ctx)
 	query := client.CitySplider.Query()
-	o := NewQuery(query)
-	for _, option := range options {
-		option(o)
+	search := NewQuery(query)
+	for _, fn := range queries {
+		fn(search)
 	}
-	model, err := query.First(ctx)
+	model, err := query.First(r.data.WithCacheContext(ctx, search.ttl))
 	if err != nil {
 		if ent.IsNotFound(err) {
 			return nil, errors.ErrorDataNotFound(err.Error())
@@ -93,7 +93,9 @@ func (r *SpliderRepo) Save(ctx context.Context, data *bizsplider.Splider) (*bizs
 	)
 	if data.ID > 0 {
 		isUpdate = true
-		model, err = client.CitySplider.Query().Where(citysplider.IDEQ(data.ID)).First(ctx)
+		model, err = client.CitySplider.Query().
+			Where(citysplider.IDEQ(data.ID)).
+			First(ctx)
 		if err != nil {
 			if !ent.IsNotFound(err) {
 				return nil, err
@@ -122,7 +124,7 @@ func (r *SpliderRepo) Save(ctx context.Context, data *bizsplider.Splider) (*bizs
 			SetPublisheTime(uint64(data.PublishedAt.Unix())).
 			SetStatus(uint8(data.Status)).
 			SetUpdateTime(uint64(data.UpdatedAt.Unix())).
-			Save(ctx)
+			Save(entcache.Evict(ctx))
 	} else {
 		model, err = client.CitySplider.Create().
 			SetSource(data.Source).
@@ -136,7 +138,7 @@ func (r *SpliderRepo) Save(ctx context.Context, data *bizsplider.Splider) (*bizs
 			SetStatus(uint8(data.Status)).
 			SetCreateTime(uint64(data.CreatedAt.Unix())).
 			SetUpdateTime(uint64(data.UpdatedAt.Unix())).
-			Save(ctx)
+			Save(entcache.Evict(ctx))
 	}
 	if err != nil {
 		return nil, err
@@ -145,16 +147,16 @@ func (r *SpliderRepo) Save(ctx context.Context, data *bizsplider.Splider) (*bizs
 	return &result, nil
 }
 
-func (r *SpliderRepo) Remove(ctx context.Context, options ...bizsplider.Query) error {
+func (r *SpliderRepo) Remove(ctx context.Context, queries ...bizsplider.Query) error {
 	client := r.data.GetClient(ctx)
 	query := client.CitySplider.Query()
-	if len(options) > 0 {
-		q := NewQuery(query)
-		for _, option := range options {
-			option(q)
+	if len(queries) > 0 {
+		search := NewQuery(query)
+		for _, fn := range queries {
+			fn(search)
 		}
 	}
-	results, err := query.All(ctx)
+	results, err := query.All(entcache.Evict(ctx))
 	if err != nil {
 		return err
 	}

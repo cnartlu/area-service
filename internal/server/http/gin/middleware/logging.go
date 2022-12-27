@@ -3,15 +3,14 @@ package middleware
 import (
 	"time"
 
-	"github.com/cnartlu/area-service/component/log"
 	"github.com/gin-gonic/gin"
 	"github.com/go-kratos/kratos/v2/errors"
 	"github.com/go-kratos/kratos/v2/transport"
 	"go.uber.org/zap"
 )
 
-func Logger(logger *log.Logger) gin.HandlerFunc {
-	l := logger.AddCallerSkip(1)
+func Logger(logger *zap.Logger) gin.HandlerFunc {
+	l := logger.WithOptions(zap.AddCallerSkip(1))
 	return func(c *gin.Context) {
 		var (
 			code      int32

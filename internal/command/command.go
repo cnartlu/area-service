@@ -32,28 +32,65 @@ var (
 )
 
 func Setup(app *cli.App, fn CommandFunc) {
-	app.Commands = append(app.Commands, &cli.Command{
-		Name:            "github",
-		HideHelp:        true,
+	var (
+		defaultCommand  *Command
+		defaultCleanup  = func() {}
+		initCommandfunc = func(ctx *cli.Context) error {
+			command, cleanup, err := fn(ctx.String("config"))
+			if err != nil {
+				return err
+			}
+			defaultCleanup = cleanup
+			defaultCommand = command
+			return nil
+		}
+		emptyCommandFunction = func(ctx *cli.Context) error {
+			return nil
+		}
+	)
+	var registerCommand = &cli.Command{
+		Name:            "register",
 		HideHelpCommand: true,
-		Hidden:          true,
-		Subcommands: []*cli.Command{
-			{
-				Name:                   "load",
-				Flags:                  []cli.Flag{ConfigFlag},
-				UseShortOptionHandling: true,
-				SkipFlagParsing:        true,
-				Action: func(ctx *cli.Context) error {
-					command, cleanup, err := fn(ctx.String("config"))
-					if err != nil {
-						return err
-					}
-					defer cleanup()
-					return command.handler.Github.Load(ctx.Context)
-				},
-			},
+		Before:          initCommandfunc,
+		Action:          emptyCommandFunction,
+		After: func(ctx *cli.Context) error {
+			defaultCleanup()
+			return nil
 		},
-	})
+	}
+
+	{
+		github := *registerCommand
+		github.Name = "github"
+		github.Before = emptyCommandFunction
+		github.Action = func(ctx *cli.Context) error {
+			return nil
+		}
+		{
+			// latest 命令
+			latest := *registerCommand
+			latest.Name = "latest"
+			latest.Action = func(ctx *cli.Context) error {
+				return defaultCommand.handler.Github.Latest(ctx.Context)
+			}
+			// load 命令
+			load := *registerCommand
+			load.Name = "load"
+			load.Action = func(ctx *cli.Context) error {
+				return defaultCommand.handler.Github.Load(ctx.Context)
+			}
+
+			// 注册命令
+			github.Subcommands = []*cli.Command{
+				&latest,
+				&load,
+			}
+		}
+
+		// 注册命令
+		app.Commands = append(app.Commands, &github)
+	}
+
 }
 
 type Command struct {

@@ -70,35 +70,16 @@ func newLevelEnable(oldLevelEnable levelEnable, level Level, levels []Level) lev
 	return newLevelEnable
 }
 
-type Logger struct {
-	// 是否初始化
-	once sync.Once
-	// c 配置装置
-	c *Config
-	// 日志配置器
-	zap *zap.Logger
+type logger struct {
+	once   sync.Once
+	config *Config
+	core   *zap.Logger
 }
 
-func (l *Logger) core() *zap.Logger {
-	if l == nil {
-		l = &Logger{}
-	}
-	if l.zap == nil {
-		l.Setup()
-	}
-	return l.zap
-}
-
-// clone
-func (l *Logger) clone() *Logger {
-	c := *l
-	return &c
-}
-
-func (l *Logger) Setup() (err error) {
+func (l *logger) Setup() (err error) {
 	l.once.Do(func() {
-		if l.c == nil {
-			l.c = &Config{
+		if l.config == nil {
+			l.config = &Config{
 				Stdout: true,
 			}
 		}
@@ -120,12 +101,12 @@ func (l *Logger) Setup() (err error) {
 			}
 		}
 		encoder = zapcore.NewJSONEncoder(encoderConfig)
-		zapOptions = append(zapOptions, zap.AddCaller(), zap.AddCallerSkip(1+int(l.c.GetTraceLevel())))
-		defaultLevelEnabler := newLevelEnable(levelEnable{}, l.c.GetLevel(), l.c.GetLevels())
-		if l.c.GetStdout() {
+		zapOptions = append(zapOptions, zap.AddCaller(), zap.AddCallerSkip(1+int(l.config.GetTraceLevel())))
+		defaultLevelEnabler := newLevelEnable(levelEnable{}, l.config.GetLevel(), l.config.GetLevels())
+		if l.config.GetStdout() {
 			cores = append(cores, zapcore.NewCore(encoder, os.Stdout, defaultLevelEnabler))
 		}
-		configTargets := l.c.GetTargets()
+		configTargets := l.config.GetTargets()
 		protoUnmarshalOption := protojson.UnmarshalOptions{
 			DiscardUnknown: true,
 		}
@@ -155,94 +136,20 @@ func (l *Logger) Setup() (err error) {
 			cores = append(cores, zapcore.NewCore(encoder, zapcore.AddSync(writer), levelEnabler))
 		}
 		core := zapcore.NewTee(cores...)
-		l.zap = zap.New(core, zapOptions...)
+		l.core = zap.New(core, zapOptions...)
 	})
 	return
 }
 
-// AddCallerSkip increases the number of callers skipped by caller annotation
-// (as enabled by the AddCaller option). When building wrappers around the
-// Logger and SugaredLogger, supplying this Option prevents zap from always
-// reporting the wrapper code as the caller.
-func (l *Logger) AddCallerSkip(skip int) *Logger {
-	c := l.clone()
-	c.zap = l.core().WithOptions(zap.AddCallerSkip(skip))
-	return c
-}
-
-// Debug logs a message at DebugLevel. The message includes any fields passed
-// at the log site, as well as any fields accumulated on the logger.
-func (l *Logger) Debug(msg string, fields ...zapcore.Field) {
-	l.core().Debug(msg, fields...)
-}
-
-// Info logs a message at InfoLevel. The message includes any fields passed
-// at the log site, as well as any fields accumulated on the logger.
-func (l *Logger) Info(msg string, fields ...zapcore.Field) {
-	l.core().Info(msg, fields...)
-}
-
-// Warn logs a message at WarnLevel. The message includes any fields passed
-// at the log site, as well as any fields accumulated on the logger.
-func (l *Logger) Warn(msg string, fields ...zapcore.Field) {
-	l.core().Warn(msg, fields...)
-}
-
-// Error logs a message at ErrorLevel. The message includes any fields passed
-// at the log site, as well as any fields accumulated on the logger.
-func (l *Logger) Error(msg string, fields ...zapcore.Field) {
-	l.core().Error(msg, fields...)
-}
-
-// DPanic logs a message at DPanicLevel. The message includes any fields
-// passed at the log site, as well as any fields accumulated on the logger.
-//
-// If the logger is in development mode, it then panics (DPanic means
-// "development panic"). This is useful for catching errors that are
-// recoverable, but shouldn't ever happen.
-func (l *Logger) DPanic(msg string, fields ...zapcore.Field) {
-	l.core().DPanic(msg, fields...)
-}
-
-// Panic logs a message at PanicLevel. The message includes any fields passed
-// at the log site, as well as any fields accumulated on the logger.
-//
-// The logger then panics, even if logging at PanicLevel is disabled.
-func (l *Logger) Panic(msg string, fields ...zapcore.Field) {
-	l.core().Panic(msg, fields...)
-}
-
-// Fatal logs a message at FatalLevel. The message includes any fields passed
-// at the log site, as well as any fields accumulated on the logger.
-//
-// The logger then calls os.Exit(1), even if logging at FatalLevel is
-// disabled.
-func (l *Logger) Fatal(msg string, fields ...zapcore.Field) {
-	l.core().Fatal(msg, fields...)
-}
-
-// Sync calls the underlying Core's Sync method, flushing any buffered log
-// entries. Applications should take care to call Sync before exiting.
-func (l *Logger) Sync() error {
-	return l.core().Sync()
-}
-
-// Close calls the underlying Core's Sync method, flushing any buffered log
-// entries. Applications should take care to call Sync before exiting.
-func (l *Logger) Close() error {
-	return l.Sync()
-}
-
-// New 日志器
-func New(c *Config) (*Logger, error) {
-	l := &Logger{
-		once: sync.Once{},
-		c:    c,
-		zap:  nil,
+func New(config *Config) (*zap.Logger, error) {
+	l := &logger{
+		once:   sync.Once{},
+		config: config,
+		core:   nil,
 	}
 	err := l.Setup()
 	if err != nil {
 		return nil, err
 	}
-	return l, nil
+	return l.core, nil
 }

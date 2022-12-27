@@ -3,13 +3,12 @@ package log
 import (
 	"fmt"
 
-	"github.com/cnartlu/area-service/component/log"
 	klog "github.com/go-kratos/kratos/v2/log"
 	"go.uber.org/zap"
 )
 
 type kratosLogger struct {
-	l *log.Logger
+	l *zap.Logger
 }
 
 // Log logs a message at the specified level. The message includes any fields
@@ -55,7 +54,7 @@ func (l *kratosLogger) Log(level klog.Level, keyvals ...interface{}) error {
 	return nil
 }
 
-func NewKratosLogger(l *log.Logger) klog.Logger {
-	var klogger = kratosLogger{l: l.AddCallerSkip(2)}
+func NewKratosLogger(l *zap.Logger) klog.Logger {
+	var klogger = kratosLogger{l: l.WithOptions(zap.AddCallerSkip(2))}
 	return &klogger
 }

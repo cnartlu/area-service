@@ -6,20 +6,18 @@ import (
 	"syscall"
 
 	v1 "github.com/cnartlu/area-service/api/manage/v1"
-	"github.com/cnartlu/area-service/component/log"
 	"github.com/cnartlu/area-service/internal/config"
 	"github.com/cnartlu/area-service/internal/service"
 	"github.com/go-kratos/kratos/v2/transport/grpc"
+	"go.uber.org/zap"
 )
 
 type Server = grpc.Server
 
 // NewServer new a gRPC server.
 func NewServer(
-	logger *log.Logger,
+	logger *zap.Logger,
 	c *config.Grpc,
-
-	// 服务
 	sArea *service.AreaService,
 ) *Server {
 	var network = c.GetNetwork()

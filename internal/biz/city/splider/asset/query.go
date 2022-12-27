@@ -14,15 +14,27 @@ type Inquirer interface {
 
 type Query func(Inquirer)
 
+func Cache(ttl int) Query {
+	return func(r Inquirer) {
+		if o, ok := r.(interface{ Cache(ttl int) }); ok {
+			o.Cache(ttl)
+		}
+	}
+}
+
 func Offset(offset int) Query {
 	return func(r Inquirer) {
-		r.Offset(offset)
+		if o, ok := r.(interface{ Offset(offset int) }); ok {
+			o.Offset(offset)
+		}
 	}
 }
 
 func Limit(limit int) Query {
 	return func(r Inquirer) {
-		r.Limit(limit)
+		if o, ok := r.(interface{ Limit(limit int) }); ok {
+			o.Limit(limit)
+		}
 	}
 }
 

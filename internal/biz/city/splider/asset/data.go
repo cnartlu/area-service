@@ -25,6 +25,14 @@ func (s Status) String() string {
 	return "未知"
 }
 
+type FindListParams struct {
+	CitySpliderID int
+	SourceID      uint64
+	Status        int
+	Page          int
+	PageSize      int
+}
+
 type Asset struct {
 	ID            int
 	CitySpliderID int

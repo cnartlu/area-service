@@ -1,6 +1,8 @@
 package area
 
 import (
+	"strings"
+
 	bizarea "github.com/cnartlu/area-service/internal/biz/area"
 	"github.com/cnartlu/area-service/internal/data/ent"
 	"github.com/cnartlu/area-service/internal/data/ent/area"
@@ -10,6 +12,11 @@ var _ bizarea.Inquirer = new(queryOption)
 
 type queryOption struct {
 	query *ent.AreaQuery
+	ttl   *int
+}
+
+func (o queryOption) Cache(ttl int) {
+	o.ttl = &ttl
 }
 
 func (o queryOption) Offset(offset int) {
@@ -20,12 +27,26 @@ func (o queryOption) Limit(limit int) {
 	o.query.Limit(limit)
 }
 
-func (o queryOption) Order(orders ...bizarea.Sort) {
-	for _, order := range orders {
-		if order.Desc {
-			o.query.Order(ent.Desc(order.Field))
-		} else {
-			o.query.Order(ent.Asc(order.Field))
+func (o queryOption) Order(orders ...string) {
+	if len(orders) > 0 {
+		var lastOrderDesc = false
+		var fields = []string{}
+		for _, str := range orders {
+			if strings.HasPrefix(str, "-") {
+				if !lastOrderDesc {
+					lastOrderDesc = true
+					o.query.Order(ent.Asc(fields...))
+					fields = []string{}
+				}
+				fields = append(fields, str[1:])
+			} else {
+				if lastOrderDesc {
+					lastOrderDesc = false
+					o.query.Order(ent.Desc(fields...))
+					fields = []string{}
+				}
+				fields = append(fields, str)
+			}
 		}
 	}
 }

@@ -4,14 +4,12 @@ import (
 	"context"
 	"time"
 
-	"github.com/cnartlu/area-service/component/log"
-
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 )
 
 // LoggerMiddleware wraps the request context with a timeout
-func LoggerMiddleware(logger *log.Logger, notlogged ...string) func(c *gin.Context) {
+func LoggerMiddleware(logger *zap.Logger, notlogged ...string) func(c *gin.Context) {
 	var skip map[string]struct{}
 
 	if length := len(notlogged); length > 0 {

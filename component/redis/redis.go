@@ -7,7 +7,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/cnartlu/area-service/component/log"
 	"go.uber.org/zap"
 
 	"github.com/go-redis/redis/v8"
@@ -15,7 +14,7 @@ import (
 
 // New 创建 redis 客户端
 // 当 Close 客户端时
-func New(config *Config, logger *log.Logger) (*redis.Client, func(), error) {
+func New(config *Config, logger *zap.Logger) (*redis.Client, func(), error) {
 	addr := bytes.Buffer{}
 	if config.GetHost() != "" {
 		addr.WriteString(config.GetHost())

@@ -5,7 +5,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cnartlu/area-service/component/log"
 	"go.opentelemetry.io/otel/exporters/jaeger"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
@@ -19,7 +18,7 @@ type Tracer struct {
 	tracerProvider *sdktrace.TracerProvider
 }
 
-func New(config *Config, logger *log.Logger) (*Tracer, func(), error) {
+func New(config *Config, logger *zap.Logger) (*Tracer, func(), error) {
 	if config == nil {
 		return nil, func() {}, nil
 	}

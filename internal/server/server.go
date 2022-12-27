@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/cnartlu/area-service/component/app"
-	"github.com/cnartlu/area-service/component/log"
 	"github.com/cnartlu/area-service/internal/server/cron"
 	"github.com/cnartlu/area-service/internal/server/grpc"
 	"github.com/cnartlu/area-service/internal/server/http"
@@ -21,7 +20,7 @@ import (
 
 type Server struct {
 	app    *app.App
-	logger *log.Logger
+	logger *zap.Logger
 	gs     *grpc.Server
 	hs     *http.Server
 	cn     *cron.Server
@@ -111,7 +110,7 @@ func (s *Server) Stop() error {
 func NewServer(
 	ctx context.Context,
 	app *app.App,
-	logger *log.Logger,
+	logger *zap.Logger,
 	gs *grpc.Server,
 	hs *http.Server,
 	cn *cron.Server,

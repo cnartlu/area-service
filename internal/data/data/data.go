@@ -3,15 +3,16 @@ package data
 import (
 	"context"
 	"fmt"
+	"time"
 
+	"ariga.io/entcache"
 	"github.com/cnartlu/area-service/component/database"
-	"github.com/cnartlu/area-service/component/log"
 	biztransaction "github.com/cnartlu/area-service/internal/biz/transaction"
 	"github.com/cnartlu/area-service/internal/data/ent"
 	"github.com/go-redis/redis/v8"
-
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/jackc/pgx/v4/stdlib"
+	"go.uber.org/zap"
 )
 
 var _ biztransaction.Transaction = (*Data)(nil)
@@ -19,7 +20,7 @@ var _ biztransaction.Transaction = (*Data)(nil)
 type txCtxKey struct{}
 
 type Data struct {
-	logger *log.Logger
+	logger *zap.Logger
 	ent    *ent.Client
 	rds    *redis.Client
 }
@@ -47,6 +48,20 @@ func (d *Data) GetClient(ctx context.Context) *ent.Client {
 	return tx.Client()
 }
 
+func (d *Data) WithCacheContext(ctx context.Context, ttl *int) context.Context {
+	if ttl != nil {
+		t := *ttl
+		if t < 0 {
+			return entcache.Skip(ctx)
+		} else if t > 0 {
+			return entcache.WithTTL(ctx, time.Duration(t)*time.Second)
+		} else {
+			return entcache.WithTTL(ctx, 0)
+		}
+	}
+	return ctx
+}
+
 func (d *Data) Transaction(ctx context.Context, fn func(ctx context.Context) error) error {
 	tx := d.txFromContext(ctx)
 	if tx != nil {
@@ -70,7 +85,7 @@ func (d *Data) Transaction(ctx context.Context, fn func(ctx context.Context) err
 }
 
 func NewData(
-	logger *log.Logger,
+	logger *zap.Logger,
 	rds *redis.Client,
 	config *database.Config,
 ) (*Data, func(), error) {

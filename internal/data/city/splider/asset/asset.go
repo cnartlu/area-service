@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"ariga.io/entcache"
 	"github.com/cnartlu/area-service/errors"
 	bizasset "github.com/cnartlu/area-service/internal/biz/city/splider/asset"
 	"github.com/cnartlu/area-service/internal/data/data"
@@ -31,26 +32,25 @@ type AssetRepo struct {
 	data *data.Data
 }
 
-func (r *AssetRepo) Count(ctx context.Context, options ...bizasset.Query) int {
+func (r *AssetRepo) Count(ctx context.Context, queries ...bizasset.Query) int {
 	client := r.data.GetClient(ctx)
 	query := client.CitySpliderAsset.Query()
-	o := NewQuery(query)
-	for _, option := range options {
-		option := option
-		option(o)
+	search := NewQuery(query)
+	for _, fn := range queries {
+		fn(search)
 	}
-	i, _ := query.Count(ctx)
+	i, _ := query.Count(r.data.WithCacheContext(ctx, search.ttl))
 	return i
 }
 
-func (r *AssetRepo) FindList(ctx context.Context, options ...bizasset.Query) ([]*bizasset.Asset, error) {
+func (r *AssetRepo) FindList(ctx context.Context, queries ...bizasset.Query) ([]*bizasset.Asset, error) {
 	client := r.data.GetClient(ctx)
 	query := client.CitySpliderAsset.Query()
-	o := NewQuery(query)
-	for _, option := range options {
-		option(o)
+	search := NewQuery(query)
+	for _, fn := range queries {
+		fn(search)
 	}
-	models, err := query.All(ctx)
+	models, err := query.All(r.data.WithCacheContext(ctx, search.ttl))
 	if err != nil {
 		return nil, err
 	}
@@ -63,14 +63,14 @@ func (r *AssetRepo) FindList(ctx context.Context, options ...bizasset.Query) ([]
 	return items, nil
 }
 
-func (r *AssetRepo) FindOne(ctx context.Context, options ...bizasset.Query) (*bizasset.Asset, error) {
+func (r *AssetRepo) FindOne(ctx context.Context, queries ...bizasset.Query) (*bizasset.Asset, error) {
 	client := r.data.GetClient(ctx)
 	query := client.CitySpliderAsset.Query()
-	o := NewQuery(query)
-	for _, option := range options {
-		option(o)
+	search := NewQuery(query)
+	for _, fn := range queries {
+		fn(search)
 	}
-	model, err := query.First(ctx)
+	model, err := query.First(r.data.WithCacheContext(ctx, search.ttl))
 	if err != nil {
 		if ent.IsNotFound(err) {
 			return nil, errors.ErrorDataNotFound(err.Error())
@@ -90,7 +90,9 @@ func (r *AssetRepo) Save(ctx context.Context, data *bizasset.Asset) (*bizasset.A
 	)
 	if data.ID > 0 {
 		isUpdate = true
-		model, err = client.CitySpliderAsset.Query().Where(cityspliderasset.IDEQ(data.ID)).First(ctx)
+		model, err = client.CitySpliderAsset.Query().
+			Where(cityspliderasset.IDEQ(data.ID)).
+			First(entcache.Evict(ctx))
 		if err != nil {
 			if !ent.IsNotFound(err) {
 				return nil, err
@@ -133,25 +135,28 @@ func (r *AssetRepo) Save(ctx context.Context, data *bizasset.Asset) (*bizasset.A
 	return &result, nil
 }
 
-func (r *AssetRepo) Remove(ctx context.Context, options ...bizasset.Query) error {
+func (r *AssetRepo) Remove(ctx context.Context, queries ...bizasset.Query) error {
 	client := r.data.GetClient(ctx)
 	query := client.CitySpliderAsset.Query()
-	if len(options) > 0 {
-		q := NewQuery(query)
-		for _, option := range options {
-			option(q)
+	if len(queries) > 0 {
+		search := NewQuery(query)
+		for _, fn := range queries {
+			fn(search)
 		}
 	}
-	results, err := query.All(ctx)
-	if err != nil {
+	err := r.data.Transaction(entcache.Evict(ctx), func(ctx context.Context) error {
+		results, err := query.All(entcache.Evict(ctx))
+		if err != nil {
+			return err
+		}
+		for _, result := range results {
+			if err1 := client.CitySpliderAsset.DeleteOne(result).Exec(ctx); err1 != nil {
+				err = err1
+				break
+			}
+		}
 		return err
-	}
-	for _, result := range results {
-		if err1 := client.CitySpliderAsset.DeleteOne(result).Exec(ctx); err1 != nil {
-			err = err1
-			break
-		}
-	}
+	})
 	return err
 }
 

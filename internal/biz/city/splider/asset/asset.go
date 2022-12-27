@@ -2,6 +2,8 @@ package asset
 
 import (
 	"context"
+
+	"github.com/cnartlu/area-service/errors"
 )
 
 type AssetRepo interface {
@@ -16,22 +18,48 @@ type AssetUsecase struct {
 	repo AssetRepo
 }
 
-func (a *AssetUsecase) FindList(ctx context.Context) ([]*Asset, error) {
-	return a.repo.FindList(ctx)
+func (a *AssetUsecase) FindList(ctx context.Context, param FindListParams) ([]*Asset, error) {
+	queries := []Query{}
+	if param.CitySpliderID != 0 {
+		queries = append(queries, IDEQ(param.CitySpliderID))
+	}
+	if param.SourceID > 0 {
+		queries = append(queries, SourceIDEQ(param.SourceID))
+	}
+	if param.Status != 0 {
+		queries = append(queries, StatusEQ(Status(param.Status)))
+	}
+	return a.repo.FindList(ctx, queries...)
 }
 
-func (a *AssetUsecase) FindOne(ctx context.Context, id uint64) (*Asset, error) {
-	return a.repo.FindOne(ctx)
+func (a *AssetUsecase) FindOne(ctx context.Context, id int) (*Asset, error) {
+	return a.repo.FindOne(ctx, IDEQ(id))
 }
 
 func (a *AssetUsecase) FindOneWithInstance(ctx context.Context, queries ...Query) (*Asset, error) {
 	return a.repo.FindOne(ctx, queries...)
 }
 
-func (a *AssetUsecase) Create(ctx context.Context, data *Asset) error {
+func (a *AssetUsecase) Create(ctx context.Context, data *Asset) (*Asset, error) {
+	data.ID = 0
 	var err error
 	data, err = a.repo.Save(ctx, data)
-	return err
+	if err != nil {
+		return nil, err
+	}
+	return data, nil
+}
+
+func (a *AssetUsecase) Update(ctx context.Context, data *Asset) (*Asset, error) {
+	if data.ID < 1 {
+		return nil, errors.ErrorParamMissing("missing unique identifier")
+	}
+	var err error
+	data, err = a.repo.Save(ctx, data)
+	if err != nil {
+		return nil, err
+	}
+	return data, nil
 }
 
 func NewAssetUsecase(

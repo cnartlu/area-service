@@ -9,17 +9,17 @@ import (
 
 	v1 "github.com/cnartlu/area-service/api/manage/v1"
 	"github.com/cnartlu/area-service/component/app"
-	"github.com/cnartlu/area-service/component/log"
 	"github.com/cnartlu/area-service/internal/config"
 	"github.com/cnartlu/area-service/internal/server/http/gin/middleware"
 	"github.com/cnartlu/area-service/internal/service"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 )
 
 type Server struct {
 	*http.Server
 	// logger 日志
-	logger *log.Logger
+	logger *zap.Logger
 	// config 配置
 	config *config.Http
 	// router 引擎
@@ -88,7 +88,7 @@ func (s *Server) Stop(ctx context.Context) error {
 // NewServer new a HTTP server.
 func NewServer(
 	a *app.App,
-	logger *log.Logger,
+	logger *zap.Logger,
 	httpConfig *config.Http,
 	// 其他数据
 	areaService *service.AreaService,

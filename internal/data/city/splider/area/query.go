@@ -1,6 +1,8 @@
 package area
 
 import (
+	"strings"
+
 	bizarea "github.com/cnartlu/area-service/internal/biz/city/splider/area"
 	"github.com/cnartlu/area-service/internal/data/ent"
 	"github.com/cnartlu/area-service/internal/data/ent/cityspliderarea"
@@ -10,6 +12,11 @@ var _ bizarea.Inquirer = new(queryOption)
 
 type queryOption struct {
 	query *ent.CitySpliderAreaQuery
+	ttl   *int
+}
+
+func (o queryOption) Cache(ttl int) {
+	o.ttl = &ttl
 }
 
 func (o queryOption) Offset(offset int) {
@@ -20,23 +27,28 @@ func (o queryOption) Limit(limit int) {
 	o.query.Limit(limit)
 }
 
-func (o queryOption) Order(order ...string) {
-	return
-	// if order == "" {
-	// 	return
-	// }
-	// orders := strings.Split(order, ",")
-	// for _, v := range orders {
-	// 	v := strings.TrimSpace(v)
-	// 	if v == "" {
-	// 		continue
-	// 	}
-	// 	if strings.HasPrefix(v, "-") {
-	// 		o.query.Order(ent.Desc(v[1:]))
-	// 	} else {
-	// 		o.query.Order(ent.Asc(v))
-	// 	}
-	// }
+func (o queryOption) Order(orders ...string) {
+	if len(orders) > 0 {
+		var lastOrderDesc = false
+		var fields = []string{}
+		for _, str := range orders {
+			if strings.HasPrefix(str, "-") {
+				if !lastOrderDesc {
+					lastOrderDesc = true
+					o.query.Order(ent.Asc(fields...))
+					fields = []string{}
+				}
+				fields = append(fields, str[1:])
+			} else {
+				if lastOrderDesc {
+					lastOrderDesc = false
+					o.query.Order(ent.Desc(fields...))
+					fields = []string{}
+				}
+				fields = append(fields, str)
+			}
+		}
+	}
 }
 
 func (o queryOption) IDEQ(id int) {
