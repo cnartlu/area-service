@@ -14,12 +14,14 @@ var _ bizarea.AreaRepo = (*AreaRepo)(nil)
 
 func convertArea(model *ent.CitySpliderArea) bizarea.Area {
 	return bizarea.Area{
-		ID:         model.ID,
-		ParentID:   model.ParentID,
-		RegionID:   model.RegionID,
-		ParentList: model.ParentList,
-		Title:      model.Title,
-		Level:      int(model.Level),
+		ID:             model.ID,
+		ParentID:       model.ParentID,
+		RegionID:       model.RegionID,
+		ParentRegionID: model.ParentRegionID,
+		Title:          model.Title,
+		Level:          int(model.Level),
+		Lng:            model.Lng,
+		Lat:            model.Lat,
 	}
 }
 
@@ -98,17 +100,21 @@ func (r *AreaRepo) Save(ctx context.Context, data *bizarea.Area) (*bizarea.Area,
 		model, err = model.Update().
 			SetParentID(data.ParentID).
 			SetRegionID(data.RegionID).
-			SetParentList(data.ParentList).
+			SetParentRegionID(data.ParentRegionID).
 			SetTitle(data.Title).
 			SetLevel(uint8(data.Level)).
+			SetLng(data.Lng).
+			SetLat(data.Lat).
 			Save(ctx)
 	} else {
 		model, err = client.CitySpliderArea.Create().
 			SetParentID(data.ParentID).
 			SetRegionID(data.RegionID).
-			SetParentList(data.ParentList).
+			SetParentRegionID(data.ParentRegionID).
 			SetTitle(data.Title).
 			SetLevel(uint8(data.Level)).
+			SetLng(data.Lng).
+			SetLat(data.Lat).
 			Save(ctx)
 	}
 	if err != nil {

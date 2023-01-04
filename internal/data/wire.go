@@ -10,11 +10,13 @@ import (
 	bizcitygithub "github.com/cnartlu/area-service/internal/biz/city/github"
 	bizcitysplider "github.com/cnartlu/area-service/internal/biz/city/splider"
 	bizcityspliderarea "github.com/cnartlu/area-service/internal/biz/city/splider/area"
+	bizcityspliderareapolygon "github.com/cnartlu/area-service/internal/biz/city/splider/area/polygon"
 	bizcityspliderasset "github.com/cnartlu/area-service/internal/biz/city/splider/asset"
 	biztransaction "github.com/cnartlu/area-service/internal/biz/transaction"
 	"github.com/cnartlu/area-service/internal/data/area"
 	citysplider "github.com/cnartlu/area-service/internal/data/city/splider"
 	cityspliderarea "github.com/cnartlu/area-service/internal/data/city/splider/area"
+	cityspliderareapolygon "github.com/cnartlu/area-service/internal/data/city/splider/area/polygon"
 	cityspliderasset "github.com/cnartlu/area-service/internal/data/city/splider/asset"
 	"github.com/cnartlu/area-service/internal/data/data"
 	"github.com/cnartlu/area-service/internal/data/github"
@@ -34,4 +36,6 @@ var ProviderSet = wire.NewSet(
 	wire.Bind(new(bizcityspliderasset.AssetRepo), new(*cityspliderasset.AssetRepo)),
 	cityspliderarea.NewAreaRepo,
 	wire.Bind(new(bizcityspliderarea.AreaRepo), new(*cityspliderarea.AreaRepo)),
+	cityspliderareapolygon.NewPolygonRepo,
+	wire.Bind(new(bizcityspliderareapolygon.PolygonRepo), new(*cityspliderareapolygon.PolygonRepo)),
 )

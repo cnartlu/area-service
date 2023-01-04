@@ -90,7 +90,7 @@ func NewData(
 	config *database.Config,
 ) (*Data, func(), error) {
 	result := Data{
-		logger: logger,
+		logger: logger.WithOptions(zap.AddCallerSkip(1)),
 		rds:    rds,
 	}
 	client, cleanup, err := result.LoadEntDatabase(config)

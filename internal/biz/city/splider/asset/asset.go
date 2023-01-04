@@ -21,13 +21,19 @@ type AssetUsecase struct {
 func (a *AssetUsecase) FindList(ctx context.Context, param FindListParams) ([]*Asset, error) {
 	queries := []Query{}
 	if param.CitySpliderID != 0 {
-		queries = append(queries, IDEQ(param.CitySpliderID))
+		queries = append(queries, CitySpliderIDEQ(param.CitySpliderID))
 	}
 	if param.SourceID > 0 {
 		queries = append(queries, SourceIDEQ(param.SourceID))
 	}
 	if param.Status != 0 {
 		queries = append(queries, StatusEQ(Status(param.Status)))
+	}
+	if param.Page > 0 {
+		queries = append(queries, Offset((param.Page-1)*param.PageSize))
+	}
+	if param.PageSize > 0 {
+		queries = append(queries, Limit(param.PageSize))
 	}
 	return a.repo.FindList(ctx, queries...)
 }

@@ -13,8 +13,8 @@ import (
 )
 
 // New 创建 redis 客户端
-// 当 Close 客户端时
-func New(config *Config, logger *zap.Logger) (*redis.Client, func(), error) {
+func New(config *Config, l *zap.Logger) (*redis.Client, func(), error) {
+	logger := l.WithOptions(zap.AddCallerSkip(1))
 	addr := bytes.Buffer{}
 	if config.GetHost() != "" {
 		addr.WriteString(config.GetHost())
@@ -81,8 +81,9 @@ func New(config *Config, logger *zap.Logger) (*redis.Client, func(), error) {
 
 	cleanup := func() {
 		if err := client.Close(); err != nil {
-			// 记录关闭的错误日志
-			logger.Error("", zap.Error(err))
+			if redis.ErrClosed != err {
+				logger.Error("[redis] close fail", zap.Error(err))
+			}
 		}
 	}
 

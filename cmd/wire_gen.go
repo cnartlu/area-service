@@ -17,6 +17,7 @@ import (
 	github3 "github.com/cnartlu/area-service/internal/biz/city/github"
 	"github.com/cnartlu/area-service/internal/biz/city/splider"
 	area4 "github.com/cnartlu/area-service/internal/biz/city/splider/area"
+	polygon2 "github.com/cnartlu/area-service/internal/biz/city/splider/area/polygon"
 	asset3 "github.com/cnartlu/area-service/internal/biz/city/splider/asset"
 	"github.com/cnartlu/area-service/internal/command"
 	"github.com/cnartlu/area-service/internal/command/handler"
@@ -26,6 +27,7 @@ import (
 	"github.com/cnartlu/area-service/internal/data/area"
 	"github.com/cnartlu/area-service/internal/data/city/splider"
 	area3 "github.com/cnartlu/area-service/internal/data/city/splider/area"
+	"github.com/cnartlu/area-service/internal/data/city/splider/area/polygon"
 	asset2 "github.com/cnartlu/area-service/internal/data/city/splider/asset"
 	"github.com/cnartlu/area-service/internal/data/data"
 	github2 "github.com/cnartlu/area-service/internal/data/github"
@@ -117,7 +119,9 @@ func initCommand(string2 string) (*command.Command, func(), error) {
 	assetUsecase := asset3.NewAssetUsecase(assetRepo)
 	areaRepo := area3.NewAreaRepo(dataData)
 	areaUsecase := area4.NewAreaUsecase(areaRepo)
-	githubUsecase := github3.NewGithubRepoUsecase(githubRepo, appApp, fileSystem, dataData, spliderUsecase, assetUsecase, areaUsecase)
+	polygonRepo := polygon.NewPolygonRepo(dataData)
+	polygonUsecase := polygon2.NewPolygonUsecase(polygonRepo)
+	githubUsecase := github3.NewGithubRepoUsecase(githubRepo, appApp, fileSystem, dataData, spliderUsecase, assetUsecase, areaUsecase, polygonUsecase)
 	githubHandler := github4.NewHandler(githubUsecase, logger)
 	handlerHandler := handler.New(githubHandler)
 	scriptScript := script.New()

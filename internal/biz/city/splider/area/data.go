@@ -10,12 +10,14 @@ const (
 )
 
 type Area struct {
-	ID         int
-	ParentID   int
-	RegionID   string
-	ParentList string
-	Title      string
-	Level      int
+	ID             int
+	ParentID       int
+	RegionID       string
+	ParentRegionID string
+	Title          string
+	Level          int
+	Lng            float64
+	Lat            float64
 }
 
 // 将字符串转为区域地址ID

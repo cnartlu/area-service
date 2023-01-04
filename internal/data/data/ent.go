@@ -157,7 +157,7 @@ func (d *Data) LoadEntDatabase(c *database.Config) (*ent.Client, func(), error) 
 
 	var cleanup = func() {
 		if err := client.Close(); err != nil {
-			// l.Error("[ent] client close failed", zap.Error(err))
+			d.logger.Error("[ent] close failed", zap.Error(err))
 		}
 	}
 

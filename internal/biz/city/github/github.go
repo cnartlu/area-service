@@ -17,6 +17,7 @@ import (
 	"github.com/cnartlu/area-service/errors"
 	"github.com/cnartlu/area-service/internal/biz/city/splider"
 	"github.com/cnartlu/area-service/internal/biz/city/splider/area"
+	"github.com/cnartlu/area-service/internal/biz/city/splider/area/polygon"
 	"github.com/cnartlu/area-service/internal/biz/city/splider/asset"
 	"github.com/cnartlu/area-service/internal/biz/transaction"
 	"github.com/google/go-github/v45/github"
@@ -28,14 +29,15 @@ type GithubRepo interface {
 }
 
 type GithubUsecase struct {
-	account        Account
-	repo           GithubRepo
-	app            *app.App
-	filesystem     *filesystem.FileSystem
-	transaction    transaction.Transaction
-	spliderUsecase *splider.SpliderUsecase
-	assetUsecase   *asset.AssetUsecase
-	areaUsecase    *area.AreaUsecase
+	account            Account
+	repo               GithubRepo
+	app                *app.App
+	filesystem         *filesystem.FileSystem
+	transaction        transaction.Transaction
+	spliderUsecase     *splider.SpliderUsecase
+	assetUsecase       *asset.AssetUsecase
+	areaUsecase        *area.AreaUsecase
+	areaPolygonUsecase *polygon.PolygonUsecase
 }
 
 func (g *GithubUsecase) LatestRelease(ctx context.Context) (*Github, error) {
@@ -275,9 +277,9 @@ func (g *GithubUsecase) WriterFile(ctx context.Context, filename string) error {
 					return err
 				}
 			case ReaderFileTypeGeo:
-				// if err := g.WriterByGeoData(ctx, datas); err != nil {
-				// 	return err
-				// }
+				if err := g.WriterByGeoData(ctx, datas); err != nil {
+					return err
+				}
 			default:
 			}
 
@@ -296,19 +298,21 @@ func NewGithubRepoUsecase(
 	spliderUsecase *splider.SpliderUsecase,
 	assetUsecase *asset.AssetUsecase,
 	areaUsecase *area.AreaUsecase,
+	areaPolygonUsecase *polygon.PolygonUsecase,
 ) *GithubUsecase {
 	var account = Account{
 		User: "xiangyuecn",
 		Repo: "AreaCity-JsSpider-StatsGov",
 	}
 	return &GithubUsecase{
-		account:        account,
-		repo:           repo,
-		app:            app,
-		filesystem:     filesystem,
-		transaction:    transaction,
-		spliderUsecase: spliderUsecase,
-		assetUsecase:   assetUsecase,
-		areaUsecase:    areaUsecase,
+		account:            account,
+		repo:               repo,
+		app:                app,
+		filesystem:         filesystem,
+		transaction:        transaction,
+		spliderUsecase:     spliderUsecase,
+		assetUsecase:       assetUsecase,
+		areaUsecase:        areaUsecase,
+		areaPolygonUsecase: areaPolygonUsecase,
 	}
 }

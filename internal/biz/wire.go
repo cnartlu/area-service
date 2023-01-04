@@ -10,6 +10,7 @@ import (
 	citygithub "github.com/cnartlu/area-service/internal/biz/city/github"
 	citysplider "github.com/cnartlu/area-service/internal/biz/city/splider"
 	cityspliderarea "github.com/cnartlu/area-service/internal/biz/city/splider/area"
+	cityspliderareapolygon "github.com/cnartlu/area-service/internal/biz/city/splider/area/polygon"
 	cityspliderasset "github.com/cnartlu/area-service/internal/biz/city/splider/asset"
 	"github.com/google/wire"
 )
@@ -19,5 +20,6 @@ var ProviderSet = wire.NewSet(
 	citygithub.NewGithubRepoUsecase,
 	citysplider.NewSpliderUsecase,
 	cityspliderarea.NewAreaUsecase,
+	cityspliderareapolygon.NewPolygonUsecase,
 	cityspliderasset.NewAssetUsecase,
 )
