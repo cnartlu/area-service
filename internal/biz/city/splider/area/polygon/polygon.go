@@ -12,6 +12,7 @@ type PolygonRepo interface {
 	FindOne(ctx context.Context, options ...Query) (*Polygon, error)
 	Save(ctx context.Context, data *Polygon) (*Polygon, error)
 	Remove(ctx context.Context, options ...Query) error
+	Truncate(ctx context.Context) error
 }
 
 type PolygonUsecase struct {
@@ -37,12 +38,8 @@ func (a *PolygonUsecase) Save(ctx context.Context, data *Polygon) (*Polygon, err
 	return a.repo.Save(ctx, data)
 }
 
-func (a *PolygonUsecase) Create(ctx context.Context, data *Polygon) error {
-	return nil
-}
-
-func (a *PolygonUsecase) Update(ctx context.Context, data *Polygon) error {
-	return nil
+func (a *PolygonUsecase) Truncate(ctx context.Context) error {
+	return a.repo.Truncate(ctx)
 }
 
 func (a *PolygonUsecase) Remove(ctx context.Context) error {

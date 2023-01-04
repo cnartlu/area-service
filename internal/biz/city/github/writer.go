@@ -49,17 +49,16 @@ func (g *GithubUsecase) WriterByAreaData(ctx context.Context, data []string) err
 					return err
 				}
 				if parentArea == nil {
-					// parentArea = &area.Area{
-					// 	RegionID: pid,
-					// 	Title:    name,
-					// 	Level:    int(deep),
-					// }
-					// if err := g.areaUsecase.Create(ctx, parentArea); err != nil {
-					// 	return err
-					// }
-				} else {
-					parentID = parentArea.ID
+					parentArea = &area.Area{
+						RegionID: pid,
+						Title:    name,
+						Level:    int(deep),
+					}
+					if err := g.areaUsecase.Create(ctx, parentArea); err != nil {
+						return err
+					}
 				}
+				parentID = parentArea.ID
 			}
 			areaData, err := g.areaUsecase.FindOneWithInstance(ctx, area.RegionIDEQ(id), area.LevelEQ(int(deep)+1))
 			if err != nil {

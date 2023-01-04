@@ -266,6 +266,9 @@ func (g *GithubUsecase) WriterFile(ctx context.Context, filename string) error {
 					readerFileType = ReaderFileTypeArea
 				case geoHeaderStr:
 					readerFileType = ReaderFileTypeGeo
+					if err := g.areaPolygonUsecase.Truncate(ctx); err != nil {
+						return err
+					}
 				default:
 					return ErrUnsupportedSheetFile
 				}

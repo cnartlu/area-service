@@ -115,6 +115,12 @@ func (r *PolygonRepo) Save(ctx context.Context, data *bizareapolygon.Polygon) (*
 	return &result, nil
 }
 
+func (r *PolygonRepo) Truncate(ctx context.Context) error {
+	client := r.data.GetClient(ctx)
+	_, err := client.CitySpliderAreaPolygon.ExecContext(ctx, "TRUNCATE `city_splider_area_polygon`")
+	return err
+}
+
 func (r *PolygonRepo) Remove(ctx context.Context, queries ...bizareapolygon.Query) error {
 	client := r.data.GetClient(ctx)
 	query := client.CitySpliderAreaPolygon.Query()
