@@ -1,5 +1,6 @@
 # Kratos Project Template
 
+练手的项目， 不保证可用
 ## Install Kratos
 ```
 go install github.com/go-kratos/kratos/cmd/kratos/v2@latest
